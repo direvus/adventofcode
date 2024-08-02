@@ -1,0 +1,9 @@
+# Inputs
+inputs/
+
+# Python
+.py[co]
+__pycache__/
+
+# Editor
+.*.sw?
