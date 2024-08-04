@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import math
 
 
 if __name__ == '__main__':
@@ -12,31 +13,33 @@ if __name__ == '__main__':
         if line == '':
             continue
         k = line[:3]
-        l = line[7:10]
-        r = line[12:15]
-        net[k] = (l, r)
+        left = line[7:10]
+        right = line[12:15]
+        net[k] = (left, right)
 
+    dircount = len(directions)
     # Part 1
     try:
         node = 'AAA'
         steps = 0
-        dircount = len(directions)
         while node != 'ZZZ':
             direction = directions[steps % dircount]
             node = net[node][direction]
             steps += 1
         print(steps)
     except KeyError:
-        print(f"No node AAA, cannot complete Part 1.")
+        print("No node AAA, cannot complete Part 1.")
 
     # Part 2
     nodes = [x for x in net.keys() if x.endswith('A')]
     steps = 0
-    while set([x[-1] for x in nodes]) != {'Z'}:
+    cycles = [None] * len(nodes)
+    while None in cycles and not all([x[2] == 'Z' for x in nodes]):
         direction = directions[steps % dircount]
-        newnodes = []
-        for node in nodes:
-            newnodes.append(net[node][direction])
-        nodes = newnodes
         steps += 1
-    print(steps)
+        for i, node in enumerate(nodes):
+            new = net[node][direction]
+            nodes[i] = new
+            if new[2] == 'Z' and cycles[i] is None:
+                cycles[i] = steps
+    print(math.lcm(*cycles))
