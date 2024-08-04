@@ -34,7 +34,7 @@ if __name__ == '__main__':
     nodes = [x for x in net.keys() if x.endswith('A')]
     steps = 0
     cycles = [None] * len(nodes)
-    while None in cycles and not all([x[2] == 'Z' for x in nodes]):
+    while None in cycles:
         direction = directions[steps % dircount]
         steps += 1
         for i, node in enumerate(nodes):
