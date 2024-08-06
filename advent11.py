@@ -3,55 +3,52 @@ import sys
 from itertools import combinations
 
 
-def get_distance(a: tuple, b: tuple) -> int:
-    return abs(b[0] - a[0]) + abs(b[1] - a[1])
+def get_distance(
+        a: tuple,
+        b: tuple,
+        empty_rows: set,
+        empty_cols: set,
+        expansion: int,
+        ) -> int:
+    lowx, highx = sorted([a[1], b[1]])
+    lowy, highy = sorted([a[0], b[0]])
+
+    cols = len({x for x in empty_cols if x > lowx and x < highx})
+    rows = len({y for y in empty_rows if y > lowy and y < highy})
+
+    return highx - lowx + highy - lowy + ((cols + rows) * (expansion - 1))
 
 
 if __name__ == '__main__':
     height = 0
     width = None
+    empty_rows = set()
     empty_cols = set()
     lines = []
+    galaxies = []
     for line in sys.stdin:
         line = line.strip()
         if width is None:
             width = len(line)
             empty_cols = set(range(width))
-        lines.append(line)
+        found = False
+        for i, c in enumerate(line):
+            if c == '#':
+                found = True
+                galaxies.append((height, i))
+                empty_cols.discard(i)
+        if not found:
+            empty_rows.add(height)
         height += 1
-        # Do the row expansions on the way through
-        if all([x == '.' for x in line]):
-            print(f"Expanding row {height}")
-            lines.append('|' * width)
-            height += 1
-        else:
-            # Prep for column expansions
-            empty_cols -= {i for i, x in enumerate(line) if x == '#'}
-
-    # Expand the empty columns
-    empty_cols = list(empty_cols)
-    empty_cols.sort()
-    print(f"Expanding columns {empty_cols}")
-    for i, line in enumerate(lines):
-        expansions = 0
-        for col in empty_cols:
-            j = col + expansions
-            line = line[:j] + '-' + line[j:]
-            expansions += 1
-        lines[i] = line
-    width += expansions
-
-    print('\n'.join(lines))
-    galaxies = []
-    for i, line in enumerate(lines):
-        for j, cell in enumerate(line):
-            if cell == '#':
-                galaxies.append((i, j))
 
     print(f"Got {len(galaxies)} galaxies on a {width} x {height} field")
+    print(f"Empty rows are {empty_rows}")
+    print(f"Empty columns are {empty_cols}")
     pairs = list(combinations(galaxies, 2))
-    total = 0
+    total1 = 0
+    total2 = 0
     for a, b in pairs:
-        dist = get_distance(a, b)
-        total += dist
-    print(total)
+        total1 += get_distance(a, b, empty_rows, empty_cols, 2)
+        total2 += get_distance(a, b, empty_rows, empty_cols, 10 ** 6)
+    print(f"Total distances with expansion factor 2 = {total1}")
+    print(f"Total distances with expansion factor 10^6 = {total2}")
