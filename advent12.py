@@ -116,10 +116,8 @@ if __name__ == '__main__':
     # Part 1
     total = 0
     for row, runs in rows:
-        print(f"{row} {runs}")
         ways = count_ways(row, runs)
         total += ways
-        print(f"{ways}")
     print(total)
 
     # Part 2 - expand all inputs rows by 5x
