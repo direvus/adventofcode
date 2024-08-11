@@ -1,13 +1,7 @@
 #!/usr/bin/env python
 import sys
-from enum import Enum, auto
 
-
-class Direction(Enum):
-    NORTH = auto()
-    SOUTH = auto()
-    EAST = auto()
-    WEST = auto()
+from util import Direction
 
 
 # These exit directions are set up so that for corner nodes, the first exit is

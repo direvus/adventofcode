@@ -1,15 +1,7 @@
 #!/usr/bin/env python
 import sys
-from enum import Enum, auto
 
-from util import timing
-
-
-class Direction(Enum):
-    NORTH = auto()
-    WEST = auto()
-    SOUTH = auto()
-    EAST = auto()
+from util import timing, Direction
 
 
 def get_total_load(pattern: list[list]) -> int:
