@@ -74,6 +74,16 @@ def run_beam(
         position = move(position, direction)
 
 
+def count_tiles(
+        rows: list,
+        position: tuple[int],
+        direction: Direction,
+        ) -> None:
+    tiles = {}
+    run_beam(rows, tiles, position, direction)
+    return len(tiles)
+
+
 if __name__ == '__main__':
     rows = []
     for line in sys.stdin:
@@ -81,7 +91,19 @@ if __name__ == '__main__':
 
     # Part 1
     with timing("Part 1"):
-        tiles = {}
-        run_beam(rows, tiles, (0, 0), Direction.EAST)
-        count = len(tiles)
+        count = count_tiles(rows, (0, 0), Direction.EAST)
     print(f"Result for Part 1 = {count}\n")
+
+    # Part 2
+    with timing("Part 2"):
+        results = []
+        width = len(rows[0])
+        height = len(rows)
+        for x in range(width):
+            results.append(count_tiles(rows, (0, x), Direction.SOUTH))
+            results.append(count_tiles(rows, (height - 1, x), Direction.NORTH))
+        for y in range(height):
+            results.append(count_tiles(rows, (y, 0), Direction.EAST))
+            results.append(count_tiles(rows, (y, width - 1), Direction.WEST))
+        result = max(results)
+    print(f"Result for Part 2 = {result}\n")
