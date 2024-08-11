@@ -1,6 +1,24 @@
 #!/usr/bin/env python
 import re
 import sys
+import time
+from contextlib import contextmanager
+
+
+COUNTS = {}
+
+
+@contextmanager
+def timing(message: str = None) -> int:
+    start = time.perf_counter_ns()
+    if message:
+        print(f"[......] {message}", end='')
+    try:
+        yield start
+    finally:
+        end = time.perf_counter_ns()
+        dur = end - start
+        print(f"\r\033[2K[{dur//1000:6d}] {message}")
 
 
 def replace(source: str, position: int, replacement: str):
@@ -27,29 +45,52 @@ def simplify(row: str, regex: re.Pattern) -> str:
     return row
 
 
-def get_ways(
-        row: str,
-        runs: tuple[int],
-        regex: re.Pattern = None,
-        ) -> list[str]:
-    if not regex:
-        regex = build_regex(runs)
-    indexes = [i for i, x in enumerate(row) if x == '?']
-    unknown = len(indexes)
-    total = sum(runs)
-    missing = total - row.count('#')
-    if unknown == 0:
-        return [row]
-    if missing == unknown:
-        return [row.replace('?', '#')]
+def get_lead_space(row: str) -> int:
+    for i, ch in enumerate(row):
+        if ch not in {'#', '.'}:
+            return i
+    return i
 
-    i = indexes[0]
-    result = []
-    for ch in ('#', '.'):
-        attempt = replace(row, i, ch)
-        valid = regex.fullmatch(attempt)
-        if valid:
-            result.extend(get_ways(attempt, runs, regex))
+
+def is_block_valid(row: str, block: str) -> bool:
+    for i, ch in enumerate(block):
+        p = row[i]
+        if p != ch and p != '?':
+            return False
+    return True
+
+
+def count_ways_slide(row: str, runs: tuple[int]) -> int:
+    runsets = COUNTS.get(row, {})
+    if runs in runsets:
+        return runsets[runs]
+
+    result = 0
+    nruns = len(runs)
+    length = sum(runs) + nruns - 1
+    run = runs[0]
+    block = '#' * run
+    if nruns > 1:
+        block += '.'
+    while length <= len(row):
+        valid = is_block_valid(row, block)
+        #print(f"  {block} in {row} is {valid}")
+        if not valid:
+            block = '.' + block
+            length += 1
+            continue
+        if nruns > 1:
+            remain = row[len(block):]
+            #print(f"  Recursing with {remain}")
+            ways = count_ways_slide(remain, runs[1:])
+            result += ways
+        elif '#' not in row[len(block):]:
+            result += 1
+        block = '.' + block
+        length += 1
+
+    COUNTS.setdefault(row, {})[runs] = result
+    #print(f"  Return {result} for {row} {runs}")
     return result
 
 
@@ -63,13 +104,12 @@ if __name__ == '__main__':
     # Part 1
     total = 0
     part1 = []
-    for row, runs in rows:
-        regex = build_regex(runs)
-        simple = simplify(row, regex)
-        nways = len(get_ways(simple, runs, regex))
-        total += nways
-        part1.append(nways)
-    print(total)
+    with timing("Part 1"):
+        for row, runs in rows:
+            nways = count_ways_slide(row, runs)
+            total += nways
+            part1.append(nways)
+    print(f"Total ways for Part 1 = {total}\n")
 
     # Part 2
     #
@@ -78,28 +118,26 @@ if __name__ == '__main__':
     # solved where we do use at least one of them.
     total = 0
     for i, nways in enumerate(part1):
-        origrow, runs = rows[i]
-
-        joins = []
-        for n in range(2, 6):
-            row = '#'.join([origrow] * n)
-            subruns = runs * n
-            regex = build_regex(subruns)
-            if not regex.fullmatch(row):
-                joins.append(0)
-                continue
-            simple = simplify(row, regex)
-            joins.append(len(get_ways(simple, subruns, regex)))
-
-        subtotal = sum([
-                nways ** 5,
-                4 * joins[0] * (nways ** 3),
-                3 * joins[1] * (nways ** 2),
-                2 * joins[2] * nways,
-                3 * (joins[0] ** 2) * nways,
-                2 * joins[0] * joins[1],
-                joins[3],
-                ])
-        print(f"R{i + 1} = {subtotal}")
-        total += subtotal
+        with timing(f"Row {i + 1}"):
+            orig_row, orig_runs = rows[i]
+            h = []
+            row = orig_row
+            runs = orig_runs
+            for n in range(4):
+                row = row + '#' + orig_row
+                runs = runs + orig_runs
+                with timing(f"Count ways for row {i + 1} x {n + 2}"):
+                    ways = count_ways_slide(row, runs)
+                h.append(ways)
+            subtotal = sum([
+                    nways ** 5,
+                    4 * h[0] * (nways ** 3),
+                    3 * h[1] * (nways ** 2),
+                    2 * h[2] * nways,
+                    3 * (h[0] ** 2) * nways,
+                    2 * h[0] * h[1],
+                    h[3],
+                    ])
+            total += subtotal
+        print(f"Row {i+1} = {subtotal}")
     print(total)
