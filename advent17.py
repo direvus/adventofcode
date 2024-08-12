@@ -35,58 +35,53 @@ def find_path(rows: list) -> int:
     width = len(rows[0])
     direction = Direction.EAST
     nodes = {
-            (y, x, d): (None, 0)
+            (y, x, d, r): None
             for y in range(height)
             for x in range(width)
-            for d in Direction}
-    nodes[(0, 0, direction)] = (0, 0)
+            for d in Direction
+            for r in range(1, 4)
+            if (y, x) != (0, 0)}
+    nodes[(0, 0, direction, 0)] = 0
     dest = (height - 1, width - 1)
     run = 0
     heat = 0
 
     visited = {}
 
-    while pos != dest:
-        print(f"At {pos} with heat {heat} heading {direction} for {run}")
+    while [k for k, v in nodes.items() if k[:2] == dest and v is None]:
         left, right = TURNS[direction]
         nbors = [
-            (*move(pos, left), left),
-            (*move(pos, right), right),
+            (*move(pos, left), left, 1),
+            (*move(pos, right), right, 1),
             ]
 
         if run < 3:
-            nbors.append((*move(pos, direction), direction))
+            nbors.append((*move(pos, direction), direction, run + 1))
 
         nbors = filter(lambda x: x in nodes, nbors)
-        for y, x, d in nbors:
-            dist = nodes[(y, x, d)][0]
+        for y, x, d, r in nbors:
+            dist = nodes[(y, x, d, r)]
             tile = rows[y][x]
             new = heat + tile
             if dist is None or dist > new:
-                r = run + 1 if d == direction else 0
-                nodes[(y, x, d)] = (new, r)
+                nodes[(y, x, d, r)] = new
 
         # DEBUG save off visited for viewing later
-        visited[pos] = heat
-        del nodes[(*pos, direction)]
+        visited[(*pos, direction, run)] = heat
+        del nodes[(*pos, direction, run)]
 
         candidates = [
-                (*k, *v) for k, v in nodes.items()
-                if v[0] is not None]
-        candidates.sort(key=lambda x: x[3])
-        y, x, direction, heat, run = candidates[0]
+                (*k, v) for k, v in nodes.items()
+                if v is not None]
+        if not candidates:
+            print("All nodes checked")
+            break
+        candidates.sort(key=lambda x: x[4])
+        y, x, direction, run, heat = candidates[0]
         pos = (y, x)
 
-    for y in range(height):
-        row = []
-        for x in range(width):
-            if (y, x) in visited:
-                row.append(f"{visited[(y, x)]:3d}")
-            else:
-                row.append('   ')
-        print(' '.join(row))
-
-    return heat
+    heats = [v for k, v in visited.items() if k[:2] == dest and v is not None]
+    return min(heats)
 
 
 if __name__ == '__main__':
