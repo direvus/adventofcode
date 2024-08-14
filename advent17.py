@@ -2,7 +2,6 @@
 import heapq
 import sys
 from collections import defaultdict, namedtuple
-from functools import cache
 
 from util import timing, Direction
 
@@ -22,14 +21,17 @@ TURNS = {
         }
 
 
-@cache
 def in_bounds(height: int, width: int, position: tuple[int]) -> bool:
     y, x = position
     return y >= 0 and y < height and x >= 0 and x < width
 
 
-def move(position: tuple[int], direction: Direction) -> tuple[int]:
-    v = VECTORS[direction]
+def move(
+        position: tuple[int],
+        direction: Direction,
+        count: int = 1,
+        ) -> tuple[int]:
+    v = tuple(x * count for x in VECTORS[direction])
     return (position[0] + v[0], position[1] + v[1])
 
 
@@ -80,22 +82,36 @@ class PriorityQueue:
         raise KeyError('Cannot pop from empty priority queue')
 
 
-def get_neighbours(node: Node, height: int, width: int) -> list[Node]:
+def get_neighbours(
+        node: Node,
+        height: int,
+        width: int,
+        min_run: int = 0,
+        max_run: int = 3,
+        ) -> list[Node]:
     left, right = TURNS[node.d]
     result = []
 
-    pos = move((node.y, node.x), left)
-    if in_bounds(height, width, pos):
-        result.append(Node(*pos, left, 1))
-
-    pos = move((node.y, node.x), right)
-    if in_bounds(height, width, pos):
-        result.append(Node(*pos, right, 1))
-
-    if node.r < 3:
-        pos = move((node.y, node.x), node.d)
+    if node.r >= min_run:
+        dist = max(min_run, 1)
+        pos = move((node.y, node.x), left, dist)
         if in_bounds(height, width, pos):
-            result.append(Node(*pos, node.d, node.r + 1))
+            result.append(Node(*pos, left, dist))
+
+        pos = move((node.y, node.x), right, dist)
+        if in_bounds(height, width, pos):
+            result.append(Node(*pos, right, dist))
+
+        if node.r < max_run:
+            pos = move((node.y, node.x), node.d)
+            if in_bounds(height, width, pos):
+                result.append(Node(*pos, node.d, node.r + 1))
+    else:
+        count = min_run - node.r
+        pos = move((node.y, node.x), node.d, count)
+        if in_bounds(height, width, pos):
+            result.append(Node(*pos, node.d, node.r + count))
+
     return result
 
 
@@ -108,7 +124,18 @@ def build_path(origins: dict, end: Node) -> list[Node]:
     return result
 
 
-def find_path_astar(rows: list) -> int:
+def get_cost(rows: list, start: Node, end: Node) -> int:
+    """Get the total heat cost for straight line travel."""
+    pos = (start.y, start.x)
+    dest = (end.y, end.x)
+    result = 0
+    while pos != dest:
+        pos = move(pos, end.d)
+        result += rows[pos[0]][pos[1]]
+    return result
+
+
+def find_path_astar(rows: list, min_run: int = 0, max_run: int = 3) -> int:
     height = len(rows)
     width = len(rows[0])
 
@@ -129,9 +156,9 @@ def find_path_astar(rows: list) -> int:
         if current[:2] == dest[:2]:
             return heat
 
-        neighbours = get_neighbours(current, height, width)
+        neighbours = get_neighbours(current, height, width, min_run, max_run)
         for neighbour in neighbours:
-            score = g[current] + rows[neighbour.y][neighbour.x]
+            score = g[current] + get_cost(rows, current, neighbour)
             if score < g[neighbour]:
                 # Best path to the neighbour so far
                 origins[neighbour] = current
@@ -144,61 +171,6 @@ def find_path_astar(rows: list) -> int:
     print("Ran out of nodes without finding the destination!")
 
 
-def find_path(rows: list) -> int:
-    pos = (0, 0)
-    height = len(rows)
-    width = len(rows[0])
-    direction = Direction.EAST
-    nodes = {
-            (y, x, d, r): None
-            for y in range(height)
-            for x in range(width)
-            for d in Direction
-            for r in range(1, 4)
-            if (y, x) != (0, 0)}
-    nodes[(0, 0, direction, 0)] = 0
-    dest = (height - 1, width - 1)
-    run = 0
-    heat = 0
-
-    visited = {}
-
-    while [k for k, v in nodes.items() if k[:2] == dest and v is None]:
-        left, right = TURNS[direction]
-        nbors = [
-            (*move(pos, left), left, 1),
-            (*move(pos, right), right, 1),
-            ]
-
-        if run < 3:
-            nbors.append((*move(pos, direction), direction, run + 1))
-
-        nbors = filter(lambda x: x in nodes, nbors)
-        for y, x, d, r in nbors:
-            dist = nodes[(y, x, d, r)]
-            tile = rows[y][x]
-            new = heat + tile
-            if dist is None or dist > new:
-                nodes[(y, x, d, r)] = new
-
-        # DEBUG save off visited for viewing later
-        visited[(*pos, direction, run)] = heat
-        del nodes[(*pos, direction, run)]
-
-        candidates = [
-                (*k, v) for k, v in nodes.items()
-                if v is not None]
-        if not candidates:
-            print("All nodes checked")
-            break
-        candidates.sort(key=lambda x: x[4])
-        y, x, direction, run, heat = candidates[0]
-        pos = (y, x)
-
-    heats = [v for k, v in visited.items() if k[:2] == dest and v is not None]
-    return min(heats)
-
-
 if __name__ == '__main__':
     rows = []
     for line in sys.stdin:
@@ -208,3 +180,8 @@ if __name__ == '__main__':
     with timing("Part 1"):
         score = find_path_astar(rows)
     print(f"Result for Part 1 = {score}\n")
+
+    # Part 2
+    with timing("Part 2"):
+        score = find_path_astar(rows, 4, 10)
+    print(f"Result for Part 2 = {score}\n")
