@@ -48,6 +48,9 @@ class PriorityQueue:
         self.finder = {}
         self.deleted = set()
 
+    def __len__(self):
+        return len(self.queue)
+
     def __bool__(self):
         return bool(self.finder)
 
@@ -115,16 +118,15 @@ def find_path_astar(rows: list) -> int:
     start = Node(0, 0, Direction.EAST, 0)
     dest = Node(height - 1, width - 1, Direction.EAST, 0)
     nodes = PriorityQueue()
-    nodes.push(start, 0)
+    nodes.push(start, get_min_distance(start, dest))
     origins = {}
     g = defaultdict(inf)
     f = defaultdict(inf)
     g[start] = 0
-    f[start] = get_min_distance(start, dest)
 
     while nodes:
         heat, current = nodes.pop()
-        if current[:2] == dest and not nodes.has_position(dest):
+        if current[:2] == dest[:2]:
             return heat
 
         neighbours = get_neighbours(current, height, width)
@@ -134,9 +136,12 @@ def find_path_astar(rows: list) -> int:
                 # Best path to the neighbour so far
                 origins[neighbour] = current
                 g[neighbour] = score
-                fscore = score + get_min_distance(neighbour, dest)
+                dist = get_min_distance(neighbour, dest)
+                fscore = score + dist
+
                 f[neighbour] = fscore
                 nodes.set_priority(neighbour, fscore)
+    print("Ran out of nodes without finding the destination!")
 
 
 def find_path(rows: list) -> int:
@@ -200,6 +205,6 @@ if __name__ == '__main__':
         rows.append([int(x) for x in line.strip()])
 
     # Part 1
-    with timing("Part 1\n"):
+    with timing("Part 1"):
         score = find_path_astar(rows)
     print(f"Result for Part 1 = {score}\n")
