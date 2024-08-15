@@ -28,3 +28,12 @@ class Direction(Enum):
         if self.__class__ is other.__class__:
             return self.value < other.value
         return NotImplemented
+
+    def __str__(self):
+        if self == Direction.NORTH:
+            return 'N'
+        if self == Direction.EAST:
+            return 'E'
+        if self == Direction.WEST:
+            return 'W'
+        return 'S'

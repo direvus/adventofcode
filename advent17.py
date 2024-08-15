@@ -92,7 +92,9 @@ def get_neighbours(
     left, right = TURNS[node.d]
     result = []
 
-    if node.r >= min_run:
+    if node.r >= min_run or node.r == 0:
+        # Special case for r == 0 because we can move off in either direction
+        # from the starting node.
         dist = max(min_run, 1)
         pos = move((node.y, node.x), left, dist)
         if in_bounds(height, width, pos):
@@ -107,6 +109,7 @@ def get_neighbours(
             if in_bounds(height, width, pos):
                 result.append(Node(*pos, node.d, node.r + 1))
     else:
+        # must continue forward until we reach minimum run length
         count = min_run - node.r
         pos = move((node.y, node.x), node.d, count)
         if in_bounds(height, width, pos):
