@@ -17,6 +17,13 @@ COMMANDS = {
         'L': Direction.WEST,
         'R': Direction.EAST,
         }
+CORNERS = {
+        # Corners that are convex in a clockwise winding
+        (Direction.NORTH, Direction.EAST),
+        (Direction.EAST, Direction.SOUTH),
+        (Direction.SOUTH, Direction.WEST),
+        (Direction.WEST, Direction.NORTH),
+        }
 
 
 Point = namedtuple('point', ['y', 'x'])
@@ -48,44 +55,51 @@ def get_size(points: list[Point]) -> tuple[int, int, Point]:
     return (max_y - min_y + 1, max_x - min_x + 1, origin)
 
 
-def get_internal_area(points: list[Point]) -> set:
+def get_interior_area(points: list[Point], corners: dict) -> int:
     verts = []
-    min_y = points[0].y
-    max_y = points[0].y
+    clockwise = True
+    min_y, max_x = points[0]
+    convex = set()
     for i in range(len(points) - 1):
         a = points[i]
         b = points[i + 1]
         if a.x == b.x:
-            verts.append((a.x, min(a.y, b.y), max(a.y, b.y)))
-        if b.y < min_y:
-            min_y = b.y
-        if b.y > max_y:
-            max_y = b.y
+            verts.append((a.x, a.y, b.y))
+        if a.y < min_y or (a.y == min_y and a.x > max_x):
+            min_y, max_x = a
+            clockwise = (a.x == b.x)
+
+    # Now we know the winding direction, so filter out the corners that are
+    # convex in that winding.
+    convex = {p for p, w in corners.items() if w == clockwise}
+
     verts.sort()
+    # For each point along each vertical line, draw a horizontal ray out to the
+    # interior side of the vertical until it intersects with another vertical.
+    # We ignore points that lie on convex corners because those rays would be
+    # on the perimeter, and we also ignore points that we've intersected with
+    # on previous rays.
     result = 0
-    inner = set()
-    x = None
-    for y in range(min_y, max_y + 1):
-        inside = False
-        edge = False
-        for vx, vy1, vy2 in verts:
-            if y >= vy1 and y <= vy2:
-                corner = y in {vy1, vy2}
-                if corner and edge == inside:
-                    edge = not edge
-                    inside = False
-                    continue
-                if inside:
-                    result += (vx - x) - 1
-                    for i in range(x + 1, vx):
-                        inner.add(Point(y, i))
-                else:
-                    x = vx
-                if edge or not corner:
-                    inside = not inside
-                if corner:
-                    edge = not edge
-    return inner
+    hits = set()
+    for i, (vx, vy1, vy2) in enumerate(verts):
+        up = vy2 < vy1
+        step = 1 if clockwise == up else -1
+        for y in range(min(vy1, vy2), max(vy1, vy2) + 1):
+            p = Point(y, vx)
+            if p in convex or p in hits:
+                continue
+            j = i + step
+            while j >= 0 and j < len(verts):
+                other = verts[j]
+                min_y = min(other[1], other[2])
+                max_y = max(other[1], other[2])
+                if y >= min_y and y <= max_y:
+                    result += abs(other[0] - vx) - 1
+                    hits.add(Point(y, other[0]))
+                    break
+
+                j += step
+    return result
 
 
 if __name__ == '__main__':
@@ -98,28 +112,17 @@ if __name__ == '__main__':
     point = Point(0, 0)
     points = [point]
     perimeter = 0
+    prevdir = digs[-1][0]
+    corners = {}
     for direction, distance, colour in digs:
-        points.append(move(points[-1], direction, distance))
+        corners[point] = (prevdir, direction) in CORNERS
+        point = move(point, direction, distance)
+        points.append(point)
         perimeter += distance
-
-    height, width, origin = get_size(points)
-    rows = [[' '] * width for y in range(height)]
-
-    point = origin
-    rows[point.y][point.x] = '#'
-    for direction, distance, colour in digs:
-        for i in range(distance):
-            point = move(point, direction, 1)
-            rows[point.y][point.x] = '#'
-
-    inner = get_internal_area(points)
-    for p in inner:
-        rows[p.y + origin.y][p.x + origin.x] = '+'
-
-    for r in rows:
-        print(''.join(r))
+        prevdir = direction
 
     # Part 1
     with timing("Part 1"):
-        area = len(inner) + perimeter
+        inner = get_interior_area(points, corners)
+        area = inner + perimeter
     print(f"Result for Part 1 = {area}\n")
