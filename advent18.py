@@ -16,6 +16,10 @@ COMMANDS = {
         'D': Direction.SOUTH,
         'L': Direction.WEST,
         'R': Direction.EAST,
+        '0': Direction.EAST,
+        '1': Direction.SOUTH,
+        '2': Direction.WEST,
+        '3': Direction.NORTH,
         }
 CORNERS = {
         # Corners that are convex in a clockwise winding
@@ -106,23 +110,44 @@ if __name__ == '__main__':
     digs = []
     for line in sys.stdin:
         command, distance, colour = line.strip().split()
+        colour = colour[2:8]
         direction = COMMANDS[command]
         digs.append((direction, int(distance), colour))
 
-    point = Point(0, 0)
-    points = [point]
-    perimeter = 0
-    prevdir = digs[-1][0]
-    corners = {}
-    for direction, distance, colour in digs:
-        corners[point] = (prevdir, direction) in CORNERS
-        point = move(point, direction, distance)
-        points.append(point)
-        perimeter += distance
-        prevdir = direction
-
     # Part 1
     with timing("Part 1"):
+        point = Point(0, 0)
+        points = [point]
+        perimeter = 0
+        prevdir = digs[-1][0]
+        corners = {}
+        for direction, distance, colour in digs:
+            corners[point] = (prevdir, direction) in CORNERS
+            point = move(point, direction, distance)
+            points.append(point)
+            perimeter += distance
+            prevdir = direction
+
         inner = get_interior_area(points, corners)
         area = inner + perimeter
     print(f"Result for Part 1 = {area}\n")
+
+    # Part 2
+    with timing("Part 2"):
+        point = Point(0, 0)
+        points = [point]
+        perimeter = 0
+        prevdir = COMMANDS[digs[-1][2][5]]
+        corners = {}
+        for _, _, colour in digs:
+            distance = int(colour[:5], 16)
+            direction = COMMANDS[colour[5]]
+            corners[point] = (prevdir, direction) in CORNERS
+            point = move(point, direction, distance)
+            points.append(point)
+            perimeter += distance
+            prevdir = direction
+
+        inner = get_interior_area(points, corners)
+        area = inner + perimeter
+    print(f"Result for Part 2 = {area}\n")
