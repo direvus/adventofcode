@@ -86,12 +86,22 @@ def union_ranges(a: dict, b: dict) -> dict:
     return result
 
 
-def get_effect_ranges(effect: str | Branch) -> dict:
+def get_total_combinations(ranges: dict) -> int:
+    combos = []
+    for k in RATINGS:
+        r = ranges.get(k, set())
+        length = len(r)
+        if length > 0:
+            combos.append(length)
+    return math.prod(combos)
+
+
+def get_effect_combos(effect: str | Branch, ranges: dict) -> int:
     if effect == 'A':
-        return ALL_RATINGS
+        return get_total_combinations(ranges)
     if effect == 'R':
-        return {}
-    return get_ranges(effect)
+        return 0
+    return get_tree_combos(effect, ranges)
 
 
 def describe_ranges(ranges: dict) -> str:
@@ -121,7 +131,7 @@ def describe_ranges(ranges: dict) -> str:
     return ', '.join(labels)
 
 
-def get_ranges(tree: Branch) -> dict:
+def get_tree_combos(tree: Branch, ranges: dict = None) -> dict:
     key, operator, value = tree.cond
     left = ALL_RATINGS.copy()
     right = ALL_RATINGS.copy()
@@ -131,23 +141,12 @@ def get_ranges(tree: Branch) -> dict:
     else:
         left[key] = set(range(value + 1, MAX_RATING + 1))
         right[key] = set(range(MIN_RATING, value + 1))
-    left = intersect_ranges(left, get_effect_ranges(tree.left))
-    right = intersect_ranges(right, get_effect_ranges(tree.right))
-    print(f"Evaluated {tree.cond}:")
-    print(f"  L = {describe_ranges(left)}")
-    print(f"  R = {describe_ranges(right)}")
-    return union_ranges(left, right)
-
-
-def get_total_combinations(tree: Branch) -> int:
-    ranges = get_ranges(tree)
-    print(describe_ranges(ranges))
-    combos = []
-    for r in ranges.values():
-        length = len(r)
-        if length > 0:
-            combos.append(length)
-    return math.prod(combos)
+    if ranges is not None:
+        left = intersect_ranges(ranges, left)
+        right = intersect_ranges(ranges, right)
+    left_combos = get_effect_combos(tree.left, left)
+    right_combos = get_effect_combos(tree.right, right)
+    return left_combos + right_combos
 
 
 def make_tree(workflows: dict, name: str, index: int) -> Branch:
@@ -176,5 +175,5 @@ if __name__ == '__main__':
     # Part 2
     with timing("Part 2"):
         tree = make_tree(workflows, 'in', 0)
-        result = get_total_combinations(tree)
+        result = get_tree_combos(tree)
     print(f"Result for Part 2 = {result} \n")
