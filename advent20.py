@@ -37,6 +37,13 @@ class Module:
     def handle_pulse(self, pulse: Pulse) -> list[Pulse]:
         return []
 
+    def reset(self):
+        pass
+
+    @property
+    def initial(self):
+        return True
+
 
 class Broadcast(Module):
     def handle_pulse(self, pulse: Pulse):
@@ -56,6 +63,13 @@ class FlipFlop(Module):
         return [Pulse(pulse.depth + 1, self.state, self.name, dest)
                 for dest in self.targets]
 
+    def reset(self):
+        self.state = False
+
+    @property
+    def initial(self):
+        return self.state is False
+
 
 class Conjunction(Module):
     def __init__(self, name, targets):
@@ -70,6 +84,14 @@ class Conjunction(Module):
         high = False in self.inputs.values()
         return [Pulse(pulse.depth + 1, high, self.name, dest)
                 for dest in self.targets]
+
+    def reset(self):
+        for k in self.inputs:
+            self.inputs[k] = False
+
+    @property
+    def initial(self):
+        return all([v is False for v in self.inputs.values()])
 
 
 def parse_modules(stream) -> dict:
@@ -101,21 +123,26 @@ def parse_modules(stream) -> dict:
     return modules
 
 
-def push_button(modules: dict) -> tuple[int, int]:
+def push_button(modules: dict):
     pq = PriorityQueue()
     pulse = Pulse(0, False, 'button', 'broadcaster')
     pq.push(pulse)
-    totals = defaultdict(lambda: 0)
     while pq:
         pulse = pq.pop()
-        totals[pulse.high] += 1
+        yield pulse
         if pulse.dest not in modules:
             continue
         module = modules[pulse.dest]
         outputs = module.handle_pulse(pulse)
         for output in outputs:
             pq.push(output)
-    return (totals[False], totals[True])
+
+
+def get_total_pulses(modules: dict) -> tuple[int, int]:
+    totals = defaultdict(lambda: 0)
+    for pulse in push_button(modules):
+        totals[pulse.high] += 1
+    return totals[False], totals[True]
 
 
 if __name__ == '__main__':
@@ -125,7 +152,7 @@ if __name__ == '__main__':
     with timing("Part 1"):
         low, high = (0, 0)
         for _ in range(1000):
-            result = push_button(modules)
+            result = get_total_pulses(modules)
             low += result[0]
             high += result[1]
         result = low * high
