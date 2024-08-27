@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import heapq
+import math
 import sys
 from collections import defaultdict, namedtuple
+from copy import deepcopy
 
 from util import timing
 
@@ -97,6 +99,7 @@ class Conjunction(Module):
 def parse_modules(stream) -> dict:
     modules = {}
     watchers = set()
+
     for line in stream:
         line = line.strip()
         name, targets = line.split(' -> ')
@@ -123,7 +126,36 @@ def parse_modules(stream) -> dict:
     return modules
 
 
-def push_button(modules: dict):
+def make_graph(modules: dict) -> str:
+    result = ['digraph G {']
+    styles = []
+    for name, module in modules.items():
+        for target in module.targets:
+            result.append(f"{name} -> {target}")
+
+        shape = None
+        colour = 'white'
+        if isinstance(module, Conjunction):
+            if len(module.inputs) > 1:
+                shape = 'octagon'
+                colour = 'navajowhite'
+            else:
+                shape = 'invtriangle'
+                colour = 'lightslategrey'
+        elif isinstance(module, FlipFlop):
+            shape = 'diamond'
+            colour = 'plum'
+        if shape:
+            style = f"{name} [shape={shape} style=filled fillcolor={colour}]"
+            styles.append(style)
+
+    result.append('')
+    result.extend(styles)
+    result.append('}')
+    return '\n'.join(result)
+
+
+def get_pulses(modules: dict):
     pq = PriorityQueue()
     pulse = Pulse(0, False, 'button', 'broadcaster')
     pq.push(pulse)
@@ -138,15 +170,30 @@ def push_button(modules: dict):
             pq.push(output)
 
 
+def run(modules: dict):
+    pq = PriorityQueue()
+    pulse = Pulse(0, False, 'button', 'broadcaster')
+    pq.push(pulse)
+    while pq:
+        pulse = pq.pop()
+        if pulse.dest not in modules:
+            continue
+        module = modules[pulse.dest]
+        outputs = module.handle_pulse(pulse)
+        for output in outputs:
+            pq.push(output)
+
+
 def get_total_pulses(modules: dict) -> tuple[int, int]:
     totals = defaultdict(lambda: 0)
-    for pulse in push_button(modules):
+    for pulse in get_pulses(modules):
         totals[pulse.high] += 1
     return totals[False], totals[True]
 
 
 if __name__ == '__main__':
     modules = parse_modules(sys.stdin)
+    modules2 = deepcopy(modules)
 
     # Part 1
     with timing("Part 1"):
@@ -159,6 +206,11 @@ if __name__ == '__main__':
     print(f"Result for Part 1 = {result} \n")
 
     # Part 2
-    with timing("Part 2"):
-        result = 0
-    print(f"Result for Part 2 = {result} \n")
+    cons = {
+            'qx': 3847,
+            'zt': 3923,
+            'pn': 4001,
+            'jg': 4091,
+            }
+    lcm = math.lcm(*cons.values())
+    print(f"Result for Part 2 = {lcm}")
