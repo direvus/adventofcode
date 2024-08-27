@@ -1,4 +1,5 @@
 import time
+from collections import namedtuple
 from contextlib import contextmanager
 from enum import Enum, auto
 from functools import total_ordering
@@ -37,3 +38,23 @@ class Direction(Enum):
         if self == Direction.WEST:
             return 'W'
         return 'S'
+
+
+Point = namedtuple('point', ['y', 'x'])
+
+
+VECTORS = {
+        Direction.NORTH: (-1,  0),
+        Direction.SOUTH:  (1,  0),
+        Direction.EAST:   (0,  1),
+        Direction.WEST:   (0, -1),
+        }
+
+
+def move(
+        point: Point,
+        direction: Direction,
+        count: int = 1,
+        ) -> Point:
+    v = tuple(x * count for x in VECTORS[direction])
+    return Point(point[0] + v[0], point[1] + v[1])

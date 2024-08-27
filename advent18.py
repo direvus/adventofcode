@@ -1,16 +1,9 @@
 #!/usr/bin/env python
 import sys
-from collections import namedtuple
 
-from util import timing, Direction
+from util import timing, Direction, Point, move
 
 
-VECTORS = {
-        Direction.NORTH: (-1,  0),
-        Direction.SOUTH:  (1,  0),
-        Direction.EAST:   (0,  1),
-        Direction.WEST:   (0, -1),
-        }
 COMMANDS = {
         'U': Direction.NORTH,
         'D': Direction.SOUTH,
@@ -28,18 +21,6 @@ CORNERS = {
         (Direction.SOUTH, Direction.WEST),
         (Direction.WEST, Direction.NORTH),
         }
-
-
-Point = namedtuple('point', ['y', 'x'])
-
-
-def move(
-        point: Point,
-        direction: Direction,
-        count: int = 1,
-        ) -> Point:
-    v = tuple(x * count for x in VECTORS[direction])
-    return Point(point[0] + v[0], point[1] + v[1])
 
 
 def get_size(points: list[Point]) -> tuple[int, int]:
