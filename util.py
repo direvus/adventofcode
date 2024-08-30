@@ -58,3 +58,9 @@ def move(
         ) -> Point:
     v = tuple(x * count for x in VECTORS[direction])
     return Point(point[0] + v[0], point[1] + v[1])
+
+
+def minmax(a, b):
+    if a < b:
+        return a, b
+    return b, a
