@@ -26,18 +26,16 @@ class Grid:
         self.blocks = dropped
 
         for block in blocks:
-            print(f"Dropping {block}")
             origz = min(block.a.z, block.b.z)
             newz, supports = self.find_z(block)
-            print(f"Lands at {newz} supported by {supports}")
             if newz < origz:
                 diff = origz - newz
                 a = Point3(block.a.x, block.a.y, block.a.z - diff)
                 b = Point3(block.b.x, block.b.y, block.b.z - diff)
                 block = Block(a, b)
-                for s in supports:
-                    self.supports[s].add(block)
-                    self.supported_by[block].add(s)
+            for s in supports:
+                self.supports[s].add(block)
+                self.supported_by[block].add(s)
             dropped.append(block)
             maxz = max(block.a.z, block.b.z)
             section = get_section(block, maxz)
@@ -55,6 +53,15 @@ class Grid:
                 return (z, supports)
             z -= 1
         return (z, supports)
+
+    def get_falls(self, block, fallen) -> set:
+        result = set()
+        fallen.add(block)
+        for dep in self.supports[block]:
+            supports = self.supported_by[dep] - fallen
+            if not supports:
+                result |= {dep} | self.get_falls(dep, fallen)
+        return result
 
 
 def parse_grid(stream) -> Grid:
@@ -114,27 +121,50 @@ def intersects(a: Line, b: Line) -> bool:
         return x >= mina and x <= maxa and y >= minb and y <= maxb
 
 
+def get_sole_supporters(grid: Grid) -> set[Block]:
+    """Return all the blocks that are sole supporters.
+
+    Specifically, return a set of all blocks in the grid that are the sole
+    support for at least one other block.
+    """
+    solos = set()
+    for block, supported_by in grid.supported_by.items():
+        if len(supported_by) == 1:
+            solos |= supported_by
+    return solos
+
+
 def get_removable_blocks(grid: Grid) -> set[Block]:
     """Return all the blocks that can be safely disintegrated.
 
     Specifically, return a set of all blocks in the grid that are not the sole
     support for any other blocks.
     """
-    solos = set()
-    for block, supported_by in grid.supported_by.items():
-        if len(supported_by) == 1:
-            solos |= supported_by
+    solos = get_sole_supporters(grid)
     return set(grid.blocks) - solos
+
+
+def get_chain_falls(grid: Grid) -> int:
+    """Return the total number of chain falls.
+
+    This is the sum of the number of blocks that would fall as a result of
+    disintegrating each single block in the grid.
+    """
+    result = 0
+    solos = get_sole_supporters(grid)
+    for block in solos:
+        result += len(grid.get_falls(block, set()))
+    return result
 
 
 if __name__ == '__main__':
     grid = parse_grid(sys.stdin)
 
-    # Part 1
     with timing("Part 1\n"):
         grid.drop()
-        print(grid.blocks)
-        print(grid.supports)
-        print(grid.supported_by)
         blocks = get_removable_blocks(grid)
     print(f"Result for Part 1 = {len(blocks)} \n")
+
+    with timing("Part 2\n"):
+        falls = get_chain_falls(grid)
+    print(f"Result for Part 2 = {falls} \n")
