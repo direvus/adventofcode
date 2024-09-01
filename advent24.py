@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 import argparse
-import math
 import sys
 from collections import namedtuple
-from functools import cache
-from itertools import combinations
+from itertools import combinations, permutations
 
 from rich import print
 
@@ -81,6 +79,73 @@ def get_intersections_xy(
     return count
 
 
+def advance_hail(hail: Hail, t: int) -> Hail:
+    """Return the hailstone's position after `t` nanoseconds."""
+    p = Point3(
+            hail.point.x + t * hail.vector.x,
+            hail.point.y + t * hail.vector.y,
+            hail.point.z + t * hail.vector.z,
+            )
+    return Hail(p, hail.vector)
+
+
+def cross(a: Vector, b: Vector) -> Vector:
+    return Vector(
+            a.y * b.z - a.z * b.y,
+            a.z * b.x - a.x * b.z,
+            a.x * b.y - a.y * b.x)
+
+
+def dot(a: Vector, b: Vector) -> int:
+    return a.x * b.x + a.y * b.y + a.z * b.z
+
+
+def intersects(a: Hail, b: Hail) -> bool:
+    """Return whether two trajectories intersect."""
+    p = Point3(
+            a.point.x - b.point.x,
+            a.point.y - b.point.y,
+            a.point.z - b.point.z)
+    return dot(cross(a.vector, b.vector), p) == 0
+
+
+def intersects_all(line: Hail, hails: list[Hail]) -> bool:
+    """Return whether the given line can intersect all the hail."""
+    for h in hails:
+        if not intersects(h, line):
+            return False
+    return True
+
+
+def get_intercept(hails: list[Hail]) -> Hail:
+    """Return a trajectory that can intercept all of the hailstones."""
+    t1 = 1
+    attempts = 500
+
+    def sortkey(h): return h.point.z
+
+    while t1 < attempts:
+        frame1 = [advance_hail(x, t1) for x in hails]
+        frame1.sort(key=sortkey)
+        h1 = frame1.pop(0)
+
+        for dt in range(1, attempts):
+            frame2 = [advance_hail(x, dt) for x in frame1]
+            frame2.sort(key=sortkey)
+            h2 = frame2.pop(0)
+
+            vector = Vector(
+                    (h2.point.x - h1.point.x) / dt,
+                    (h2.point.y - h1.point.y) / dt,
+                    (h2.point.z - h1.point.z) / dt)
+            line = Hail(h1.point, vector)
+            if intersects_all(line, frame2):
+                # Found it!
+                return advance_hail(line, -t1)
+        t1 += 1
+    raise ValueError("No intercept found!")
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--test', action='store_true')
@@ -94,10 +159,11 @@ if __name__ == '__main__':
         area_max = 400000000000000
 
     with timing("Part 1\n"):
-        hail = parse_hail(sys.stdin)
-        result = get_intersections_xy(hail, area_min, area_max)
+        hails = parse_hail(sys.stdin)
+        result = get_intersections_xy(hails, area_min, area_max)
     print(f"Result for Part 1 = {result} \n")
 
     with timing("Part 2\n"):
-        result = None
+        rock = get_intercept(hails)
+        result = sum(rock.point)
     print(f"Result for Part 2 = {result} \n")
