@@ -2,7 +2,7 @@
 import argparse
 import sys
 from collections import namedtuple
-from functools import cache
+from fractions import Fraction
 from itertools import combinations
 
 from rich import print
@@ -80,136 +80,88 @@ def get_intersections_xy(
     return count
 
 
-def advance_hail(hail: Hail, t: int) -> Hail:
-    """Return the hailstone's position after `t` nanoseconds."""
-    p = Point3(
-            hail.point.x + t * hail.vector.x,
-            hail.point.y + t * hail.vector.y,
-            hail.point.z + t * hail.vector.z,
-            )
-    return Hail(p, hail.vector)
+def scale_iter(v, f):
+    return tuple((x * f for x in v))
 
 
-@cache
-def cross(a: Vector, b: Vector) -> Vector:
-    return Vector(
-            a.y * b.z - a.z * b.y,
-            a.z * b.x - a.x * b.z,
-            a.x * b.y - a.y * b.x)
+def num_leading_zeros(row: list) -> int:
+    for i, n in enumerate(row):
+        if n != 0:
+            return i
+    return i + 1
 
 
-@cache
-def dot(a: Vector, b: Vector) -> int:
-    return a.x * b.x + a.y * b.y + a.z * b.z
+def get_non_echelon_row(matrix: list) -> int:
+    prev = -1
+    for i, row in enumerate(matrix):
+        z = num_leading_zeros(row)
+        if z == len(row):
+            return None
+        if z <= prev:
+            return i
+        prev = z
+    return None
 
 
-@cache
-def intersects(a: Hail, b: Hail) -> bool:
-    """Return whether two trajectories intersect."""
-    p = Point3(
-            a.point.x - b.point.x,
-            a.point.y - b.point.y,
-            a.point.z - b.point.z)
-    return dot(cross(a.vector, b.vector), p) == 0
+def eliminate(matrix: list) -> list:
+    """Perform a Gaussian elimination on an augmented matrix.
 
-
-def intersects_all(line: Hail, hails: list[Hail]) -> bool:
-    """Return whether the given line can intersect all the hail."""
-    for h in hails:
-        if not intersects(h, line):
-            return False
-    return True
-
-
-@cache
-def get_vector(a: Point3, b: Point3) -> Vector:
-    return Vector(b.x - a.x, b.y - a.y, b.z - a.z)
-
-
-def negate(v: Vector) -> Vector:
-    return Vector(*[-x for x in v])
-
-
-def intersects_plane(hail: Hail, p: Point3, n: Vector) -> bool:
-    """Return whether a given hailstone will intersect a plane.
-
-    The plane is described by a point `p` and a normal vector `n`.
+    Return the list of values in the solution, or raise an exception if a
+    unique solution cannot be found.
     """
-    num = dot(n, get_vector(hail.point, p))
-    if num == 0:
-        return True
-    den = dot(n, hail.vector)
-    if den == 0:
-        return False
-    return (num > 0) == (den > 0)
+    while True:
+        matrix.sort(key=num_leading_zeros)
+        i = get_non_echelon_row(matrix)
+        if i is None:
+            break
+        j = num_leading_zeros(matrix[i])
+        upper = matrix[i - 1]
+        for i in range(i, len(matrix)):
+            lead = matrix[i][j]
+            if lead == 0:
+                break
+            factor = Fraction(0 - lead, upper[j])
+            scaled = scale_iter(upper, factor)
+            matrix[i] = tuple(map(lambda a, b: a + b, matrix[i], scaled))
+
+    width = len(matrix[0]) - 1
+    solution = [None] * width
+    for row in reversed(matrix):
+        z = num_leading_zeros(row)
+        aug = row[width]
+        for j in range(z + 1, width):
+            aug -= row[j] * solution[j]
+        solution[z] = Fraction(aug, row[z])
+    return solution
 
 
-def intersects_plane_all(hails: list[Hail], p: Point3, n: Vector) -> bool:
-    """Return whether the given plane can intersect all the hail."""
-    for h in hails:
-        if not intersects_plane(h, p, n):
-            return False
-    return True
-
-
-def get_plane_intersection(hail: Hail, p: Point3, n: Vector) -> Point3 | None:
-    """Get the intersection between a ray and a plane in 3D.
-
-    The ray is described by a Hail object, the plane is described by a point on
-    the plane `p` and a normal vector `n`.
-
-    Return the single point where the ray intersects the plane, if there is
-    such a point.
-
-    Return None if the ray is parallel to the plane, or lies directly on it.
-    """
-    den = dot(n, hail.vector)
-    num = dot(n, get_vector(hail.point, p))
-    if den == 0:
-        # The ray is either parallel to the plane, or lies on the plane such
-        # that it intersects at every point, so in either case there is no
-        # single Point intersection
-        return None
-    t = num / den
-    return advance_hail(hail, t).point
+def get_matrix_rows(a: Hail, b: Hail) -> list:
+    ap, av = a
+    bp, bv = b
+    rhs = [
+            bp.x * bv.y - bp.y * bv.x - ap.x * av.y + ap.y * av.x,
+            bp.x * bv.z - bp.z * bv.x - ap.x * av.z + ap.z * av.x,
+            bp.z * bv.y - bp.y * bv.z - ap.z * av.y + ap.y * av.z,
+            ]
+    return [
+            [bv.y - av.y, av.x - bv.x, 0, ap.y - bp.y, bp.x - ap.x, 0, rhs[0]],
+            [bv.z - av.z, 0, av.x - bv.x, ap.z - bp.z, 0, bp.x - ap.x, rhs[1]],
+            [0, av.z - bv.z, bv.y - av.y, 0, bp.z - ap.z, ap.y - bp.y, rhs[2]],
+            ]
 
 
 def get_intercept(hails: list[Hail]) -> Hail:
     """Return a trajectory that can intercept all of the hailstones."""
-    def sortkey(h): return h.point.z
+    def sortkey(h): return h.point.x
 
-    t1 = 1
-    while True:
-        print(f"Trying t = {t1} ...")
-        frame1 = [advance_hail(x, t1) for x in hails]
-        frame1.sort(key=sortkey)
-        low = frame1.pop(0)
-        high = frame1.pop()
-
-        # Find a plane between the lowest hailstone and the highest, using two
-        # different timeframes for the highest.
-        v1 = get_vector(low.point, high.point)
-        v2 = get_vector(low.point, advance_hail(high, 1).point)
-        norm = cross(v1, v2)
-
-        if not intersects_plane_all(frame1, low.point, norm):
-            # This time index cannot yield a solution, move on
-            t1 += 1
-            continue
-
-        # Get another hailstone that has a point intersection with the plane,
-        # and test the line that runs through that point.
-        p = None
-        while p is None:
-            h = frame1.pop(0)
-            p = get_plane_intersection(h, low.point, norm)
-
-        v = get_vector(low.point, p)
-        line = Hail(low.point, v)
-
-        if intersects_all(line, frame1):
-            return line
-        t1 += 1
+    hails = list(sorted(hails, key=lambda x: x.point.x))
+    a, b, c = hails[:3]
+    matrix = []
+    matrix.extend(get_matrix_rows(a, b))
+    matrix.extend(get_matrix_rows(a, c))
+    solution = eliminate(matrix)
+    rounded = ([int(round(x)) for x in solution])
+    return Hail(Point3(*rounded[:3]), Vector(*rounded[3:]))
 
 
 if __name__ == '__main__':
