@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import sys
-
 from util import timing
 
 
@@ -54,10 +52,10 @@ def detect_reflections(rows: list[str], tolerance: int = 0) -> tuple[int]:
     return (h, v)
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     patterns = []
     rows = []
-    for line in sys.stdin:
+    for line in stream:
         row = line.strip()
         if row:
             rows.append(row)
@@ -68,17 +66,18 @@ if __name__ == '__main__':
         patterns.append(rows)
 
     # Part 1
-    total = 0
+    total1 = 0
     with timing("Part 1"):
         for pattern in patterns:
             h, v = detect_reflections(pattern, 0)
-            total += v + (100 * h)
-    print(f"Total for Part 1 = {total}\n")
+            total1 += v + (100 * h)
+    print(f"Total for Part 1 = {total1}\n")
 
     # Part 2
-    total = 0
+    total2 = 0
     with timing("Part 2"):
         for pattern in patterns:
             h, v = detect_reflections(pattern, 1)
-            total += v + (100 * h)
-    print(f"Total for Part 2 = {total}\n")
+            total2 += v + (100 * h)
+    print(f"Total for Part 2 = {total2}\n")
+    return (total1, total2)

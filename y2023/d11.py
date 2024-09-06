@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import sys
 from itertools import combinations
 
 
@@ -19,14 +18,13 @@ def get_distance(
     return highx - lowx + highy - lowy + ((cols + rows) * (expansion - 1))
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     height = 0
     width = None
     empty_rows = set()
     empty_cols = set()
-    lines = []
     galaxies = []
-    for line in sys.stdin:
+    for line in stream:
         line = line.strip()
         if width is None:
             width = len(line)
@@ -52,3 +50,4 @@ if __name__ == '__main__':
         total2 += get_distance(a, b, empty_rows, empty_cols, 10 ** 6)
     print(f"Total distances with expansion factor 2 = {total1}")
     print(f"Total distances with expansion factor 10^6 = {total2}")
+    return (total1, total2)

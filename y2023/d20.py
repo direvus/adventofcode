@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 import heapq
 import math
-import sys
 from collections import defaultdict, namedtuple
-from copy import deepcopy
 
 from util import timing
 
@@ -170,20 +168,6 @@ def get_pulses(modules: dict):
             pq.push(output)
 
 
-def run(modules: dict):
-    pq = PriorityQueue()
-    pulse = Pulse(0, False, 'button', 'broadcaster')
-    pq.push(pulse)
-    while pq:
-        pulse = pq.pop()
-        if pulse.dest not in modules:
-            continue
-        module = modules[pulse.dest]
-        outputs = module.handle_pulse(pulse)
-        for output in outputs:
-            pq.push(output)
-
-
 def get_total_pulses(modules: dict) -> tuple[int, int]:
     totals = defaultdict(lambda: 0)
     for pulse in get_pulses(modules):
@@ -191,9 +175,8 @@ def get_total_pulses(modules: dict) -> tuple[int, int]:
     return totals[False], totals[True]
 
 
-if __name__ == '__main__':
-    modules = parse_modules(sys.stdin)
-    modules2 = deepcopy(modules)
+def run(stream, test=False):
+    modules = parse_modules(stream)
 
     # Part 1
     with timing("Part 1"):
@@ -214,3 +197,4 @@ if __name__ == '__main__':
             }
     lcm = math.lcm(*cons.values())
     print(f"Result for Part 2 = {lcm}")
+    return (result, lcm)

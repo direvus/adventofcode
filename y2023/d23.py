@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import sys
 from collections import namedtuple
 
 from rich import print
@@ -152,16 +151,17 @@ class Grid:
         return segment.length + max(choices)
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     with timing("Part 1\n"):
         grid = Grid()
-        grid.parse(sys.stdin)
-        result = grid.get_longest_path_length(grid.head)
-    print(f"Result for Part 1 = {result} \n")
+        grid.parse(stream)
+        result1 = grid.get_longest_path_length(grid.head)
+    print(f"Result for Part 1 = {result1} \n")
 
     with timing("Part 2\n"):
         grid.reset_paths()
         grid.slopes = False
         grid.head = grid.find_paths(grid.start)
-        result = grid.get_longest_path_length(grid.head)
-    print(f"Result for Part 2 = {result} \n")
+        result2 = grid.get_longest_path_length(grid.head)
+    print(f"Result for Part 2 = {result2} \n")
+    return (result1, result2)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import sys
 from array import array
 from functools import cache
 from itertools import chain
@@ -52,7 +51,7 @@ def parse_grid(stream) -> Grid:
     return grid
 
 
-def run(grid: Grid, count: int) -> set[Point]:
+def walk_grid(grid: Grid, count: int) -> set[Point]:
     points = set([grid.start])
     for i in range(count):
         new = set()
@@ -78,7 +77,7 @@ def get_array_value(height, width, arr, point) -> bool:
     return arr[i]
 
 
-def run2(grid: Grid, count: int) -> set[Point]:
+def walk_grid2(grid: Grid, count: int) -> set[Point]:
     points = set([grid.start])
     arr = grid_to_array(grid)
 
@@ -106,14 +105,14 @@ def get_square_points(points, height, width, y, x):
             x.x >= left and x.x < right), points)
 
 
-if __name__ == '__main__':
-    grid = parse_grid(sys.stdin)
+def run(stream, test=False):
+    grid = parse_grid(stream)
 
     # Part 1
     with timing("Part 1\n"):
-        points = run(grid, 6)
-        result = len(points)
-    print(f"Result for Part 1 = {result} \n")
+        points = walk_grid(grid, 6)
+        result1 = len(points)
+    print(f"Result for Part 1 = {result1} \n")
 
     # Part 2
     with timing("Part 2\n"):
@@ -121,7 +120,7 @@ if __name__ == '__main__':
         h = grid.height
         w = grid.width
         with timing(f"Executing {count} steps"):
-            points = run2(grid, count)
+            points = walk_grid2(grid, count)
             total = len(points)
         print(f"Got {total} total points")
 
@@ -147,7 +146,7 @@ if __name__ == '__main__':
         print(f"Got {minor_even_nw} minor even points on y-2, x-1 square")
 
         n = 26501365 // 131
-        result = sum([
+        result2 = sum([
                 full_odd * ((n - 1) ** 2),
                 full_even * (n ** 2),
                 major_odd_se * (n - 1),
@@ -163,4 +162,5 @@ if __name__ == '__main__':
                 len(set(get_square_points(points, h, w, 0, 2))),
                 len(set(get_square_points(points, h, w, 0, -2))),
                 ])
-    print(f"Result for Part 2 = {result} \n")
+    print(f"Result for Part 2 = {result2} \n")
+    return (result1, result2)

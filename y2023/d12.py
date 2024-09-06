@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import sys
-
 from util import timing
 
 
@@ -46,30 +44,30 @@ def count_ways_slide(row: str, runs: tuple[int]) -> int:
     return result
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     rows = []
-    for line in sys.stdin:
+    for line in stream:
         field, runs = line.strip().split()
         runs = tuple([int(x) for x in runs.split(',')])
         rows.append([field, runs])
 
     # Part 1
-    total = 0
+    total1 = 0
     part1 = []
     with timing("Part 1"):
         for row, runs in rows:
             nways = count_ways_slide(row, runs)
-            total += nways
+            total1 += nways
             part1.append(nways)
-    print(f"Total ways for Part 1 = {total}\n")
+    print(f"Total ways for Part 1 = {total1}\n")
 
     # Part 2
-    total = 0
+    total2 = 0
     for i, nways in enumerate(part1):
         with timing(f"Row {i + 1}"):
             orig_row, orig_runs = rows[i]
             row = '?'.join([orig_row] * 5)
             subtotal = count_ways_slide(row, orig_runs * 5)
-            total += subtotal
+            total2 += subtotal
         print(f"Row {i+1} = {subtotal}")
-    print(total)
+    return (total1, total2)

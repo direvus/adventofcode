@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import sys
-
 from util import timing, Direction
 
 
@@ -84,9 +82,9 @@ def count_tiles(
     return len(tiles)
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     rows = []
-    for line in sys.stdin:
+    for line in stream:
         rows.append(line.strip())
 
     # Part 1
@@ -107,3 +105,4 @@ if __name__ == '__main__':
             results.append(count_tiles(rows, (y, width - 1), Direction.WEST))
         result = max(results)
     print(f"Result for Part 2 = {result}\n")
+    return (count, result)

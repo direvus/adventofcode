@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import sys
-
 from util import timing, Direction
 
 
@@ -79,9 +77,9 @@ def to_string(rows: list[list]) -> str:
     return '\n'.join([''.join(row) for row in rows])
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     rows = []
-    for line in sys.stdin:
+    for line in stream:
         row = list(line.strip())
         if row:
             rows.append(row)
@@ -89,8 +87,8 @@ if __name__ == '__main__':
     # Part 1
     with timing("Part 1"):
         tilted = tilt(rows, Direction.NORTH)
-        load = get_total_load(tilted)
-    print(f"Result for Part 1 = {load}\n")
+        load1 = get_total_load(tilted)
+    print(f"Result for Part 1 = {load1}\n")
 
     # Part 2
     results = []
@@ -123,5 +121,6 @@ if __name__ == '__main__':
                 limit = index
                 print(f"Continuing until we get to {index} ...")
             results.append(rows)
-        load = get_total_load(rows)
-    print(f"Result for Part 2 = {load}\n")
+        load2 = get_total_load(rows)
+    print(f"Result for Part 2 = {load2}\n")
+    return (load1, load2)

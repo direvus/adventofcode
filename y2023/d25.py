@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import argparse
-import sys
 from collections import defaultdict
 from itertools import pairwise
 
@@ -156,21 +154,16 @@ class Graph:
         return result
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--test', action='store_true')
-    args = parser.parse_args()
-
+def run(stream, test=False):
     with timing("Part 1\n"):
         g = Graph()
-        g.parse(sys.stdin)
+        g.parse(stream)
         cuts = g.get_cut_set(3)
         g2 = g.cut(cuts)
         subs = tuple(g2.get_subgraphs())
         assert len(subs) == 2
-        result = len(subs[0]) * len(subs[1])
-    print(f"Result for Part 1 = {result} \n")
+        result1 = len(subs[0]) * len(subs[1])
+    print(f"Result for Part 1 = {result1} \n")
 
-    with timing("Part 2\n"):
-        result = None
-    print(f"Result for Part 2 = {result} \n")
+    # There is no Part 2 for Day 25
+    return (result1, None)

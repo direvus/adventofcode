@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import argparse
-import sys
 from collections import namedtuple
 from fractions import Fraction
 from itertools import combinations
@@ -164,12 +162,8 @@ def get_intercept(hails: list[Hail]) -> Hail:
     return Hail(Point3(*rounded[:3]), Vector(*rounded[3:]))
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--test', action='store_true')
-    args = parser.parse_args()
-
-    if args.test:
+def run(stream, test=False):
+    if test:
         area_min = 7
         area_max = 27
     else:
@@ -177,11 +171,12 @@ if __name__ == '__main__':
         area_max = 400000000000000
 
     with timing("Part 1\n"):
-        hails = parse_hail(sys.stdin)
-        result = get_intersections_xy(hails, area_min, area_max)
-    print(f"Result for Part 1 = {result} \n")
+        hails = parse_hail(stream)
+        result1 = get_intersections_xy(hails, area_min, area_max)
+    print(f"Result for Part 1 = {result1} \n")
 
     with timing("Part 2\n"):
         rock = get_intercept(hails)
-        result = sum(rock.point)
-    print(f"Result for Part 2 = {result} \n")
+        result2 = sum(rock.point)
+    print(f"Result for Part 2 = {result2} \n")
+    return (result1, result2)

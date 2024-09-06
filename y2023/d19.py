@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import math
-import sys
 from collections import namedtuple
 
 from util import timing
@@ -161,19 +160,20 @@ def make_tree(workflows: dict, name: str, index: int) -> Branch:
     return Branch(rule.cond, effect, right)
 
 
-if __name__ == '__main__':
-    workflows, parts = parse_workflows(sys.stdin)
+def run(stream, test=False):
+    workflows, parts = parse_workflows(stream)
 
     # Part 1
     with timing("Part 1"):
-        result = 0
+        result1 = 0
         for part in parts:
             if process_part(workflows, part):
-                result += sum(part.values())
-    print(f"Result for Part 1 = {result} \n")
+                result1 += sum(part.values())
+    print(f"Result for Part 1 = {result1} \n")
 
     # Part 2
     with timing("Part 2"):
         tree = make_tree(workflows, 'in', 0)
-        result = get_tree_combos(tree)
-    print(f"Result for Part 2 = {result} \n")
+        result2 = get_tree_combos(tree)
+    print(f"Result for Part 2 = {result2} \n")
+    return (result1, result2)

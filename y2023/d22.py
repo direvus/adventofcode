@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import sys
 from collections import defaultdict, namedtuple
 
 from util import timing, minmax
@@ -157,8 +156,8 @@ def get_chain_falls(grid: Grid) -> int:
     return result
 
 
-if __name__ == '__main__':
-    grid = parse_grid(sys.stdin)
+def run(stream, test=False):
+    grid = parse_grid(stream)
 
     with timing("Part 1\n"):
         grid.drop()
@@ -168,3 +167,4 @@ if __name__ == '__main__':
     with timing("Part 2\n"):
         falls = get_chain_falls(grid)
     print(f"Result for Part 2 = {falls} \n")
+    return (blocks, falls)
