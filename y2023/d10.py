@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import sys
-
 from util import Direction
 
 
@@ -52,12 +50,12 @@ def traverse(grid: list, vector: tuple) -> tuple:
     return (row, col, newdir)
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     grid = []
     i = 0
     start = None
     home = None
-    for line in sys.stdin:
+    for line in stream:
         line = line.strip()
         if 'S' in line:
             j = line.index('S')
@@ -93,7 +91,7 @@ if __name__ == '__main__':
         a = traverse(grid, a)
         b = traverse(grid, b)
         steps += 1
-    print(f"{steps} steps to reach the farthest tile")
+    p1 = steps
 
     # Part 2 - tiles enclosed by the loop.
     #
@@ -130,4 +128,5 @@ if __name__ == '__main__':
                     cross_corner = 'J'
             elif inside:
                 count += 1
-    print(f"{count} internal tiles")
+    p2 = count
+    return (p1, p2)
