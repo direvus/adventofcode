@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-import sys
-
-
 def get_diffs(values: list[int]) -> list[int]:
     result = []
     for i in range(len(values) - 1):
@@ -25,9 +22,9 @@ def predict_prev(sequence: list[int]) -> int:
     return sequence[0] - prev
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     seqs = []
-    for line in sys.stdin:
+    for line in stream:
         line = line.strip()
         if line == '':
             continue
@@ -35,13 +32,12 @@ if __name__ == '__main__':
         seqs.append(seq)
 
     # Part 1
-    total = 0
+    p1 = 0
     for seq in seqs:
-        total += predict_next(seq)
-    print(total)
+        p1 += predict_next(seq)
 
     # Part 2
-    total = 0
+    p2 = 0
     for seq in seqs:
-        total += predict_prev(seq)
-    print(total)
+        p2 += predict_prev(seq)
+    return (p1, p2)

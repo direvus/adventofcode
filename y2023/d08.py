@@ -1,14 +1,13 @@
 #!/usr/bin/env python
-import sys
 import math
 
 
-if __name__ == '__main__':
-    line = sys.stdin.readline().strip()
+def run(stream, test=False):
+    line = stream.readline().strip()
     trans = str.maketrans('LR', '01')
     directions = tuple(int(x) for x in line.translate(trans))
     net = {}
-    for line in sys.stdin:
+    for line in stream:
         line = line.strip()
         if line == '':
             continue
@@ -26,7 +25,7 @@ if __name__ == '__main__':
             direction = directions[steps % dircount]
             node = net[node][direction]
             steps += 1
-        print(steps)
+        p1 = steps
     except KeyError:
         print("No node AAA, cannot complete Part 1.")
 
@@ -42,4 +41,5 @@ if __name__ == '__main__':
             nodes[i] = new
             if new[2] == 'Z' and cycles[i] is None:
                 cycles[i] = steps
-    print(math.lcm(*cycles))
+    p2 = math.lcm(*cycles)
+    return (p1, p2)

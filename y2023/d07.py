@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-import sys
-
-
 STD = str.maketrans('23456789TJQKA', 'abcdefghijklm')
 WILD = str.maketrans('J23456789TQKA', 'abcdefghijklm')
 
@@ -84,9 +81,9 @@ def get_hand_key(hand: str, wilds: bool = False) -> str:
     return str(typ) + hand.translate(table)
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     hands = []
-    for line in sys.stdin:
+    for line in stream:
         hand, bid = line.strip().split()
         hands.append((hand, int(bid)))
     hands.sort(key=lambda x: get_hand_key(x[0]))
@@ -96,7 +93,6 @@ if __name__ == '__main__':
     for hand, bid in hands:
         total1 += i * bid
         i += 1
-    print(total1)
 
     hands.sort(key=lambda x: get_hand_key(x[0], True))
     total2 = 0
@@ -104,4 +100,4 @@ if __name__ == '__main__':
     for hand, bid in hands:
         total2 += i * bid
         i += 1
-    print(total2)
+    return (total1, total2)

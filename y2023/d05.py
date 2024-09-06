@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-import sys
-
-
 def resolve_map(entries: list, value: int) -> int:
     for start, end, offset in entries:
         if value >= start and value < end:
@@ -58,12 +55,11 @@ def resolve_seed_range(maps: list, start: int, size: int) -> int:
     return min([x for x, y in ranges])
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     seeds = []
     maps = []
-    results = []
     entries = []
-    for line in sys.stdin:
+    for line in stream:
         line = line.strip()
         if line == '':
             continue
@@ -90,7 +86,7 @@ if __name__ == '__main__':
         result = resolve_seed(maps, seed)
         if lowest is None or result < lowest:
             lowest = result
-    print(lowest)
+    p1 = lowest
 
     # Part 2: seeds are in (start, range) pairs
     lowest = None
@@ -100,4 +96,5 @@ if __name__ == '__main__':
         result = resolve_seed_range(maps, seed, size)
         if lowest is None or result < lowest:
             lowest = result
-    print(lowest)
+    p2 = lowest
+    return (p1, p2)

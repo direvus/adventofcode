@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import sys
-
 from util import timing, Direction, Point, move
 
 
@@ -147,9 +145,9 @@ def get_interior_area(points: list[Point]) -> int:
             splitlen))
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     digs = []
-    for line in sys.stdin:
+    for line in stream:
         command, distance, colour = line.strip().split()
         colour = colour[2:8]
         direction = COMMANDS[command]
@@ -166,8 +164,8 @@ if __name__ == '__main__':
             perimeter += distance
 
         inner = get_interior_area(points)
-        area = inner + perimeter
-    print(f"Result for Part 1 = {area}\n")
+        area1 = inner + perimeter
+    print(f"Result for Part 1 = {area1}\n")
 
     # Part 2
     with timing("Part 2\n"):
@@ -182,5 +180,6 @@ if __name__ == '__main__':
             perimeter += distance
 
         inner = get_interior_area(points)
-        area = inner + perimeter
-    print(f"Result for Part 2 = {area}\n")
+        area2 = inner + perimeter
+    print(f"Result for Part 2 = {area2}\n")
+    return (area1, area2)

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import heapq
-import sys
 from collections import defaultdict, namedtuple
 
 from util import timing, Direction
@@ -174,17 +173,18 @@ def find_path_astar(rows: list, min_run: int = 0, max_run: int = 3) -> int:
     print("Ran out of nodes without finding the destination!")
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     rows = []
-    for line in sys.stdin:
+    for line in stream:
         rows.append([int(x) for x in line.strip()])
 
     # Part 1
     with timing("Part 1"):
-        score = find_path_astar(rows)
-    print(f"Result for Part 1 = {score}\n")
+        score1 = find_path_astar(rows)
+    print(f"Result for Part 1 = {score1}\n")
 
     # Part 2
     with timing("Part 2"):
-        score = find_path_astar(rows, 4, 10)
-    print(f"Result for Part 2 = {score}\n")
+        score2 = find_path_astar(rows, 4, 10)
+    print(f"Result for Part 2 = {score2}\n")
+    return (score1, score2)

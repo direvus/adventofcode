@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import sys
-
 from util import timing
 
 
@@ -29,17 +27,17 @@ def run_step(boxes: list, lenses: dict, instruction: str) -> None:
             boxes[box].append(label)
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     lines = []
-    for line in sys.stdin:
+    for line in stream:
         lines.append(line.strip())
 
     seq = (''.join(lines)).split(',')
 
     # Part 1
     with timing("Part 1"):
-        total = sum([make_hash(x) for x in seq])
-    print(f"Result for Part 1 = {total}\n")
+        total1 = sum([make_hash(x) for x in seq])
+    print(f"Result for Part 1 = {total1}\n")
 
     # Part 2
     with timing("Part 2"):
@@ -47,7 +45,8 @@ if __name__ == '__main__':
         lenses = {}
         for instruction in seq:
             run_step(boxes, lenses, instruction)
-        total = sum([
+        total2 = sum([
                 get_focus_power(i, x, lenses)
                 for i, x in enumerate(boxes)])
-    print(f"Result for Part 2 = {total}\n")
+    print(f"Result for Part 2 = {total2}\n")
+    return (total1, total2)
