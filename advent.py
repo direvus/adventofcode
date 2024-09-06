@@ -17,15 +17,17 @@ if __name__ == '__main__':
     parser.add_argument('day', type=int)
     args = parser.parse_args()
 
-    modpath = f'y{args.year}.advent{args.day:2d}'
+    year = f'y{args.year}'
+    day = f'{args.day:02d}'
+    modpath = f'{year}.d{day}'
     m = importlib.import_module(modpath, '.')
 
     if args.input_file:
         inpath = args.input_file
     elif args.test:
-        inpath = os.path.join(f'y{args.year}', 'tests', f'{args.day:2d}')
+        inpath = os.path.join(year, 'tests', day)
     else:
-        inpath = os.path.join(f'y{args.year}', 'inputs', f'{args.day:2d}')
+        inpath = os.path.join(year, 'inputs', day)
 
     mode = '[orange]test[/]' if args.test else '[orange]actual[/]'
     print(f"Executing {args.year} Day {args.day} in {mode} mode\n")
