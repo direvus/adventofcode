@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-import re
-import sys
-
-
 DIGITS = {
         'one': '1',
         'two': '2',
@@ -16,11 +12,10 @@ DIGITS = {
         }
 
 
-if __name__ == '__main__':
+def run(stream, test=False):
     total1 = 0
     total2 = 0
-    exp = re.compile(r'[^\d]')
-    for line in sys.stdin:
+    for line in stream:
         i = 0
         d1 = []
         d2 = []
@@ -37,5 +32,4 @@ if __name__ == '__main__':
         total1 += int(d1[0] + d1[-1])
         total2 += int(d2[0] + d2[-1])
 
-    print(total1)
-    print(total2)
+    return (total1, total2)

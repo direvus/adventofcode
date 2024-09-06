@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 import re
-import sys
 
 
 SYMBOLS = {'#', '$', '%', '&', '*', '+', '-', '/', '=', '@'}
 SYM_RE = re.compile(r'[#$%&*+/=@-]')
 NUM_RE = re.compile(r'\d+')
 
-if __name__ == '__main__':
+
+def run(stream, test=False):
     total1 = 0
     total2 = 0
     numbers = []
     symbols = []
     gears = {}
     i = 0
-    for line in sys.stdin:
+    for line in stream:
         symbols.append(set())
         numbers.append([])
         for m in SYM_RE.finditer(line):
@@ -39,9 +39,8 @@ if __name__ == '__main__':
                             matched = True
                         if (i, j) in gears:
                             gears[(i, j)].append(num)
-    print(total1)
 
     for loc, nums in gears.items():
         if len(nums) == 2:
             total2 += (nums[0] * nums[1])
-    print(total2)
+    return (total1, total2)
