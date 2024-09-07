@@ -1,4 +1,4 @@
-!(python package build status)[https://github.com/direvus/adventofcode/actions/workflows/python-package.yml/badge.svg]
+![python package build status](https://github.com/direvus/adventofcode/actions/workflows/python-package.yml/badge.svg)
 
 # Advent of Code 2023
 
