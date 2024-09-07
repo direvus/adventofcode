@@ -43,7 +43,7 @@ class Grid:
             case _:
                 raise ValueError(f"Unknown instruction {cmd}")
 
-    def count_lit(self):
+    def get_total_light(self):
         return sum(map(sum, self.lights))
 
     def to_image(self):
@@ -63,10 +63,35 @@ class Grid:
         resize.show()
 
 
+class BrightnessGrid(Grid):
+    def turn_on(self, y1: int, x1: int, y2: int, x2: int):
+        for i in range(y1, y2 + 1):
+            chunk = [x + 1 for x in self.lights[i][x1:x2 + 1]]
+            self.lights[i][x1:x2 + 1] = chunk
+
+    def turn_off(self, y1: int, x1: int, y2: int, x2: int):
+        for i in range(y1, y2 + 1):
+            chunk = [max(0, x - 1) for x in self.lights[i][x1:x2 + 1]]
+            self.lights[i][x1:x2 + 1] = chunk
+
+    def toggle(self, y1: int, x1: int, y2: int, x2: int):
+        for i in range(y1, y2 + 1):
+            chunk = [x + 2 for x in self.lights[i][x1:x2 + 1]]
+            self.lights[i][x1:x2 + 1] = chunk
+
+
 def run(stream, test=False):
     result2 = 0
     grid = Grid()
+    instructions = []
     for line in stream:
-        grid.process_line(line.strip())
-    result1 = grid.count_lit()
+        line = line.strip()
+        instructions.append(line)
+        grid.process_line(line)
+    result1 = grid.get_total_light()
+
+    grid2 = BrightnessGrid()
+    for line in instructions:
+        grid2.process_line(line)
+    result2 = grid2.get_total_light()
     return (result1, result2)
