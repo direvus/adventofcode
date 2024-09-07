@@ -16,3 +16,7 @@ def get_day_result(day):
 
 def test_d01():
     assert get_day_result(1) == (3, 1)
+
+
+def test_d02():
+    assert get_day_result(2) == (58 + 43, 34 + 14)
