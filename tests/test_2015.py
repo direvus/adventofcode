@@ -35,4 +35,8 @@ def test_d05():
 
 
 def test_d06():
-    assert get_day_result(6) == (998996, 0)
+    assert get_day_result(6) == (998996, 1001996)
+
+
+def test_d07():
+    assert get_day_result(7) == (65079, 0)
