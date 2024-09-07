@@ -24,3 +24,7 @@ def test_d02():
 
 def test_d03():
     assert get_day_result(3) == (4, 3)
+
+
+def test_d04():
+    assert get_day_result(4) == (609043, 6742839)
