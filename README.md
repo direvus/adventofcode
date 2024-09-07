@@ -1,9 +1,9 @@
 ![python package build status](https://github.com/direvus/adventofcode/actions/workflows/python-package.yml/badge.svg)
 
-# Advent of Code 2023
+# Advent of Code
 
-This repository contains my own solutions to the [Advent of Code
-2023](https://adventofcode.com/2023/) coding puzzles.
+This repository contains my own solutions to the [Advent of
+Code](https://adventofcode.com/) coding puzzles.
 
 **Spoiler alert!**
 
