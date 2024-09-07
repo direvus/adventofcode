@@ -116,9 +116,14 @@ def run(stream, test=False):
 
     # Part 2
     with timing("Part 2\n"):
-        count = (131 * 2) + 65
         h = grid.height
         w = grid.width
+        count = (w * 2) + (w // 2)
+        if test:
+            steps = 100
+        else:
+            steps = 26501365
+        n = steps // w
         with timing(f"Executing {count} steps"):
             points = walk_grid2(grid, count)
             total = len(points)
@@ -145,7 +150,6 @@ def run(stream, test=False):
         print(f"Got {minor_even_sw} minor even points on y+2, x-1 square")
         print(f"Got {minor_even_nw} minor even points on y-2, x-1 square")
 
-        n = 26501365 // 131
         result2 = sum([
                 full_odd * ((n - 1) ** 2),
                 full_even * (n ** 2),
