@@ -20,7 +20,7 @@ if __name__ == '__main__':
     year = f'y{args.year}'
     day = f'{args.day:02d}'
     modpath = f'{year}.d{day}'
-    m = importlib.import_module(modpath, '.')
+    m = importlib.import_module(modpath, 'adventofcode')
 
     if args.input_file:
         inpath = args.input_file

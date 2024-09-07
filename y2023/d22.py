@@ -167,4 +167,4 @@ def run(stream, test=False):
     with timing("Part 2\n"):
         falls = get_chain_falls(grid)
     print(f"Result for Part 2 = {falls} \n")
-    return (blocks, falls)
+    return (len(blocks), falls)
