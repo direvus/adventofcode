@@ -55,4 +55,8 @@ def test_d10():
 
 
 def test_d11():
-    assert get_day_result(11) == ('ghjaabcc', 'ghjbbcdd')
+    assert get_day_result(11) == ('abcdffaa', 'abcdffbb')
+
+
+def test_d12():
+    assert get_day_result(12) == (15, 0)
