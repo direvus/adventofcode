@@ -72,3 +72,7 @@ def test_d14():
 
 def test_d15():
     assert get_day_result(15) == (62842880, 57600000)
+
+
+def test_d16():
+    assert get_day_result(16) == (5, 4)
