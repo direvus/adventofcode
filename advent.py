@@ -29,7 +29,7 @@ if __name__ == '__main__':
     else:
         inpath = os.path.join(year, 'inputs', day)
 
-    mode = '[orange]test[/]' if args.test else '[orange]actual[/]'
+    mode = '[yellow]test[/]' if args.test else '[yellow]actual[/]'
     print(f"Executing {args.year} Day {args.day} in {mode} mode\n")
     with timing('\n'):
         try:
