@@ -76,3 +76,7 @@ def test_d15():
 
 def test_d16():
     assert get_day_result(16) == (5, 4)
+
+
+def test_d17():
+    assert get_day_result(17) == (4, 3)
