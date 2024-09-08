@@ -52,3 +52,7 @@ def test_d09():
 
 def test_d10():
     assert get_day_result(10) == (82350, 1166642)
+
+
+def test_d11():
+    assert get_day_result(11) == ('ghjaabcc', 'ghjbbcdd')
