@@ -60,3 +60,7 @@ def test_d11():
 
 def test_d12():
     assert get_day_result(12) == (15, 0)
+
+
+def test_d13():
+    assert get_day_result(13) == (330, 286)
