@@ -68,3 +68,7 @@ def test_d13():
 
 def test_d14():
     assert get_day_result(14) == (1120, 689)
+
+
+def test_d15():
+    assert get_day_result(15) == (62842880, 57600000)
