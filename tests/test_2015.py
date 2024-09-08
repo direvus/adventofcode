@@ -80,3 +80,7 @@ def test_d16():
 
 def test_d17():
     assert get_day_result(17) == (4, 3)
+
+
+def test_d18():
+    assert get_day_result(18) == (4, 17)

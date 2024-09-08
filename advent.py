@@ -12,6 +12,7 @@ from util import timing
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--test', action='store_true')
+    parser.add_argument('-d', '--draw', action='store_true')
     parser.add_argument('-i', '--input-file', required=False)
     parser.add_argument('year', type=int)
     parser.add_argument('day', type=int)
@@ -37,7 +38,12 @@ if __name__ == '__main__':
                 infile = sys.stdin
             else:
                 infile = open(inpath, 'r')
-            p1, p2 = m.run(infile, test=args.test)
+            kwargs = {}
+            if args.test:
+                kwargs['test'] = True
+            if args.draw:
+                kwargs['draw'] = True
+            p1, p2 = m.run(infile, **kwargs)
             print(f"Part 1 => {p1}")
             print(f"Part 2 => {p2}")
         finally:
