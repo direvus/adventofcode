@@ -87,4 +87,4 @@ def test_d18():
 
 
 def test_d19():
-    assert get_day_result(19) == (7, 0)
+    assert get_day_result(19) == (7, 6)

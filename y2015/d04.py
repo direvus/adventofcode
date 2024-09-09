@@ -8,9 +8,9 @@ def find_digest(prefix: str, target: str) -> int:
     suffix = 0
     while digest[:length] != target:
         h2 = h.copy()
+        suffix += 1
         h2.update(str(suffix).encode('ascii'))
         digest = h2.hexdigest()
-        suffix += 1
     return suffix
 
 
