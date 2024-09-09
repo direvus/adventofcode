@@ -84,3 +84,7 @@ def test_d17():
 
 def test_d18():
     assert get_day_result(18) == (4, 17)
+
+
+def test_d19():
+    assert get_day_result(19) == (7, 0)
