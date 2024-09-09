@@ -1,20 +1,21 @@
 import hashlib
 
 
-def digest(prefix: str, suffix: int) -> str:
-    h = hashlib.md5(f'{prefix}{suffix}'.encode('ascii'))
-    return h.hexdigest()
+def find_digest(prefix: str, target: str) -> int:
+    h = hashlib.md5(prefix.encode('ascii'))
+    length = len(target)
+    digest = ''
+    suffix = 0
+    while digest[:length] != target:
+        h2 = h.copy()
+        h2.update(str(suffix).encode('ascii'))
+        digest = h2.hexdigest()
+        suffix += 1
+    return suffix
 
 
 def run(stream, test=False):
     line = stream.readline().strip()
-    suffix = 0
-    while not digest(line, suffix).startswith('00000'):
-        suffix += 1
-    result1 = suffix
-
-    suffix = 0
-    while not digest(line, suffix).startswith('000000'):
-        suffix += 1
-    result2 = suffix
+    result1 = find_digest(line, '00000')
+    result2 = find_digest(line, '000000')
     return (result1, result2)
