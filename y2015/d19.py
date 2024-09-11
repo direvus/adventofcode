@@ -1,6 +1,5 @@
 import re
 from collections import defaultdict
-from copy import copy
 
 
 INF = float('inf')
@@ -34,6 +33,12 @@ def replace_atoms(molecule: tuple, atom: str, replacement: str) -> tuple:
 
 
 def parse_earley(molecule: tuple, reps: set, start: str = 'e'):
+    """Parse a context-free grammar using an Earley algorithm.
+
+    This is a modified version of Earley that runs the Scan step for
+    non-terminal as well as terminal symbols, since the target string in this
+    puzzle consists of a mixture.
+    """
     state = defaultdict(set)
     symbols = set()
     gram = defaultdict(set)
@@ -46,24 +51,20 @@ def parse_earley(molecule: tuple, reps: set, start: str = 'e'):
 
     length = len(molecule)
     for k in range(length + 1):
-        print(f"Starting k = {k}")
         q = list(state[k])
         while q:
             a, b, i, j = q.pop(0)
-            print(f"  Popped {a} => {b}, {i}, {j} from the queue")
             if i < len(b):
                 if b[i] in nonterminals:
                     # Prediction
                     for product in gram[b[i]]:
                         s = (b[i], product, 0, k)
                         if s not in state[k]:
-                            print(f"  Adding {s} to {k} by prediction")
                             state[k].add(s)
                             q.append(s)
-                elif k < length and b[i] == molecule[k]:
+                if k < length and b[i] == molecule[k]:
                     # Scanning
                     s = (a, b, i + 1, j)
-                    print(f"  Adding {s} to {k + 1} by scan")
                     state[k + 1].add(s)
             else:
                 # Completion
@@ -71,7 +72,6 @@ def parse_earley(molecule: tuple, reps: set, start: str = 'e'):
                     if s[2] < len(s[1]) and s[1][s[2]] in nonterminals:
                         c = (s[0], s[1], s[2] + 1, s[3])
                         if c not in state[k]:
-                            print(f"  Adding {c} to {k} by completion")
                             state[k].add(c)
                             q.append(c)
     finals = {s[0] for s in state[length]}
