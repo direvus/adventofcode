@@ -33,90 +33,49 @@ def replace_atoms(molecule: tuple, atom: str, replacement: str) -> tuple:
     return result
 
 
-def normalise_chomsky(reps: set) -> set:
-    terminals = set()
-    nonterminals = set()
+def parse_earley(molecule: tuple, reps: set, start: str = 'e'):
+    state = defaultdict(set)
+    symbols = set()
+    gram = defaultdict(set)
     for a, b in reps:
-        nonterminals.add(a)
-        terminals |= set(b)
-    terminals -= nonterminals
+        if a == start:
+            state[0].add((a, b, 0, 0))
+        gram[a].add(b)
+        symbols |= {a} | set(b)
+    nonterminals = set(gram.keys())
 
-    # Skipping the START step because we know that the start symbol doesn't
-    # appear on the right-hand side in the grammar.
-    n = 1
-    new = {}
-    for t in terminals:
-        new[t] = f'N{n}'
-        n += 1
-
-    # TERM: Eliminate rules that have non-solitary terminals
-    result = copy(reps)
-    for a, b in reps:
-        terms = set(b) & terminals
-        if terms and len(b) > 1:
-            result.discard((a, b))
-            for t in terms:
-                result.add((new[t], (t,)))
-                b = replace_atoms(b, t, new[t])
-            result.add((a, b))
-    # BIN: Now find rules that have more than 2 outputs, and just so I'm not
-    # looping over the thing that I'm modifying, copy those into a separate
-    # variable first.
-    longs = [(a, b) for a, b in result if len(b) > 2]
-    n = 1
-    for a, b in longs:
-        while len(b) > 2:
-            # Rule has more than 2 outputs
-            t = f'A{n}'
-            n += 1
-            result.discard((a, b))
-            result.add((a, (b[0], t)))
-            a = t
-            b = b[1:]
-            result.add((a, b))
-
-    # DEL: Skipping this step because there are no empty rules
-    empty = {a for a, b in result if len(b) == 0}
-    assert not empty
-
-    # UNIT: Eliminate unit rules
-    nonterminals = {a for a, _ in result}
-    units = [(a, b) for a, b in result if len(b) == 1 and b[0] in nonterminals]
-    new = set()
-    for a, b in units:
-        result.discard((a, b))
-        for r in result:
-            if r[0] == b[0] and r not in units:
-                new.add((a, r[1]))
-    return result | new
-
-
-def get_parse_trees(molecule: tuple, reps: set, start: str = 'e'):
-    n = len(molecule)
-    r = normalise_chomsky(reps)
-    routes = defaultdict(lambda: False)  # (length, start, source): bool
-    back = defaultdict(list)
-
-    for i in range(n):
-        for a, b in r:
-            if b == molecule[i:i + 1]:
-                routes[(1, i, a)] = True
-
-    print(routes)
-    for l in range(2, n + 1):
-        for s in range(n - l + 1):
-            for p in range(1, l):
-                print(f'Considering a {l} long substring from {s}, partitioned at {p}: {molecule[s:s+l]}')
-                for a, b in r:
-                    if len(b) != 2:
-                        continue
-                    b, c = b
-                    if routes[(p, s, b)] and routes[(l - p, s + p, c)]:
-                        print(f"  Can be produced by {a} => {b},{c}")
-                        routes[(l, s, a)] = True
-                        back[(l, s, a)].append((p, b, c))
-    print(routes)
-    print(back)
+    length = len(molecule)
+    for k in range(length + 1):
+        print(f"Starting k = {k}")
+        q = list(state[k])
+        while q:
+            a, b, i, j = q.pop(0)
+            print(f"  Popped {a} => {b}, {i}, {j} from the queue")
+            if i < len(b):
+                if b[i] in nonterminals:
+                    # Prediction
+                    for product in gram[b[i]]:
+                        s = (b[i], product, 0, k)
+                        if s not in state[k]:
+                            print(f"  Adding {s} to {k} by prediction")
+                            state[k].add(s)
+                            q.append(s)
+                elif k < length and b[i] == molecule[k]:
+                    # Scanning
+                    s = (a, b, i + 1, j)
+                    print(f"  Adding {s} to {k + 1} by scan")
+                    state[k + 1].add(s)
+            else:
+                # Completion
+                for s in state[j]:
+                    if s[2] < len(s[1]) and s[1][s[2]] in nonterminals:
+                        c = (s[0], s[1], s[2] + 1, s[3])
+                        if c not in state[k]:
+                            print(f"  Adding {c} to {k} by completion")
+                            state[k].add(c)
+                            q.append(c)
+    finals = {s[0] for s in state[length]}
+    return start in finals
 
 
 def get_neighbours(molecule: tuple, reps: set) -> set[str]:
@@ -137,7 +96,8 @@ def count_outputs(reps: set, molecule: tuple) -> int:
 
 
 def count_steps(target: tuple, reps: set, start: str = 'e') -> int:
-    result = get_parse_trees(target, reps, start)
+    result = parse_earley(target, reps, start)
+    print(f"Earley said {result}")
 
 
 def run(stream, test=False, draw=False):
