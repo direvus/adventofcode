@@ -95,9 +95,42 @@ def count_outputs(reps: set, molecule: tuple) -> int:
     return len(outputs)
 
 
+def get_index(molecule: tuple, search: tuple) -> int | None:
+    for i in range(len(molecule) - len(search) + 1):
+        if molecule[i:i + len(search)] == search:
+            return i
+    return None
+
+
+def replace_longest(molecule: tuple, reps: set, start: str = 'e') -> int:
+    """Iteratively replace the longest matching rule to get back to the start.
+
+    Starting with the target molecule, we try to apply each rule in reverse,
+    from the longest to the shortest, and keep going until we reach the
+    starting string.
+
+    Return the total number of replacements made.
+    """
+    result = 0
+    work = molecule
+    reps = list(reps)
+    reps.sort(key=lambda x: len(x[1]), reverse=True)
+    while work != (start,):
+        curr = result
+        for a, b in reps:
+            i = get_index(work, b)
+            if i is not None:
+                work = work[:i] + (a,) + work[i + len(b):]
+                i = get_index(work, b)
+                result += 1
+                break
+        if curr == result:
+            raise ValueError(f"No more replacements for {work}")
+    return result
+
+
 def count_steps(target: tuple, reps: set, start: str = 'e') -> int:
-    result = parse_earley(target, reps, start)
-    print(f"Earley said {result}")
+    return replace_longest(target, reps, start)
 
 
 def run(stream, test=False, draw=False):
