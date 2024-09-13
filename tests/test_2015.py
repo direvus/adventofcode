@@ -92,3 +92,7 @@ def test_d19():
 
 def test_d20():
     assert get_day_result(20) == (6, 6)
+
+
+def test_d21():
+    assert get_day_result(21) == ((0, 2, 7), 0)
