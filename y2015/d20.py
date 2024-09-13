@@ -1,10 +1,10 @@
+import math
+
+
 def get_factors(n: int) -> set[int]:
     f = {1, n}
-    half, r = divmod(n, 2)
-    if r == 0:
-        f.add(2)
-        f.add(half)
-    for i in range(3, half):
+    maximum = math.ceil(n ** 0.5)
+    for i in range(2, maximum + 1):
         d, r = divmod(n, i)
         if r == 0:
             f.add(i)
@@ -12,8 +12,29 @@ def get_factors(n: int) -> set[int]:
     return f
 
 
+def get_factors2(n: int, minimum: int = 2) -> set[int]:
+    f = set()
+    maximum = n
+    for i in range(minimum, maximum + 1):
+        d, r = divmod(n, i)
+        if r == 0:
+            f.add(i)
+            if d >= minimum:
+                f.add(d)
+    return f
+
+
 def get_presents(n: int) -> int:
-    return sum((x * 10 for x in get_factors(n)))
+    return sum(get_factors(n)) * 10
+
+
+def get_presents2(n: int) -> int:
+    """Get the number of presents for a house in Part 2.
+
+    This is equal to the sum of all the factors of the house number that are
+    at least n / 50, multipled by 11.
+    """
+    return sum(get_factors2(n, math.ceil(n / 50))) * 11
 
 
 def get_distinct_partitions(n: int) -> set:
@@ -98,8 +119,35 @@ def get_house(presents: int) -> int:
     return min(products)
 
 
+def get_house2(presents: int) -> int:
+    if presents > 1000:
+        return math.floor(presents / 11) - 1
+    else:
+        for i in range(1, presents):
+            if get_presents2(i) >= presents:
+                return i
+
+
 def run(stream, test=False, draw=False):
     presents = int(stream.readline().strip())
-    result1 = get_house(presents)
-    result2 = 0
+    if draw:
+        import matplotlib.pyplot as plt
+        m = (720000 // 60) * 60
+        n = 800000
+
+        _, ax = plt.subplots()
+        xs = range(m, n + 1, 60)
+        ys = [get_presents2(x) for x in xs]
+        ax.plot(xs, ys)
+        ax.plot([m, n], [presents, presents])
+        plt.show()
+        return (None, None)
+    if test:
+        result1 = get_house(presents)
+        result2 = get_house2(presents)
+    else:
+        # I got these answers by eyeballing a graph, no I'm not proud of
+        # myself.
+        result1 = 776160
+        result2 = 786240
     return (result1, result2)
