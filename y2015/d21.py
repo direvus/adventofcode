@@ -116,14 +116,26 @@ def find_cheapest_winning_loadout(boss, player):
             return result
 
 
+def find_costliest_losing_loadout(boss, player):
+    loadouts = [(x, get_equipment_totals(x)) for x in get_all_loadouts()]
+    loadouts.sort(key=lambda x: x[1][0], reverse=True)
+    for equip, (cost, damage, armor) in loadouts:
+        result = fight(boss, player, damage, armor)
+        if result[1] <= 0:
+            print(f"Player loses with loadout costing {cost}:")
+            print(equip)
+            return result
+
+
 def run(stream, test=False, draw=False):
     boss = parse(stream)
     if test:
         player = Character(8, 5, 5)
         result1 = fight(boss, player, 0, 0)
+        result2 = 0
     else:
         player = Character(100, 0, 0)
         result1 = find_cheapest_winning_loadout(boss, player)
+        result2 = find_costliest_losing_loadout(boss, player)
 
-    result2 = 0
     return (result1, result2)
