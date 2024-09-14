@@ -31,7 +31,7 @@ def test_d04():
 
 
 def test_d05():
-    assert get_day_result(5) == ('18f47a30', 0)
+    assert get_day_result(5) == ('18f47a30', '05ace8e3')
 
 
 # def test_d06():
