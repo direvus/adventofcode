@@ -38,10 +38,10 @@ def test_d06():
     assert get_day_result(6) == ('easter', 'advent')
 
 
-# def test_d07():
-#     assert get_day_result(7) == (0, 0)
-#
-#
+def test_d07():
+    assert get_day_result(7) == (2, 0)
+
+
 # def test_d08():
 #     assert get_day_result(8) == (0, 0)
 #
