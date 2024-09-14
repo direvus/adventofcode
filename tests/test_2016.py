@@ -22,10 +22,10 @@ def test_d02():
     assert get_day_result(2) == ('1985', '5DB3')
 
 
-# def test_d03():
-#     assert get_day_result(3) == (0, 0)
-#
-#
+def test_d03():
+    assert get_day_result(3) == (3, 6)
+
+
 # def test_d04():
 #     assert get_day_result(4) == (0, 0)
 #
