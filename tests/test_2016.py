@@ -30,10 +30,10 @@ def test_d04():
     assert get_day_result(4) == (1857, 'very encrypted name')
 
 
-# def test_d05():
-#     assert get_day_result(5) == (0, 0)
-#
-#
+def test_d05():
+    assert get_day_result(5) == ('18f47a30', 0)
+
+
 # def test_d06():
 #     assert get_day_result(6) == (0, 0)
 #
