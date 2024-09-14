@@ -100,3 +100,7 @@ def test_d21():
 
 def test_d22():
     assert get_day_result(22) == ((True, -1, 1, 9), 392)
+
+
+def test_d23():
+    assert get_day_result(23) == (2, 7)
