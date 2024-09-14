@@ -191,8 +191,9 @@ def find_least_mana_win(boss, player, difficulty: int = 0) -> int:
     while q:
         state, cost, action = q.pop(0)
         cost += SPELLS[action]
-        if cost > best:
-            # This route is a dead-end
+        if cost >= best:
+            # This route is a dead-end, even if we win it can't possibly beat
+            # the best cost found so far.
             continue
         game = Game.from_tuple(state)
         win = game.do_round(action)
@@ -200,19 +201,22 @@ def find_least_mana_win(boss, player, difficulty: int = 0) -> int:
             if cost < best:
                 best = cost
             continue
-        if win is None:
-            # This game is still in play. Choose next spell from the list of
-            # spells that aren't already in effect, and that the player can
-            # afford to cast.
-            active = {name for name, _ in game.effects}
-            spells = [
-                    name
-                    for name, cost in SPELLS.items()
-                    if cost <= game.mana and name not in active]
-            spells.sort(key=lambda x: SPELLS[x])
-            state = game.as_tuple
-            for action in spells:
-                q.append((state, cost, action))
+        if win is False:
+            # Player lost, abandon this route.
+            continue
+
+        # This game is still in play. Choose next spell from the list of
+        # spells that won't be in effect next round, and that the player can
+        # afford to cast.
+        active = {name for name, timer in game.effects if timer > 1}
+        spells = [
+                name
+                for name, cost in SPELLS.items()
+                if cost <= game.mana and name not in active]
+        spells.sort(key=lambda x: SPELLS[x])
+        state = game.as_tuple
+        for action in spells:
+            q.append((state, cost, action))
     return best
 
 
@@ -222,7 +226,7 @@ def run(stream, test=False, draw=False):
         player = Player(10, 250)
         actions = ('Recharge', 'Shield', 'Drain', 'Poison', 'Magic Missile')
         result1 = fight(boss, player, actions)
-        result2 = 0
+        result2 = find_least_mana_win(boss, Player(10, 500), 1)
     else:
         player = Player(50, 500)
         result1 = find_least_mana_win(boss, player)

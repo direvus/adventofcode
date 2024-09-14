@@ -99,4 +99,4 @@ def test_d21():
 
 
 def test_d22():
-    assert get_day_result(22) == ((True, -1, 1, 9), 0)
+    assert get_day_result(22) == ((True, -1, 1, 9), 392)
