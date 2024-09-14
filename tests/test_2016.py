@@ -34,10 +34,10 @@ def test_d05():
     assert get_day_result(5) == ('18f47a30', '05ace8e3')
 
 
-# def test_d06():
-#     assert get_day_result(6) == (0, 0)
-#
-#
+def test_d06():
+    assert get_day_result(6) == ('easter', 'advent')
+
+
 # def test_d07():
 #     assert get_day_result(7) == (0, 0)
 #
