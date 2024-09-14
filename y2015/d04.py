@@ -1,8 +1,8 @@
-import hashlib
+from _md5 import md5
 
 
 def find_digest(prefix: str, target: str) -> int:
-    h = hashlib.md5(prefix.encode('ascii'))
+    h = md5(prefix.encode('ascii'))
     length = len(target)
     digest = ''
     suffix = 0

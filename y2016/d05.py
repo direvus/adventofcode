@@ -1,4 +1,4 @@
-import hashlib
+from _md5 import md5
 
 
 def parse(stream) -> list:
@@ -10,7 +10,7 @@ def parse(stream) -> list:
 def get_password(door: str) -> str:
     result = []
     i = 0
-    base = hashlib.md5(door.encode('ascii'))
+    base = md5(door.encode('ascii'))
     while len(result) < 8:
         h = base.copy()
         h.update(str(i).encode('ascii'))
@@ -24,7 +24,7 @@ def get_password(door: str) -> str:
 def get_password2(door: str) -> str:
     result = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
     i = 0
-    base = hashlib.md5(door.encode('ascii'))
+    base = md5(door.encode('ascii'))
     while ' ' in result:
         h = base.copy()
         h.update(str(i).encode('ascii'))
