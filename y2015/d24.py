@@ -90,34 +90,27 @@ def has_partition(numbers: set, target: int) -> bool:
     return False
 
 
-def find_best_config(packages: set) -> tuple:
+def find_best_config(packages: set, bins: int = 3) -> tuple:
     best_group = None
     best_entanglement = float('inf')
     total_weight = sum(packages)
-    target = total_weight / 3
+    target = total_weight / bins
     length = 0
-    if len(packages) % 2 == 0:
-        length += 1
     while best_group is None:
         length += 1
-        print(f"Trying with length {length}")
         for primary in length_partitions(packages, target, length):
-            print(f"Considering {primary}")
             other = frozenset(packages - primary)
             if not has_partition(other, target):
                 # There's no way to actually arrange these packages evenly into
                 # two groups.
-                print("  No good, it's full of steam")
                 continue
 
             if best_group is None:
-                print(f"  {primary} is the first valid")
                 best_group = primary
                 best_entanglement = get_entanglement(primary)
             else:
                 ent = get_entanglement(primary)
                 if ent < best_entanglement:
-                    print(f"  {primary} wins on entanglement")
                     best_group = primary
                     best_entanglement = ent
     return best_group
@@ -128,6 +121,8 @@ def run(stream, test=False, draw=False):
 
     conf = find_best_config(packages)
     result1 = get_entanglement(conf)
-    result2 = 0
+
+    conf = find_best_config(packages, 4)
+    result2 = get_entanglement(conf)
 
     return (result1, result2)

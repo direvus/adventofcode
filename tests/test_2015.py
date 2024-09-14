@@ -107,4 +107,4 @@ def test_d23():
 
 
 def test_d24():
-    assert get_day_result(24) == (99, 0)
+    assert get_day_result(24) == (99, 44)
