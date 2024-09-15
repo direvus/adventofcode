@@ -1,5 +1,3 @@
-import logging
-import math
 import re
 from functools import cache
 from itertools import combinations
@@ -45,15 +43,29 @@ def get_moves(facility: tuple) -> list:
     # Consider single-item loads
     for item in floor:
         load = {item}
-        # Is it safe to remove this item from here?
-        if is_safe(floor - load):
+        # Is it safe to remove this item from here? Removing a microchip can't
+        # make a floor unsafe, but removing a generator might, because it could
+        # leave a microchip unshielded.
+        if item[1] == 'm' or is_safe(floor - load):
             loads.append(load)
+    pair = False
     # Consider all possible two-item loads
     for com in combinations(floor, 2):
         load = set(com)
-        # Is it safe to remove these two items from here?
-        if is_safe(floor - load):
+        if com[0][0] == com[1][0]:
+            # This is a matched microchip-generator pair. We only need to
+            # consider this load type once, since all matched pairs are
+            # equivalent. We also don't have to test whether it's safe to
+            # remove a matched pair from the current floor, because it
+            # is guaranteed to be safe.
+            if pair:
+                continue
+            pair = True
             loads.append(set(com))
+        else:
+            # Is it safe to remove these two items from here?
+            if is_safe(floor - load):
+                loads.append(set(com))
 
     targets = []
     if elevator < len(floors) - 1:
@@ -104,29 +116,11 @@ def is_safe(items: set) -> bool:
             # The code here is a bit obscure, but because of the way these
             # items are encoded, when they are sorted, if this microchip's
             # matching generator is here, it has to be the item immediately
-            # preceding it. Otherwise, it is unshielded.
+            # preceding it. Otherwise, the microchip is unshielded.
             if generators:
                 return False
             unshielded = True
     return not (unshielded and generators)
-
-
-def get_min_distance(start: tuple) -> int:
-    """Return the fewest conceivable number of moves to reach the goal.
-
-    This is intended for use as a search heuristic, so it only considers the
-    ideal case where every move is valid. For each floor below the top floor,
-    we look at the number of items, divde by two (because the elevator can
-    transport two items at a time), multiply that by the distance to the top
-    floor, and finally sum it all together.
-    """
-    result = 0
-    size = len(start[1])
-    for i in range(size - 1):
-        floor = start[1][i]
-        num = math.ceil(len(floor) / 2)
-        result += num * (size - 1 - i)
-    return result
 
 
 def trace_to_path(trace: dict, end: tuple) -> list:
