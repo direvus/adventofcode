@@ -42,10 +42,10 @@ def test_d07():
     assert get_day_result(7) == (2, 0)
 
 
-# def test_d08():
-#     assert get_day_result(8) == (0, 0)
-#
-#
+def test_d08():
+    assert get_day_result(8) == (6, 0)
+
+
 # def test_d09():
 #     assert get_day_result(9) == (0, 0)
 #
