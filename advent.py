@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 import argparse
 import importlib
+import logging
 import os
 import sys
 
 from rich import print
+from rich.logging import RichHandler
 
 from util import timing
 
@@ -12,11 +14,15 @@ from util import timing
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--test', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-d', '--draw', action='store_true')
     parser.add_argument('-i', '--input-file', required=False)
     parser.add_argument('year', type=int)
     parser.add_argument('day', type=int)
     args = parser.parse_args()
+
+    loglevel = 'DEBUG' if args.verbose else 'INFO'
+    logging.basicConfig(level=loglevel, handlers=[RichHandler()])
 
     year = f'y{args.year}'
     day = f'{args.day:02d}'
