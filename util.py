@@ -1,3 +1,4 @@
+import heapq
 import time
 from collections import namedtuple
 from contextlib import contextmanager
@@ -64,3 +65,41 @@ def minmax(a, b):
     if a < b:
         return a, b
     return b, a
+
+
+class PriorityQueue:
+    def __init__(self):
+        self.queue = []
+        self.finder = {}
+        self.deleted = set()
+
+    def __len__(self):
+        return len(self.queue)
+
+    def __bool__(self):
+        return bool(self.finder)
+
+    def push(self, node, priority):
+        entry = (priority, node)
+        heapq.heappush(self.queue, entry)
+        self.finder[node] = entry
+
+    def has_node(self, node):
+        return node in self.finder
+
+    def has_position(self, position):
+        return position in {(n.y, n.x) for n in self.finder.keys()}
+
+    def set_priority(self, node, priority):
+        if node in self.finder:
+            self.deleted.add(id(self.finder[node]))
+        self.push(node, priority)
+
+    def pop(self):
+        while self.queue:
+            entry = heapq.heappop(self.queue)
+            if id(entry) not in self.deleted:
+                del self.finder[entry[1]]
+                return entry
+            self.deleted.discard(id(entry))
+        raise KeyError('Cannot pop from empty priority queue')
