@@ -59,7 +59,7 @@ def test_d11():
 
 
 def test_d12():
-    assert get_day_result(12) == (42, 0)
+    assert get_day_result(12) == (42, 42)
 
 
 # def test_d13():
