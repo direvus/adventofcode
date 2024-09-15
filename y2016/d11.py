@@ -1,10 +1,8 @@
+import logging
 import math
 import re
-from collections import defaultdict
 from functools import cache
 from itertools import combinations
-
-from util import PriorityQueue
 
 
 INF = float('inf')
@@ -21,12 +19,11 @@ def parse(stream) -> tuple:
         items = set()
         for element, function in matches:
             if element not in elements:
-                elements[element] = e
                 e += 1
-            gen = 1 if function == 'generator' else 0
-            items.add((elements[element], gen))
+                elements[element] = e
+            items.add(f'{elements[element]}{function[0]}')
         floors.append(items)
-    return (0, tuple(frozenset(x) for x in floors))
+    return (0, tuple(frozenset(x) for x in floors)), elements
 
 
 def get_moves(facility: tuple) -> list:
@@ -59,10 +56,10 @@ def get_moves(facility: tuple) -> list:
             loads.append(set(com))
 
     targets = []
-    if elevator > 0:
-        targets.append(-1)
     if elevator < len(floors) - 1:
         targets.append(1)
+    if elevator > 0:
+        targets.append(-1)
 
     for move in targets:
         target = floors[elevator + move]
@@ -91,15 +88,26 @@ def is_safe(items: set) -> bool:
     An unshielded microchip may not be present on the same floor as any
     generator.
     """
-    chips = set()
-    generators = set()
+    if len(items) < 2:
+        return True
 
-    for element, generator in items:
-        if generator:
-            generators.add(element)
-        else:
-            chips.add(element)
-    unshielded = chips - generators
+    unshielded = False
+    generators = False
+
+    items = sorted(items)
+    for i, item in enumerate(items):
+        if item[1] == 'g':
+            if unshielded:
+                return False
+            generators = True
+        elif items[i - 1][0] != item[0]:
+            # The code here is a bit obscure, but because of the way these
+            # items are encoded, when they are sorted, if this microchip's
+            # matching generator is here, it has to be the item immediately
+            # preceding it. Otherwise, it is unshielded.
+            if generators:
+                return False
+            unshielded = True
     return not (unshielded and generators)
 
 
@@ -121,43 +129,52 @@ def get_min_distance(start: tuple) -> int:
     return result
 
 
+def trace_to_path(trace: dict, end: tuple) -> list:
+    result = [end]
+    node = end
+    while node in trace:
+        result.insert(0, trace[node])
+        node = trace[node]
+    return result
+
+
 def find_fewest_moves(start: tuple) -> int:
     """Find the fewest number of moves needed to reach the goal.
 
     The goal is to have all components safely located on the top floor of the
     facility.
     """
-    dist = defaultdict(lambda: INF)
-    dist[start] = 0
-    q = PriorityQueue()
-    q.push(start, 0)
+    explored = {start}
+    trace = {}
+    q = [start]
 
     while q:
-        _, node = q.pop()
+        node = q.pop(0)
         if sum(len(x) for x in node[1][:-1]) == 0:
             # Nothing on any floors except the last one, that's a bingo.
-            return dist[node]
+            return len(trace_to_path(trace, node)) - 1
 
         for move in get_moves(node):
             neighbour = apply_move(node, *move)
-            score = dist[node] + 1
-            if score < dist[neighbour]:
-                # Best path to that neighbour so far
-                dist[neighbour] = score
-                fscore = score + get_min_distance(neighbour)
-                q.set_priority(neighbour, fscore)
+            if neighbour in explored:
+                continue
+            explored.add(neighbour)
+            trace[neighbour] = node
+            q.append(neighbour)
     raise ValueError("Ran out of moves to try!")
 
 
 def run(stream, test=False, draw=False):
-    facility = parse(stream)
+    facility, elements = parse(stream)
 
     result1 = find_fewest_moves(facility)
 
-    newitems = {('e', 1), ('e', 0)}
+    elid = max(elements.values()) + 1
+    newitems = {f'{elid}g', f'{elid}m'}
     if not test:
         # Adding these last two items breaks the test case
-        newitems |= {('d', 1), ('d', 0)}
+        elid += 1
+        newitems = {f'{elid}g', f'{elid}m'}
     floors = (facility[1][0] | newitems,) + facility[1][1:]
     facility2 = (0, tuple(frozenset(x) for x in floors))
     result2 = find_fewest_moves(facility2)
