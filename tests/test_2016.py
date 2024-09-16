@@ -81,10 +81,10 @@ def test_y2016d15():
     assert get_day_result(15) == (5, 85)
 
 
-# def test_d16():
-#     assert get_day_result(16) == (0, 0)
-#
-#
+def test_d16():
+    assert get_day_result(16) == ('01100', '10111110011110111')
+
+
 # def test_d17():
 #     assert get_day_result(17) == (0, 0)
 #
