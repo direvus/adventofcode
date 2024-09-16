@@ -73,10 +73,10 @@ def test_d13():
     assert get_day_result(13) == (11, 151)
 
 
-# def test_d14():
-#     assert get_day_result(14) == (0, 0)
-#
-#
+def test_d14():
+    assert get_day_result(14) == (22728, 0)
+
+
 # def test_d15():
 #     assert get_day_result(15) == (0, 0)
 #
