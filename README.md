@@ -36,15 +36,16 @@ that).
 
 Here's a sample of some of the visualisations I generated for these puzzles:
 
-### 2015 Day 18, part 1
+### 2015 Day 18, part 1 "Like a GIF For Your Yard"
 
 ![2015 Day 18 Part 1](vis/y2015d18p1.gif)
 
-### 2016 Day 8
+### 2016 Day 8 "Two-Factor Authentication"
 
 ![2016 Day 8](vis/y2016d08.gif)
 
 ### 2016 Day 13, part 1 "A Maze of Twisty Little Cubicles"
 
-| ![2016 Day 13 Part 1 (BFS)](vis/y2015d18p1_bfs.gif) | ![2016 Day 13 Part 1 (AStar)](vis/y2015d18p1_astar.gif) | 
-| BFS | A Star |
+![2016 Day 13 Part 1 (BFS)](vis/y2015d18p1_bfs.gif) ![2016 Day 13 Part 1 (AStar)](vis/y2015d18p1_astar.gif)
+
+Using Breadth-first search (left) and A Star (right) to solve the maze.
