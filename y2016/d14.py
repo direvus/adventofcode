@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import re
 from collections import defaultdict
@@ -27,12 +26,13 @@ def get_index(
         md5cache: dict = None,
         stretch_cache: dict = None,
         ) -> int:
-    found = []
+    found = set()
     triples = defaultdict(set)
     index = 0
     base = md5(salt)
     saltstr = salt.decode('ascii')
-    while len(found) < keys:
+    finish = float('inf')
+    while index < finish:
         k = saltstr + str(index)
         if md5cache and k in md5cache:
             digest = md5cache[k]
@@ -55,18 +55,19 @@ def get_index(
         m = TRIPLES.search(digest)
         if m:
             t = m.group(1)
-            m = QUINTUPLES.search(digest)
-            if m:
-                q = m.group(1)
-                prev = (
+            matches = QUINTUPLES.findall(digest)
+            for q in matches:
+                prev = {
                         x for x in triples[q]
-                        if x >= index - 1000 and x < index)
-                found.extend(prev)
-                logging.debug(f"Found {m.group(0)} at index {index}")
-                logging.debug(f"Total keys found now = {found}")
+                        if x >= index - 1000 and x < index}
+                found |= prev
+
+                if len(found) >= keys:
+                    finish = index + 1000
             triples[t].add(index)
         index += 1
-    return sorted(found)[keys - 1]
+    found = sorted(found)
+    return found[keys - 1]
 
 
 def run(stream, test=False, draw=False):
