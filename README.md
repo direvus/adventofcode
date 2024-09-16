@@ -46,6 +46,6 @@ Here's a sample of some of the visualisations I generated for these puzzles:
 
 ### 2016 Day 13, part 1 "A Maze of Twisty Little Cubicles"
 
-![2016 Day 13 Part 1 (BFS)](vis/y2015d18p1_bfs.gif) ![2016 Day 13 Part 1 (AStar)](vis/y2015d18p1_astar.gif)
+![2016 Day 13 Part 1 (BFS)](vis/y2016d13p1_bfs.gif) ![2016 Day 13 Part 1 (AStar)](vis/y2016d13p1_astar.gif)
 
 Using Breadth-first search (left) and A Star (right) to solve the maze.
