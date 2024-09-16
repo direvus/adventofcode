@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 from collections import defaultdict
 from _md5 import md5
@@ -72,6 +73,7 @@ def run(stream, test=False, draw=False):
     salt = parse(stream).encode('ascii')
 
     stretch = 2016
+    os.makedirs('out', exist_ok=True)
     md5_cache_name = 'out/md5.json'
     stretch_cache_name = f'out/md5_stretch{stretch}.json'
     try:
