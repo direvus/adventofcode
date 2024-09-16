@@ -89,10 +89,10 @@ def test_d17():
     assert get_day_result(17) == ('DDRRRD', 370)
 
 
-# def test_d18():
-#     assert get_day_result(18) == (0, 0)
-#
-#
+def test_d18():
+    assert get_day_result(18) == (38, 1935478)
+
+
 # def test_d19():
 #     assert get_day_result(19) == (0, 0)
 #
