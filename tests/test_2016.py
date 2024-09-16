@@ -14,55 +14,55 @@ def get_day_result(day):
     return result
 
 
-def test_d01():
+def test_y2016d01():
     assert get_day_result(1) == (8, 4)
 
 
-def test_d02():
+def test_y2016d02():
     assert get_day_result(2) == ('1985', '5DB3')
 
 
-def test_d03():
+def test_y2016d03():
     assert get_day_result(3) == (3, 6)
 
 
-def test_d04():
+def test_y2016d04():
     assert get_day_result(4) == (1857, 'very encrypted name')
 
 
-def test_d05():
+def test_y2016d05():
     assert get_day_result(5) == ('18f47a30', '05ace8e3')
 
 
-def test_d06():
+def test_y2016d06():
     assert get_day_result(6) == ('easter', 'advent')
 
 
-def test_d07():
+def test_y2016d07():
     assert get_day_result(7) == (2, 0)
 
 
-def test_d08():
+def test_y2016d08():
     assert get_day_result(8) == (6, 0)
 
 
-def test_d09():
+def test_y2016d09():
     assert get_day_result(9) == (57, 56)
 
 
-def test_d10():
+def test_y2016d10():
     assert get_day_result(10) == ({1: [2], 2: [3], 0: [5]}, 30)
 
 
-def test_d11():
+def test_y2016d11():
     assert get_day_result(11) == (11, 21)
 
 
-def test_d12():
+def test_y2016d12():
     assert get_day_result(12) == (42, 42)
 
 
-def test_d13():
+def test_y2016d13():
     from y2016.d13 import is_space
     assert is_space(0, 0, 10) is True
     assert is_space(0, 1, 10) is True
@@ -73,11 +73,11 @@ def test_d13():
     assert get_day_result(13) == (11, 151)
 
 
-def test_d14():
+def test_y2016d14():
     assert get_day_result(14) == (22728, 22551)
 
 
-def test_d15():
+def test_y2016d15():
     assert get_day_result(15) == (5, 85)
 
 
