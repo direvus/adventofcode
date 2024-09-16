@@ -110,6 +110,26 @@ def find_fewest_moves(
     raise ValueError("Ran out of moves to try!")
 
 
+def find_cells_in_range(start: tuple, steps: int, magic: int) -> int:
+    """Find all of the cells that can be reached in at most `steps` steps.
+
+    Return the number of distinct cells found.
+    """
+    explored = {start}
+    q = [(0, start)]
+
+    while q:
+        cost, node = q.pop(0)
+        if cost >= steps:
+            continue
+        for n in get_neighbours(node, magic):
+            if n in explored:
+                continue
+            explored.add(n)
+            q.append((cost + 1, n))
+    return len(explored)
+
+
 def draw_background(magic: int, size: int):
     im = Image.new('RGB', (size, size), '#1a1a1a')
     wall = Image.open(PIXELS['wall'])
@@ -140,8 +160,9 @@ def draw_frame(bg, explored: set, path: set):
 def run(stream, test=False, draw=False):
     magic = int(stream.readline().strip())
     goal = (7, 4) if test else (31, 39)
+    start = (1, 1)
 
-    result1 = find_fewest_moves((1, 1), goal, magic, draw)
-    result2 = 0
+    result1 = find_fewest_moves(start, goal, magic, draw)
+    result2 = find_cells_in_range(start, 50, magic)
 
     return (result1, result2)

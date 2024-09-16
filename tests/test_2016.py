@@ -70,7 +70,7 @@ def test_d13():
     assert is_space(1, 1, 10) is True
     assert is_space(2, 0, 10) is True
     assert is_space(2, 1, 10) is False
-    assert get_day_result(13) == (11, 0)
+    assert get_day_result(13) == (11, 151)
 
 
 # def test_d14():
