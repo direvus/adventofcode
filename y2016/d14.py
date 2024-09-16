@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from collections import defaultdict
@@ -18,17 +19,37 @@ def stretch_key(digest: str, count: int) -> str:
     return digest
 
 
-def get_index(salt: bytes, keys: int, stretch: int = 0) -> int:
+def get_index(
+        salt: bytes,
+        keys: int,
+        stretch: int = 0,
+        md5cache: dict = None,
+        stretch_cache: dict = None,
+        ) -> int:
     found = []
     triples = defaultdict(set)
     index = 0
     base = md5(salt)
+    saltstr = salt.decode('ascii')
     while len(found) < keys:
-        h = base.copy()
-        h.update(str(index).encode('ascii'))
-        digest = h.hexdigest()
+        k = saltstr + str(index)
+        if md5cache and k in md5cache:
+            digest = md5cache[k]
+        else:
+            h = base.copy()
+            h.update(str(index).encode('ascii'))
+            digest = h.hexdigest()
+            if md5cache is not None:
+                md5cache[k] = digest
+
         if stretch > 0:
-            digest = stretch_key(h.hexdigest(), stretch)
+            initial = digest
+            if stretch_cache and initial in stretch_cache:
+                digest = stretch_cache[initial]
+            else:
+                digest = stretch_key(initial, stretch)
+                if stretch_cache is not None:
+                    stretch_cache[initial] = digest
 
         m = TRIPLES.search(digest)
         if m:
@@ -50,7 +71,28 @@ def get_index(salt: bytes, keys: int, stretch: int = 0) -> int:
 def run(stream, test=False, draw=False):
     salt = parse(stream).encode('ascii')
 
-    result1 = get_index(salt, 64)
-    result2 = get_index(salt, 64, 2016)
+    stretch = 2016
+    md5_cache_name = 'out/md5.json'
+    stretch_cache_name = f'out/md5_stretch{stretch}.json'
+    try:
+        with open(md5_cache_name, 'r') as fp:
+            md5cache = json.load(fp)
+    except FileNotFoundError:
+        md5cache = {}
+
+    try:
+        with open(stretch_cache_name, 'r') as fp:
+            stretch_cache = json.load(fp)
+    except FileNotFoundError:
+        stretch_cache = {}
+
+    result1 = get_index(salt, 64, md5cache=md5cache)
+    result2 = get_index(
+            salt, 64, 2016, md5cache=md5cache, stretch_cache=stretch_cache)
+
+    with open(md5_cache_name, 'w') as fp:
+        json.dump(md5cache, fp, separators=(',', ':'))
+    with open(stretch_cache_name, 'w') as fp:
+        json.dump(stretch_cache, fp, separators=(',', ':'))
 
     return (result1, result2)
