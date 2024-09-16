@@ -62,10 +62,17 @@ def test_d12():
     assert get_day_result(12) == (42, 42)
 
 
-# def test_d13():
-#     assert get_day_result(13) == (0, 0)
-#
-#
+def test_d13():
+    from y2016.d13 import is_space
+    assert is_space(0, 0, 10) is True
+    assert is_space(0, 1, 10) is True
+    assert is_space(1, 0, 10) is False
+    assert is_space(1, 1, 10) is True
+    assert is_space(2, 0, 10) is True
+    assert is_space(2, 1, 10) is False
+    assert get_day_result(13) == (11, 0)
+
+
 # def test_d14():
 #     assert get_day_result(14) == (0, 0)
 #
