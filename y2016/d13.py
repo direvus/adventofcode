@@ -1,4 +1,9 @@
+from collections import defaultdict
 from functools import cache
+
+from util import PriorityQueue
+
+
 try:
     from PIL import Image
 except ImportError:
@@ -6,6 +11,7 @@ except ImportError:
     pass
 
 
+INF = float('inf')
 PIXELS = {
         'path': 'assets/green_pixel_4.png',
         'explored': 'assets/orange_pixel_4.png',
@@ -51,6 +57,13 @@ def trace_to_path(trace: dict, end: tuple) -> list:
     return result
 
 
+def get_min_distance(a: tuple[int], b: tuple[int]) -> int:
+    """Return the Manhattan distance between two points."""
+    if a == b:
+        return 0
+    return abs(b[0] - a[0]) + abs(b[1] - a[1])
+
+
 def find_fewest_moves(
         start: tuple, goal: tuple, magic: int, draw: bool = False) -> int:
     """Find the fewest number of moves needed to reach the goal.
@@ -58,37 +71,42 @@ def find_fewest_moves(
     The `magic` number is applied to `is_space()` to discover which locations
     are traversable.
     """
-    explored = {start}
     trace = {}
-    q = [(0, start)]
+    q = PriorityQueue()
+    q.push(start, get_min_distance(start, goal))
+    dist = defaultdict(lambda: INF)
+    dist[start] = 0
+    explored = set()
     frames = []
 
     while q:
-        cost, node = q.pop(0)
+        cost, node = q.pop()
         if node == goal:
             if draw:
                 path = set(trace_to_path(trace, node))
                 frames.append((explored, path))
 
-                maxcoord = max(max(p) for p in explored) + 2
+                maxcoord = max(max(p) for p in explored | path) + 2
                 size = 5 * maxcoord + 1  # 4 pixels per cell, plus border
 
                 bg = draw_background(magic, size)
 
                 images = [draw_frame(bg, *f) for f in frames]
                 images[0].save(
-                        'out/y2016d13p1_bfs.gif', save_all=True,
+                        'out/y2016d13p1_astar.gif', save_all=True,
                         append_images=images[1:], duration=100)
             return cost
 
         if draw:
             frames.append((set(explored), {start, goal}))
         for n in get_neighbours(node, magic):
-            if n in explored:
-                continue
-            explored.add(n)
-            trace[n] = node
-            q.append((cost + 1, n))
+            score = dist[node] + 1
+            if score < dist[n]:
+                dist[n] = score
+                trace[n] = node
+                f = score + get_min_distance(n, goal)
+                q.set_priority(n, f)
+        explored.add(node)
     raise ValueError("Ran out of moves to try!")
 
 
