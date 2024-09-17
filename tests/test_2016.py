@@ -130,10 +130,10 @@ def test_y2016d21():
     assert get_day_result(21) == ('fbdecgha', 'abcdefgh')
 
 
-# def test_y2016d22():
-#     assert get_day_result(22) == (0, 0)
-#
-#
+def test_y2016d22():
+    assert get_day_result(22) == (7, 0)
+
+
 # def test_y2016d23():
 #     assert get_day_result(23) == (0, 0)
 #
