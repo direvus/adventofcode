@@ -81,41 +81,53 @@ def test_y2016d15():
     assert get_day_result(15) == (5, 85)
 
 
-def test_d16():
+def test_y2016d16():
     assert get_day_result(16) == ('01100', '0000100010100000110010100')
 
 
-def test_d17():
+def test_y2016d17():
     assert get_day_result(17) == ('DDRRRD', 370)
 
 
-def test_d18():
+def test_y2016d18():
     assert get_day_result(18) == (38, 1935478)
 
 
-# def test_d19():
-#     assert get_day_result(19) == (0, 0)
-#
-#
-# def test_d20():
+def test_y2016d19():
+    from y2016.d19 import get_winner_p2
+    assert get_winner_p2(2) == 1
+    assert get_winner_p2(3) == 3
+    assert get_winner_p2(4) == 1
+    assert get_winner_p2(5) == 2
+    assert get_winner_p2(6) == 3
+    assert get_winner_p2(7) == 5
+    assert get_winner_p2(8) == 7
+    assert get_winner_p2(9) == 9
+    assert get_winner_p2(10) == 1
+    assert get_winner_p2(11) == 2
+    assert get_winner_p2(12) == 3
+    assert get_day_result(19) == (3, 2)
+
+
+# def test_y2016d20():
 #     assert get_day_result(20) == (0, 0)
 #
 #
-# def test_d21():
+# def test_y2016d21():
 #     assert get_day_result(21) == (0, 0)
 #
 #
-# def test_d22():
+# def test_y2016d22():
 #     assert get_day_result(22) == (0, 0)
 #
 #
-# def test_d23():
+# def test_y2016d23():
 #     assert get_day_result(23) == (0, 0)
 #
 #
-# def test_d24():
+# def test_y2016d24():
 #     assert get_day_result(24) == (0, 0)
 #
 #
-# def test_d25():
+# def test_y2016d25():
 #     assert get_day_result(25) == (0, 0)
