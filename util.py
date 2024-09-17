@@ -1,4 +1,5 @@
 import heapq
+import logging
 import time
 from collections import namedtuple
 from contextlib import contextmanager
@@ -10,13 +11,13 @@ from functools import total_ordering
 def timing(message: str = None) -> int:
     start = time.perf_counter_ns()
     if message:
-        print(f"[......] {message}", end='')
+        logging.info(f"[........] ==> {message}")
     try:
         yield start
     finally:
         end = time.perf_counter_ns()
         dur = end - start
-        print(f"\r\033[2K[{dur//1000:6d}] {message}")
+        logging.info(f"[{dur//1000:8d}] <== {message}")
 
 
 @total_ordering

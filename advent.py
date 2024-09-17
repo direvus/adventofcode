@@ -22,7 +22,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     loglevel = 'DEBUG' if args.verbose else 'INFO'
-    logging.basicConfig(level=loglevel, handlers=[RichHandler()])
+    handler = RichHandler(markup=True)
+    fmt = '%(message)s'
+    logging.basicConfig(level=loglevel, format=fmt, handlers=[handler])
 
     year = f'y{args.year}'
     day = f'{args.day:02d}'
@@ -37,9 +39,9 @@ if __name__ == '__main__':
         inpath = os.path.join(year, 'inputs', day)
 
     mode = '[yellow]test[/]' if args.test else '[yellow]actual[/]'
-    print(f"Executing {args.year} Day {args.day} in {mode} mode\n")
-    with timing('\n'):
-        try:
+    title = f"Executing {args.year} Day {args.day} in {mode} mode"
+    try:
+        with timing(title):
             if inpath == '-':
                 infile = sys.stdin
             else:
@@ -50,8 +52,8 @@ if __name__ == '__main__':
             if args.draw:
                 kwargs['draw'] = True
             p1, p2 = m.run(infile, **kwargs)
-            print(f"Part 1 => {p1}")
-            print(f"Part 2 => {p2}")
-        finally:
-            if inpath != '-':
-                infile.close()
+        print(f"Part 1 => {p1}")
+        print(f"Part 2 => {p2}")
+    finally:
+        if inpath != '-':
+            infile.close()
