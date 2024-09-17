@@ -1,4 +1,4 @@
-import logging  # noqa: F401
+import logging
 
 
 # Index of the winning player for several small sizes in Part 2.
