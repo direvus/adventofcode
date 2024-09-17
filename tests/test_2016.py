@@ -113,10 +113,23 @@ def test_y2016d20():
     assert get_day_result(20) == (3, 5)
 
 
-# def test_y2016d21():
-#     assert get_day_result(21) == (0, 0)
-#
-#
+def test_y2016d21():
+    from y2016.d21 import (
+            swap_position, swap_letter, rotate_count,
+            rotate_index, reverse_span, move_index,
+            )
+    assert swap_position('abcde', 4, 0) == 'ebcda'
+    assert swap_letter('ebcda', 'd', 'b') == 'edcba'
+    assert rotate_count('abcde', 1) == 'eabcd'
+    assert rotate_count('abcde', 2) == 'deabc'
+    assert rotate_count('abcde', -1) == 'bcdea'
+    assert rotate_index('ecabd', 'd') == 'decab'
+    assert reverse_span('abcde', 0, 4) == 'edcba'
+    assert reverse_span('abcde', 1, 3) == 'adcbe'
+    assert move_index('bcdea', 1, 4) == 'bdeac'
+    assert get_day_result(21) == ('decab', 0)
+
+
 # def test_y2016d22():
 #     assert get_day_result(22) == (0, 0)
 #
