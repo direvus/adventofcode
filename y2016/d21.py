@@ -1,5 +1,19 @@
 import logging  # noqa: F401
 
+from util import timing
+
+
+REVERSE_SHIFTS = {
+        1: 0,
+        3: 1,
+        5: 2,
+        7: 3,
+        2: 4,
+        4: 5,
+        6: 6,
+        0: 7,
+        }
+
 
 def swap_position(value: str, a: int, b: int) -> str:
     work = list(value)
@@ -80,13 +94,44 @@ def scramble(value: str, program: tuple) -> str:
     return result
 
 
+def unscramble(value: str, program: tuple) -> str:
+    """Apply the reverse of each step in program, in reverse order."""
+    result = value
+    for fn, args in reversed(program):
+        if fn == rotate_count:
+            args = (-args[0],)
+        elif fn == move_index:
+            args = (args[1], args[0])
+        elif fn == rotate_index:
+            # This trick only works on passwords of length 8
+            if len(result) != 8:
+                raise ValueError(
+                        "Can only reverse rotate_index on "
+                        "strings that are exactly 8 characters long.")
+            index = result.index(args[0])
+            shift = REVERSE_SHIFTS[index] - index
+            fn = rotate_count
+            args = (shift,)
+
+        # All the other functions can just be applied again with the same
+        # arguments to reverse.
+
+        logging.debug(
+                f"Executing {fn.__name__} on {result} with arguments {args}")
+        result = fn(result, *args)
+    return result
+
+
 def run(stream, test: bool = False):
-    password = 'abcde' if test else 'abcdefgh'
+    password = 'abcdefgh' if test else 'abcdefgh'
     program = parse(stream)
     logging.debug("Parsed the instructions as:")
     logging.debug(program)
 
-    result1 = scramble(password, program)
-    result2 = 0
+    with timing("Part 1"):
+        result1 = scramble(password, program)
+    with timing("Part 2"):
+        scrambled = 'fbdecgha' if test else 'fbgdceah'
+        result2 = unscramble(scrambled, program)
 
     return (result1, result2)

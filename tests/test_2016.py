@@ -127,7 +127,7 @@ def test_y2016d21():
     assert reverse_span('abcde', 0, 4) == 'edcba'
     assert reverse_span('abcde', 1, 3) == 'adcbe'
     assert move_index('bcdea', 1, 4) == 'bdeac'
-    assert get_day_result(21) == ('decab', 0)
+    assert get_day_result(21) == ('fbdecgha', 'abcdefgh')
 
 
 # def test_y2016d22():
