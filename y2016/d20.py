@@ -35,23 +35,52 @@ def merge_spans(spans: set) -> set:
 
 
 def get_spans_total(spans: set) -> int:
-    """Return the number of value enclosed by the set of spans.
+    """Return the number of distinct values enclosed by the set of spans.
 
     The spans must already be in simple form (no overlaps).
     """
     return sum(high - low + 1 for low, high in spans)
 
 
-def diff_spans(a: tuple, b: set) -> set:
-    """Subtract set of spans `b` from single span `a`.
+def diff_span(a: tuple, b: tuple) -> set:
+    """Subtract span `b` from span `a`.
 
     Return a new set of spans that encloses all the values that are in `a`, but
-    not in any of the spans in `b`.
-
-    The spans in `b` must already be in simple form (no overlaps).
+    not in `b`.
     """
-    result = set()
-    return result
+    if b[1] < a[0] or a[1] < b[0]:
+        # Disjoint spans, return a set holding only the unmodified `a`.
+        return {a}
+    if a[0] >= b[0] and a[1] <= b[1]:
+        # `a` is entirely covered by `b`, return the empty set.
+        return set()
+    if b[0] > a[0] and b[1] < a[1]:
+        # `b` is entirely contained within `a`, divide `a` into two sets.
+        return {
+                (a[0], b[0] - 1),
+                (b[1] + 1, a[1]),
+                }
+    if b[0] <= a[0]:
+        return {(b[1] + 1, a[1])}
+    else:
+        return {(a[0], b[0] - 1)}
+
+
+def diff_spans(span: tuple, others: set) -> set:
+    """Subtract set of spans `others` from single span `span`.
+
+    Return a new set of spans that encloses all the values that are in `span`,
+    but not in any of the spans in `others`.
+
+    The spans in `others` must already be in simple form (no overlaps).
+    """
+    result = {span}
+    for other in others:
+        new = set()
+        for span in result:
+            new |= diff_span(span, other)
+        result = new
+    return merge_spans(result)
 
 
 def get_lowest_value(blocks: set) -> int:
@@ -62,20 +91,40 @@ def get_lowest_value(blocks: set) -> int:
     """
     i = 0
     for low, high in sorted(blocks):
-        logging.debug(f"Range {low} - {high} is blocked, checking {i}")
         if i < low:
-            logging.debug(f"{i} is outside the range, return it")
             return i
-        logging.debug(f"{i} is inside the range, return it")
         i = high + 1
     return i
+
+
+def describe_spans(spans: set) -> str:
+    """Return a string description of a set of spans.
+
+    For example:
+
+    >>> describe_spans({(5, 7), (9, 9), (11, 12)})
+    5-7, 9, 11-12
+    """
+    result = []
+    for low, high in sorted(spans):
+        if low == high:
+            result.append(str(low))
+        else:
+            result.append(f"{low}-{high}")
+    return ', '.join(result)
 
 
 def run(stream, test: bool = False):
     blocks = parse(stream)
     blocks = merge_spans(blocks)
+    logging.debug(f"Simplified blocklist is {describe_spans(blocks)}")
 
     result1 = get_lowest_value(blocks)
-    result2 = 0
+
+    totalspan = (0, 12) if test else (0, 4294967295)
+    logging.debug(f"Overall address space: {totalspan}")
+    remain = diff_spans(totalspan, blocks)
+    logging.debug(f"Remaining spans: {describe_spans(remain)}")
+    result2 = get_spans_total(remain)
 
     return (result1, result2)

@@ -11,13 +11,13 @@ from functools import total_ordering
 def timing(message: str = None) -> int:
     start = time.perf_counter_ns()
     if message:
-        logging.info(f"[........] ==> {message}")
+        logging.info(f"[........] :green_circle: [green]START[/] {message}")
     try:
         yield start
     finally:
         end = time.perf_counter_ns()
         dur = end - start
-        logging.info(f"[{dur//1000:8d}] <== {message}")
+        logging.info(f"[{dur//1000:8d}] :stop_sign: [red]END[/] {message}")
 
 
 @total_ordering
