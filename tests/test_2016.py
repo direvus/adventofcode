@@ -139,7 +139,7 @@ def test_y2016d23():
 
 
 def test_y2016d24():
-    assert get_day_result(24) == (14, 0)
+    assert get_day_result(24) == (14, 20)
 
 
 # def test_y2016d25():

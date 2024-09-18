@@ -22,6 +22,7 @@ class Grid:
         self.start = None
         self.width = None
         self.height = None
+        self.target_paths = None
 
     def parse(self, stream):
         y = 0
@@ -73,19 +74,26 @@ class Grid:
         of target nodes, including the start node. The values of the dict are
         the number of steps in the shortest path between those nodes.
         """
+        if self.target_paths is not None:
+            return self.target_paths
+
         result = {}
         for a, b in combinations(self.targets.keys(), 2):
             a_node = self.targets[a]
             b_node = self.targets[b]
             steps = self.find_shortest_path(a_node, b_node)
-            result[frozenset({a, b})] = steps
+            result[frozenset((a, b))] = steps
+        self.target_paths = result
         return result
 
-    def find_optimal_path(self) -> int:
+    def find_optimal_path(self, cycle: bool = False) -> int:
         """Find the optimal path that visits all targets.
 
         The path must begin at the start node (target 0) and pass through each
         of the other targets at least once.
+
+        If the `cycle` argument is truthy, then the path must also return back
+        to the start node after visiting all of the targets.
 
         Return the length of the shortest such path.
         """
@@ -96,9 +104,11 @@ class Grid:
             start = 0
             length = 0
             for k in perm:
-                pair = frozenset({start, k})
+                pair = frozenset((start, k))
                 length += paths[pair]
                 start = k
+            if cycle:
+                length += paths[frozenset((start, 0))]
             if length < best:
                 best = length
         return best
@@ -111,6 +121,6 @@ def run(stream, test: bool = False):
         result1 = grid.find_optimal_path()
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = grid.find_optimal_path(cycle=True)
 
     return (result1, result2)
