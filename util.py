@@ -68,6 +68,11 @@ def minmax(a, b):
     return b, a
 
 
+def get_manhattan_distance(a: tuple[int], b: tuple[int]) -> int:
+    """Return the Manhattan distance between two points."""
+    return abs(b[0] - a[0]) + abs(b[1] - a[1])
+
+
 class PriorityQueue:
     def __init__(self):
         self.queue = []
