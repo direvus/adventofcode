@@ -40,8 +40,10 @@ if __name__ == '__main__':
 
     mode = '[yellow]test[/]' if args.test else '[yellow]actual[/]'
     title = f"Executing {args.year} Day {args.day} in {mode} mode"
+    retcode = 0
     try:
         with timing(title):
+            infile = None
             if inpath == '-':
                 infile = sys.stdin
             else:
@@ -54,6 +56,16 @@ if __name__ == '__main__':
             p1, p2 = m.run(infile, **kwargs)
         print(f"Part 1 => {p1}")
         print(f"Part 2 => {p2}")
+    except FileNotFoundError:
+        logging.error(f"No such file '{inpath}'")
+        retcode = 1
+    except Exception as err:
+        logging.error(f"Unexpected error '{err}' occurred", exc_info=err)
+        retcode = 1
     finally:
-        if inpath != '-':
-            infile.close()
+        if infile and infile != sys.stdin:
+            try:
+                infile.close()
+            except Exception:
+                pass
+        sys.exit(retcode)
