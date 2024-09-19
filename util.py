@@ -17,7 +17,7 @@ def timing(message: str = None) -> int:
     finally:
         end = time.perf_counter_ns()
         dur = end - start
-        logging.info(f"[{dur//1000:8d}] :stop_sign: [red]END[/] {message}")
+        logging.info(f"[{dur//1000:8d}] :stop_sign:   [red]END[/] {message}")
 
 
 @total_ordering

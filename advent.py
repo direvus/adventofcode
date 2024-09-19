@@ -5,8 +5,10 @@ import logging
 import os
 import sys
 
-from rich import print
+from rich import box, print
+from rich.console import Console
 from rich.logging import RichHandler
+from rich.table import Table
 
 from util import timing
 
@@ -21,6 +23,7 @@ if __name__ == '__main__':
     parser.add_argument('day', type=int)
     args = parser.parse_args()
 
+    console = Console()
     loglevel = 'DEBUG' if args.verbose else 'INFO'
     handler = RichHandler(markup=True)
     fmt = '%(message)s'
@@ -54,8 +57,18 @@ if __name__ == '__main__':
             if args.draw:
                 kwargs['draw'] = True
             p1, p2 = m.run(infile, **kwargs)
-        print(f"Part 1 => {p1}")
-        print(f"Part 2 => {p2}")
+
+        print()
+        table = Table(
+                box=box.ROUNDED,
+                padding=(0, 4),
+                title=f"{args.year} Day {args.day} Results",
+                show_lines=True)
+        table.add_column('Part')
+        table.add_column('Result', justify='right', style='cyan')
+        table.add_row('Part 1', str(p1))
+        table.add_row('Part 2', str(p2))
+        console.print(table, justify='center')
     except FileNotFoundError:
         logging.error(f"No such file '{inpath}'")
         retcode = 1
