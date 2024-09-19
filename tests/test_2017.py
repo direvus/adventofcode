@@ -29,7 +29,7 @@ def test_y2017d03():
     assert find_distance(23) == 2
     assert find_distance(1024) == 31
 
-    assert get_day_result(3) == (31, 0)
+    assert get_day_result(3) == (31, 1968)
 
 
 # def test_y2017d04():
