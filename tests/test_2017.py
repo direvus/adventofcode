@@ -45,7 +45,7 @@ def test_y2017d06():
 
 
 def test_y2017d07():
-    assert get_day_result(7) == ('tknk', 243)
+    assert get_day_result(7) == ('tknk', 60)
 
 
 # def test_y2017d08():
