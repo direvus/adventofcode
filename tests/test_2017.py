@@ -44,10 +44,10 @@ def test_y2017d06():
     assert get_day_result(6) == (5, 4)
 
 
-# def test_y2017d07():
-#     assert get_day_result(7) == (0, 0)
-#
-#
+def test_y2017d07():
+    assert get_day_result(7) == ('tknk', 243)
+
+
 # def test_y2017d08():
 #     assert get_day_result(8) == (0, 0)
 #
