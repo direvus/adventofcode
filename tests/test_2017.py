@@ -74,10 +74,16 @@ def test_y2017d09():
     assert get_day_result(9) == (3, 13)
 
 
-# def test_y2017d10():
-#     assert get_day_result(10) == (0, 0)
-#
-#
+def test_y2017d10():
+    from y2017.d10 import get_hash
+    assert get_hash('') == 'a2582a3a0e66e6e86e3812dcb672a272'
+    assert get_hash('AoC 2017') == '33efeb34ea91902bb2f59c9920caa6cd'
+    assert get_hash('1,2,3') == '3efbe78a8d82f29979031a4aa0b16a9d'
+    assert get_hash('1,2,4') == '63960835bcdc130f0b66d7ff4f6a5a8e'
+
+    assert get_day_result(10) == (12, '4a19451b02fb05416d73aea0ec8c00c0')
+
+
 # def test_y2017d11():
 #     assert get_day_result(11) == (0, 0)
 #
