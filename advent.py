@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 
-from rich import box, print
+from rich import box
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.table import Table
@@ -58,7 +58,7 @@ if __name__ == '__main__':
                 kwargs['draw'] = True
             p1, p2 = m.run(infile, **kwargs)
 
-        print()
+        console.print()
         table = Table(
                 box=box.ROUNDED,
                 padding=(0, 4),
