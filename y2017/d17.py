@@ -6,66 +6,84 @@ https://adventofcode.com/2017/day/17
 """
 import logging  # noqa: F401
 
-from util import timing
+from util import timing, jit
 
 
 COUNT1 = 2017
 COUNT2 = 50 * 10 ** 6
 
 
-def create_list(value: int):
-    node = [value, None]
-    node[1] = node
-    return node
+class Node:
+    def __init__(self, value: int, nextnode: 'Node' = None):
+        self.value = value
+        self.next = nextnode
 
 
-def get_list_values(start: list) -> list:
-    result = [start[0]]
-    if start[1] is start:
+def create_list(values: list):
+    assert len(values) > 0
+    start = Node(values[0])
+    prev = start
+    for value in values[1:]:
+        node = Node(value)
+        prev.next = node
+        prev = node
+    prev.next = start
+    return start
+
+
+def get_list_values(start: Node) -> list:
+    result = [start.value]
+    if start.next is start:
         return result
     node = start
-    while not node[1] is start:
-        node = node[1]
-        result.append(node[0])
+    while node.next is not start:
+        node = node.next
+        result.append(node.value)
     return result
 
 
-def update_list(current: list, steps: int) -> list:
+def update_list(current: Node, steps: int) -> Node:
     """Update the list for one iteration.
 
     Seek forward through the list `steps` times, then insert a new node and
     return it.
     """
-    value = current[0]
-    if current[1] is current:
-        node = [value + 1, current]
-        current[1] = node
+    value = current.value
+    if current.next is current:
+        node = Node(value + 1, current)
+        current.next = node
         return node
 
     for _ in range(steps):
-        current = current[1]
-    post = current[1]
-    node = [value + 1, post]
-    current[1] = node
+        current = current.next
+    post = current.next
+    node = Node(value + 1, post)
+    current.next = node
     return node
 
 
 def get_final_value(steps: int, count: int) -> int:
-    node = create_list(0)
+    node = create_list([0])
     for _ in range(count):
         node = update_list(node, steps)
-    return node[1][0]
+    return node.next.value
 
 
+@jit
 def get_value_after_zero(steps: int, count: int) -> int:
     """Update the buffer `count` times and return the value after zero."""
-    node = create_list(0)
+    size = 1
+    position = 0
+    value = 0
+    result = 0
     for i in range(count):
-        node = update_list(node, steps)
+        value += 1
+        position = ((position + steps) % size) + 1
+        if position == 1:
+            result = value
+        size += 1
 
-    while node[0] != 0:
-        node = node[1]
-    return node[1][0]
+    return result
 
 
 def parse(stream) -> tuple:
@@ -78,7 +96,6 @@ def run(stream, test: bool = False):
         result1 = get_final_value(steps, COUNT1)
 
     with timing("Part 2"):
-        count = 9 if test else COUNT2
-        result2 = get_value_after_zero(steps, count)
+        result2 = get_value_after_zero(steps, COUNT2)
 
     return (result1, result2)

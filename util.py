@@ -6,6 +6,16 @@ from contextlib import contextmanager
 from enum import Enum, auto
 from functools import total_ordering
 
+try:
+    import numba
+    jit = numba.jit
+except ImportError:
+    # Degrade to a no-op decorator if jit isn't available.
+    def jit(*args):
+        def dec(fn):
+            return fn
+        return dec
+
 
 @contextmanager
 def timing(message: str = None) -> int:

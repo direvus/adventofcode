@@ -6,16 +6,7 @@ https://adventofcode.com/2017/day/15
 """
 import logging  # noqa: F401
 
-try:
-    from numba import jit
-except ImportError:
-    # Degrade to a no-op decorator if jit isn't available.
-    def jit(*args):
-        def dec(fn):
-            return fn
-        return dec
-
-from util import timing
+from util import timing, jit
 
 
 DIVISOR = 2147483647
