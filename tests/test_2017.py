@@ -84,10 +84,15 @@ def test_y2017d10():
     assert get_day_result(10) == (12, '4a19451b02fb05416d73aea0ec8c00c0')
 
 
-# def test_y2017d11():
-#     assert get_day_result(11) == (0, 0)
-#
-#
+def test_y2017d11():
+    from y2017.d11 import get_path_distance
+    assert get_path_distance('ne,ne,ne'.split(',')) == 3
+    assert get_path_distance('ne,ne,sw,sw'.split(',')) == 0
+    assert get_path_distance('ne,ne,s,s'.split(',')) == 2
+    assert get_path_distance('se,sw,se,sw,sw'.split(',')) == 3
+    assert get_day_result(11) == (3, 3)
+
+
 # def test_y2017d12():
 #     assert get_day_result(12) == (0, 0)
 #
