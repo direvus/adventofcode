@@ -123,7 +123,7 @@ def test_y2017d15():
     assert match16(1181022009, 1233683848) is False
     assert match16(245556042, 1431495498) is True
 
-    assert get_day_result(15) == (0, 0)
+    assert get_day_result(15) == (588, 309)
 
 
 # def test_y2017d16():
