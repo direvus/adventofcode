@@ -48,10 +48,10 @@ def test_y2017d07():
     assert get_day_result(7) == ('tknk', 60)
 
 
-# def test_y2017d08():
-#     assert get_day_result(8) == (0, 0)
-#
-#
+def test_y2017d08():
+    assert get_day_result(8) == (1, 10)
+
+
 # def test_y2017d09():
 #     assert get_day_result(9) == (0, 0)
 #
