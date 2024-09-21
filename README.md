@@ -8,15 +8,18 @@ Code](https://adventofcode.com/) coding puzzles.
 **Spoiler alert!**
 
 If you don't want those puzzles spoiled for you, don't look at the code!
-It runs on Python 3.10+.
 
 ## Requirements
+
+It runs on Python 3.10+.
 
 The puzzle-solving code is all purely Python Standard Library stuff. The only
 external dependencies are optional:
 
-- `rich`, for pretty printing on the console, and
-- `pillow`, for rendering visualisations.
+- `rich`, for pretty printing on the console
+- `pillow`, for rendering visualisations
+- `numba`, to speed up some of the number-crunchy solutions
+- `pytest`, to run the test suite
 
 ## Usage
 
