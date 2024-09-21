@@ -105,10 +105,27 @@ def test_y2017d14():
     assert get_day_result(14) == (8108, 1242)
 
 
-# def test_y2017d15():
-#     assert get_day_result(15) == (0, 0)
-#
-#
+def test_y2017d15():
+    from y2017.d15 import get_generators, match16
+    a, b = get_generators(65, 8921)
+    assert a.next() == 1092455
+    assert b.next() == 430625591
+    assert a.next() == 1181022009
+    assert b.next() == 1233683848
+    assert a.next() == 245556042
+    assert b.next() == 1431495498
+    assert a.next() == 1744312007
+    assert b.next() == 137874439
+    assert a.next() == 1352636452
+    assert b.next() == 285222916
+
+    assert match16(1092455, 430625591) is False
+    assert match16(1181022009, 1233683848) is False
+    assert match16(245556042, 1431495498) is True
+
+    assert get_day_result(15) == (0, 0)
+
+
 # def test_y2017d16():
 #     assert get_day_result(16) == (0, 0)
 #
