@@ -52,10 +52,28 @@ def test_y2017d08():
     assert get_day_result(8) == (1, 10)
 
 
-# def test_y2017d09():
-#     assert get_day_result(9) == (0, 0)
-#
-#
+def test_y2017d09():
+    from y2017.d09 import get_total_score, get_garbage_count
+    assert get_total_score('{}') == 1
+    assert get_total_score('{{{}}}') == 6
+    assert get_total_score('{{},{}}') == 5
+    assert get_total_score('{{{},{},{{}}}}') == 16
+    assert get_total_score('{<a>,<a>,<a>,<a>}') == 1
+    assert get_total_score('{{<ab>},{<ab>},{<ab>},{<ab>}}') == 9
+    assert get_total_score('{{<!!>},{<!!>},{<!!>},{<!!>}}') == 9
+    assert get_total_score('{{<a!>},{<a!>},{<a!>},{<ab>}}') == 3
+
+    assert get_garbage_count('<>') == 0
+    assert get_garbage_count('<random characters>') == 17
+    assert get_garbage_count('<<<<>') == 3
+    assert get_garbage_count('<{!>}>') == 2
+    assert get_garbage_count('<!!>') == 0
+    assert get_garbage_count('<!!!>>') == 0
+    assert get_garbage_count('<{o"i!a,<{i<a>') == 10
+
+    assert get_day_result(9) == (3, 13)
+
+
 # def test_y2017d10():
 #     assert get_day_result(10) == (0, 0)
 #
