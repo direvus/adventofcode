@@ -1,3 +1,4 @@
-rich
+numba
 pillow
 pytest
+rich

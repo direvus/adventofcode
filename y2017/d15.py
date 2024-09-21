@@ -6,10 +6,20 @@ https://adventofcode.com/2017/day/15
 """
 import logging  # noqa: F401
 
+try:
+    from numba import jit
+except ImportError:
+    # Degrade to a no-op decorator if jit isn't available.
+    def jit(*args):
+        def dec(fn):
+            return fn
+        return dec
+
 from util import timing
 
 
 DIVISOR = 2147483647
+MATCH = 65535
 FACTOR_A = 16807
 FACTOR_B = 48271
 MODULUS_A = 4
@@ -48,7 +58,7 @@ def get_generators(a: int, b: int) -> tuple[Generator]:
 
 def match16(a: int, b: int) -> bool:
     """Return whether two integers match in their lowest 16 bits."""
-    return a & 65535 == b & 65535
+    return a & MATCH == b & MATCH
 
 
 def parse(stream) -> tuple:
@@ -59,26 +69,40 @@ def parse(stream) -> tuple:
     return tuple(result)
 
 
-def count_matches(a: Generator, b: Generator, count: int) -> int:
+@jit
+def _count_matches(init_a: int, init_b: int, count: int) -> int:
+    a = init_a
+    b = init_b
     result = 0
     for i in range(count):
-        value_a = a.next()
-        value_b = b.next()
-        if match16(value_a, value_b):
-            logging.debug(f"Match found on #{i + 1}: {value_a} and {value_b}")
-            result += 1
+        a = (a * FACTOR_A) % DIVISOR
+        b = (b * FACTOR_B) % DIVISOR
+        result += int(a & MATCH == b & MATCH)
     return result
+
+
+@jit
+def _count_mod_matches(init_a: int, init_b: int, count: int) -> int:
+    a = init_a
+    b = init_b
+    result = 0
+    for i in range(count):
+        a = (a * FACTOR_A) % DIVISOR
+        while a % MODULUS_A:
+            a = (a * FACTOR_A) % DIVISOR
+        b = (b * FACTOR_B) % DIVISOR
+        while b % MODULUS_B:
+            b = (b * FACTOR_B) % DIVISOR
+        result += int(a & MATCH == b & MATCH)
+    return result
+
+
+def count_matches(a: Generator, b: Generator, count: int) -> int:
+    return _count_matches(a.initial, b.initial, count)
 
 
 def count_mod_matches(a: Generator, b: Generator, count: int) -> int:
-    result = 0
-    for i in range(count):
-        value_a = a.generate()
-        value_b = b.generate()
-        if match16(value_a, value_b):
-            logging.debug(f"Match found on #{i + 1}: {value_a} and {value_b}")
-            result += 1
-    return result
+    return _count_mod_matches(a.initial, b.initial, count)
 
 
 def run(stream, test: bool = False):
