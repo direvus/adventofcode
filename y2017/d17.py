@@ -13,36 +13,59 @@ COUNT1 = 2017
 COUNT2 = 50 * 10 ** 6
 
 
-def update_buffer(values: list, position: int, steps: int) -> list:
-    """Update the buffer for one iteration.
+def create_list(value: int):
+    node = [value, None]
+    node[1] = node
+    return node
 
-    Modifies the buffer list in-place and returns the new position.
+
+def get_list_values(start: list) -> list:
+    result = [start[0]]
+    if start[1] is start:
+        return result
+    node = start
+    while not node[1] is start:
+        node = node[1]
+        result.append(node[0])
+    return result
+
+
+def update_list(current: list, steps: int) -> list:
+    """Update the list for one iteration.
+
+    Seek forward through the list `steps` times, then insert a new node and
+    return it.
     """
-    value = values[position]
-    position = (position + steps) % len(values) + 1
-    values.insert(position, value + 1)
-    return position
+    value = current[0]
+    if current[1] is current:
+        node = [value + 1, current]
+        current[1] = node
+        return node
+
+    for _ in range(steps):
+        current = current[1]
+    post = current[1]
+    node = [value + 1, post]
+    current[1] = node
+    return node
 
 
 def get_final_value(steps: int, count: int) -> int:
-    buffer = [0]
-    position = 0
+    node = create_list(0)
     for _ in range(count):
-        position = update_buffer(buffer, position, steps)
-    position = (position + 1) % len(buffer)
-    return buffer[position]
+        node = update_list(node, steps)
+    return node[1][0]
 
 
 def get_value_after_zero(steps: int, count: int) -> int:
     """Update the buffer `count` times and return the value after zero."""
-    buffer = [0]
-    position = 0
-    for _ in range(count):
-        value = buffer[position]
-        position = (position + steps) % len(buffer) + 1
-        buffer.insert(position, value + 1)
-    index = buffer.index(0)
-    return buffer[(index + 1) % len(buffer)]
+    node = create_list(0)
+    for i in range(count):
+        node = update_list(node, steps)
+
+    while node[0] != 0:
+        node = node[1]
+    return node[1][0]
 
 
 def parse(stream) -> tuple:
@@ -55,6 +78,7 @@ def run(stream, test: bool = False):
         result1 = get_final_value(steps, COUNT1)
 
     with timing("Part 2"):
-        result2 = 0
+        count = 9 if test else COUNT2
+        result2 = get_value_after_zero(steps, count)
 
     return (result1, result2)
