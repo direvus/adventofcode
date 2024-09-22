@@ -142,10 +142,10 @@ def test_y2017d19():
     assert get_day_result(19) == ('ABCDEF', 38)
 
 
-# def test_y2017d20():
-#     assert get_day_result(20) == (0, 0)
-#
-#
+def test_y2017d20():
+    assert get_day_result(20) == (0, 0)
+
+
 # def test_y2017d21():
 #     assert get_day_result(21) == (0, 0)
 #
