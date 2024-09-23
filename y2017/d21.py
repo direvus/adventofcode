@@ -77,6 +77,18 @@ class Grid:
         rows = [reversed(row) for row in self.rows]
         return Grid(rows)
 
+    def get_subgrid_strings(self):
+        step = 2 if self.size % 2 == 0 else 3
+        result = []
+        for y in range(0, self.size, step):
+            line = []
+            for x in range(0, self.size, step):
+                line.append(''.join(
+                        ''.join(str(c) for c in row[x:x + step])
+                        for row in self.rows[y:y + step]))
+            result.append(line)
+        return result
+
 
 class Transform:
     def __init__(self, source, dest):
@@ -140,11 +152,37 @@ class TransformSet:
             if g.string not in self.subgrids:
                 self.prepare_subgrids(g)
 
-    def transform(self, grid: Grid) -> Grid:
-        s = grid.string
-        if s not in self.subgrids:
-            raise ValueError(f"Grid {s} not found in cached transforms")
-        return Grid(self.subgrids[s])
+    def transform(self, grid: Grid | str) -> Grid:
+        if isinstance(grid, Grid):
+            grid = grid.string
+        if grid not in self.subgrids:
+            raise ValueError(f"Grid {grid} not found in cached transforms")
+        return Grid(self.subgrids[grid])
+
+    def enhance(self, grid: Grid, count: int = 1) -> Grid:
+        """Perform `count` rounds of enhancement on the grid.
+
+        For each round of enhancement, split the grid up into subgrids of size
+        2 or 3, apply the matching transform rule to each subgrid, and create a
+        new grid by joining the transformed subgrids back together.
+
+        Return the final Grid result.
+        """
+        for i in range(count):
+            strings = grid.get_subgrid_strings()
+            rows = []
+            j = 0
+            for line in strings:
+                for s in line:
+                    sub = self.transform(s)
+                    for k in range(len(sub.rows)):
+                        if len(rows) <= j + k:
+                            rows.append(sub.rows[k])
+                        else:
+                            rows[j + k].extend(sub.rows[k])
+                j += k + 1
+            grid = Grid(rows)
+        return grid
 
 
 def parse(stream) -> TransformSet:
@@ -163,9 +201,18 @@ def run(stream, test: bool = False):
     with timing("Part 1"):
         transforms = parse(stream)
         transforms.prepare_all_subgrids()
-        result1 = 0
+
+        count = 2 if test else 5
+        grid = transforms.enhance(start, count)
+        result1 = grid.count
 
     with timing("Part 2"):
+        # Further transformations not possible with the test input
         result2 = 0
+        if not test:
+            # Part 2 requires 18 iterations, but we've already done 5
+            count = 18 - 5
+            grid = transforms.enhance(grid, count)
+            result2 = grid.count
 
     return (result1, result2)
