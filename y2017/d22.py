@@ -5,6 +5,7 @@ Day 22: Sporifica Virus
 https://adventofcode.com/2017/day/22
 """
 import logging  # noqa: F401
+from collections import defaultdict
 
 from util import timing
 
@@ -93,6 +94,69 @@ class Grid:
         return '\n'.join(result)
 
 
+class Grid2:
+    current: tuple[int, int]
+    direction: str
+    cells: dict
+
+    def __init__(self, grid: Grid = None):
+        self.current = (0, 0)
+        self.direction = 'U'
+        # 0 = clean, 1 = weak, 2 = infected, 3 = flagged
+        self.cells = defaultdict(lambda: 0)
+
+        if grid:
+            self.current = grid.current
+            self.direction = grid.direction
+            for p in grid.infected:
+                self.cells[p] = 2
+
+    def do_burst(self) -> 0 | 1:
+        """Do one burst of the virus carrier.
+
+        Return the number of nodes that were infected by this burst (either 0
+        or 1).
+        """
+        status = self.cells[self.current]
+        turns = status - 1
+        self.direction = turn(self.direction, turns)
+        status = (status + 1) % 4
+        self.cells[self.current] = status
+        self.current = move(self.current, self.direction)
+        return 1 if status == 2 else 0
+
+    def do_bursts(self, count: int) -> int:
+        """Do multiple bursts of the virus carrier.
+
+        Return the total number of cells that were infected by the burst
+        activity.
+        """
+        return sum(self.do_burst() for _ in range(count))
+
+    def to_string(self) -> str:
+        result = []
+        ys = list(x[0] for x in self.infected)
+        xs = list(x[1] for x in self.infected)
+        ys.sort()
+        xs.sort()
+        miny, maxy = ys[0], ys[-1]
+        minx, maxx = xs[0], xs[-1]
+
+        for y in range(miny - 1, maxy + 2):
+            row = []
+            for x in range(minx - 1, maxx + 2):
+                infected = (y, x) in self.infected
+                current = (y, x) == self.current
+                if current:
+                    ch = '*' if infected else '_'
+                else:
+                    ch = '#' if infected else '.'
+                row.append(ch)
+            result.append(''.join(row))
+        result.append('')
+        return '\n'.join(result)
+
+
 def parse(stream) -> Grid:
     grid = Grid()
     y = 0
@@ -115,9 +179,11 @@ def parse(stream) -> Grid:
 def run(stream, test: bool = False):
     with timing("Part 1"):
         grid = parse(stream)
+        grid2 = Grid2(grid)
         result1 = grid.do_bursts(10_000)
 
     with timing("Part 2"):
-        result2 = 0
+        count = 100 if test else 10_000_000
+        result2 = grid2.do_bursts(count)
 
     return (result1, result2)
