@@ -158,9 +158,9 @@ def test_y2017d23():
     assert get_day_result(23) == (2, 903)
 
 
-# def test_y2017d24():
-#     assert get_day_result(24) == (0, 0)
-#
-#
+def test_y2017d24():
+    assert get_day_result(24) == (31, 19)
+
+
 # def test_y2017d25():
 #     assert get_day_result(25) == (0, 0)

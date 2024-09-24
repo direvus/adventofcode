@@ -11,15 +11,6 @@ from collections import defaultdict
 from util import timing, is_prime
 
 
-DIRECTIONS = ('U', 'R', 'D', 'L')
-VECTORS = {
-        'U': (-1, 0),
-        'D': (1, 0),
-        'L': (0, -1),
-        'R': (0, 1),
-        }
-
-
 def parse_program(stream) -> tuple:
     program = []
     for line in stream:
