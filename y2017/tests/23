@@ -1,0 +1,4 @@
+set a 2
+sub a 1
+mul b a
+jnz a -2
