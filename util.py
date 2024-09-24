@@ -125,3 +125,11 @@ class PriorityQueue:
                 return entry
             self.deleted.discard(id(entry))
         raise KeyError('Cannot pop from empty priority queue')
+
+
+@jit
+def is_prime(value: int) -> bool:
+    for n in range(2, value ** 0.5 + 1):
+        if value % n == 0:
+            return False
+    return True

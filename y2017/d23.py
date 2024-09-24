@@ -8,7 +8,7 @@ import logging  # noqa: F401
 import string
 from collections import defaultdict
 
-from util import timing
+from util import timing, is_prime
 
 
 DIRECTIONS = ('U', 'R', 'D', 'L')
@@ -94,9 +94,8 @@ class Computer:
         length = len(self.program)
         while self.pointer >= 0 and self.pointer < length:
             index = self.pointer
-            inst, ops = self.program[self.pointer]
+            inst, ops = self.program[index]
             self.do_instruction(inst, ops)
-
             self.counter += 1
 
             if watch == inst:
@@ -110,11 +109,19 @@ class Computer:
 
 def run(stream, test: bool = False):
     with timing("Part 1"):
-        comp = Computer()
-        comp.parse(stream)
-        result1 = comp.run_program('mul')
+        comp1 = Computer()
+        comp1.parse(stream)
+        result1 = comp1.run_program('mul')
 
     with timing("Part 2"):
+        comp2 = Computer()
+        comp2.program = comp1.program
+        comp2.registers['a'] = 1
+        # Don't run the actual program, just count the number of primes from
+        # 108400 to 125400 stepping up by 17.
         result2 = 0
+        for n in range(108_400, 125_401, 17):
+            if not is_prime(n):
+                result2 += 1
 
     return (result1, result2)
