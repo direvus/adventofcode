@@ -22,16 +22,10 @@ def test_y2018d02():
     assert get_day_result(2) == (12, 'abcde')
 
 
-#def test_y2018d03():
-#    from y2018.d03 import find_distance
-#    assert find_distance(1) == 0
-#    assert find_distance(12) == 3
-#    assert find_distance(23) == 2
-#    assert find_distance(1024) == 31
-#
-#    assert get_day_result(3) == (31, 1968)
-#
-#
+def test_y2018d03():
+    assert get_day_result(3) == (4, 0)
+
+
 #def test_y2018d04():
 #    assert get_day_result(4) == (7, 5)
 #
