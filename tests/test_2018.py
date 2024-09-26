@@ -32,3 +32,7 @@ def test_y2018d04():
 
 def test_y2018d05():
     assert get_day_result(5) == (10, 4)
+
+
+def test_y2018d06():
+    assert get_day_result(6) == (0, 0)
