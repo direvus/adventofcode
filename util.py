@@ -58,6 +58,10 @@ class Direction(Enum):
         return 'S'
 
 
+INF = float('inf')
+NINF = float('-inf')
+
+
 Point = namedtuple('point', ['y', 'x'])
 
 

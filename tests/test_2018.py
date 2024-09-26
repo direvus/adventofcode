@@ -26,10 +26,10 @@ def test_y2018d03():
     assert get_day_result(3) == (4, 3)
 
 
-#def test_y2018d04():
-#    assert get_day_result(4) == (7, 5)
-#
-#
+def test_y2018d04():
+    assert get_day_result(4) == (240, 4455)
+
+
 #def test_y2018d05():
 #    assert get_day_result(5) == (5, 10)
 #
