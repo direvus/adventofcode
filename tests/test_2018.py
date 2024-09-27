@@ -36,3 +36,7 @@ def test_y2018d05():
 
 def test_y2018d06():
     assert get_day_result(6) == (17, 16)
+
+
+def test_y2018d07():
+    assert get_day_result(7) == ('CABDFE', 15)
