@@ -16,14 +16,22 @@ export AOC_YEAR="$yyyy"
 export AOC_DAY="$d"
 export AOC_DD="$dd"
 
-touch "y$yyyy/tests/$dd"
-sed "s/_YEAR_/$yyyy/; s/_DAY_/$d/" skeleton.py > "y$yyyy/d$dd.py"
+mkdir -p "y$yyyy/tests" "y$yyyy/inputs"
 
-if ! fgrep -q "test_y${yyyy}d${dd}" "tests/test_$yyyy.py"; then
+testsfile="tests/test_${yyyy}.py"
+scriptfile="y$yyyy/d$dd.py"
+testinputfile="y$yyyy/tests/$dd"
+
+touch "$testinputfile"
+if [ ! -f "$scriptfile" ]; then
+    sed "s/_YEAR_/$yyyy/; s/_DAY_/$d/" skeleton.py > "$scriptfile"
+fi
+
+if ! fgrep -q "test_y${yyyy}d${dd}" "$testsfile"; then
     echo -e "
 
 def test_y${yyyy}d${dd}():
-    assert get_day_result($d) == (0, 0)" >> "tests/test_${yyyy}.py"
+    assert get_day_result($d) == (0, 0)" >> "$testsfile"
 fi
 
-git add -N "y$yyyy/tests/$dd" "y$yyyy/d$dd.py"
+git add -N "$testinputfile" "$scriptfile"
