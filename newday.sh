@@ -10,7 +10,7 @@
 # from the skeleton for the day, and schedule files to be added to git.
 yyyy="$1"
 d="$2"
-dd="$(printf %02d $AOC_DAY)"
+dd="$(printf %02d $d)"
 
 export AOC_YEAR="$yyyy"
 export AOC_DAY="$d"
