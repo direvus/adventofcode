@@ -7,7 +7,7 @@ https://adventofcode.com/2018/day/6
 import logging  # noqa: F401
 from collections import defaultdict
 
-from util import timing, INF, NINF, get_manhattan_distance
+from util import timing, get_manhattan_distance
 
 
 def parse(stream) -> tuple:
@@ -50,13 +50,7 @@ def get_distances(point: tuple, points: tuple) -> list:
 
 
 def find_finite_regions(points: tuple) -> dict:
-    miny = INF
-    minx = INF
-    maxy = NINF
-    maxx = NINF
-
     hull = get_convex_hull(points)
-    logging.debug(hull)
     xs = tuple(p[0] for p in hull)
     ys = tuple(p[1] for p in hull)
     minx = min(xs) - 1
@@ -100,6 +94,34 @@ def find_largest_region(points: tuple) -> int:
     return max(len(x) for x in regions.values())
 
 
+def is_within(target: tuple, points: tuple, limit: int) -> bool:
+    """Return whether the total distance to all points is below `limit`."""
+    total = 0
+    for p in points:
+        total += get_manhattan_distance(target, p)
+        if total >= limit:
+            return False
+    return True
+
+
+def find_nearest_region(points: tuple, limit: int) -> int:
+    """Get the number of locations with total distance below `limit`."""
+    xs = tuple(p[0] for p in points)
+    ys = tuple(p[1] for p in points)
+    minx = min(xs) - 1
+    maxx = max(xs) + 1
+    miny = min(ys) - 1
+    maxy = max(ys) + 1
+
+    region = set()
+    for x in range(minx, maxx + 1):
+        for y in range(miny, maxy + 1):
+            p = (x, y)
+            if is_within(p, points, limit):
+                region.add(p)
+    return len(region)
+
+
 def run(stream, test: bool = False):
     with timing("Part 1"):
         points = parse(stream)
@@ -107,6 +129,6 @@ def run(stream, test: bool = False):
 
     with timing("Part 2"):
         limit = 32 if test else 10_000
-        result2 = 0
+        result2 = find_nearest_region(points, limit)
 
     return (result1, result2)
