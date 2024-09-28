@@ -64,3 +64,12 @@ def test_y2018d10():
             '.#...#..###.\n'
             '............')
     assert r2 == 3
+
+
+def test_y2018d11():
+    from y2018.d11 import Grid
+    assert Grid(8).get_power_level((3, 5)) == 4
+    assert Grid(57).get_power_level((122, 79)) == -5
+    assert Grid(39).get_power_level((217, 196)) == 0
+    assert Grid(71).get_power_level((101, 153)) == 4
+    assert get_day_result(11) == ((33, 45), (90, 269, 16))
