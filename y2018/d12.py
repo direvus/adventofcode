@@ -57,6 +57,15 @@ def run(stream, test: bool = False):
         result1 = farm.sum
 
     with timing("Part 2"):
-        result2 = 0
+        farm.run(79)
+        # After a hundred generations, both the test and actual inputs have
+        # settled into stable linear patterns, so we can extrapolate out for
+        # any future generation number.
+        total1 = farm.sum
+        farm.update()
+        total2 = farm.sum
+        diff = total2 - total1
+        logging.debug(f"Sum is increasing by {diff} per generation")
+        result2 = total2 + diff * (50_000_000_000 - 100)
 
     return (result1, result2)
