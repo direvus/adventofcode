@@ -9,38 +9,30 @@ import logging  # noqa: F401
 from util import timing, NINF
 
 
-def get_square_power(levels: tuple, topleft: tuple, size: int) -> int:
-    x, y = topleft
-    result = 0
-    for i in range(y, y + size):
-        result += sum(levels[i][x: x + size])
-    return result
-
-
-def get_highest_square(levels: tuple, size: int = 3) -> tuple:
-    best = NINF
-    result = None
-    length = len(levels)
-    for y in range(length - size + 1):
-        for x in range(length - size + 1):
-            power = get_square_power(levels, (x, y), size)
-            if power > best:
-                best = power
-                result = (x, y, power)
-    return result
-
-
 class Grid:
     def __init__(self, serial: int, size: int = 300):
         self.size = size
         self.serial = serial
         levels = []
+        sums = []
         for y in range(self.size):
             row = []
+            sumrow = []
             for x in range(self.size):
-                row.append(self.get_power_level((x, y)))
+                power = self.get_power_level((x, y))
+                row.append(power)
+                total = power
+                if x > 0:
+                    total += sumrow[-1]
+                if y > 0:
+                    total += sums[-1][x]
+                    if x > 0:
+                        total -= sums[-1][x - 1]
+                sumrow.append(total)
             levels.append(tuple(row))
+            sums.append(tuple(sumrow))
         self.levels = tuple(levels)
+        self.sums = tuple(sums)
 
     def get_power_level(self, cell: tuple) -> int:
         x, y = cell
@@ -50,10 +42,30 @@ class Grid:
         return hundreds - 5
 
     def get_square_power(self, topleft: tuple, size: int) -> int:
-        return get_square_power(self.levels, topleft, size)
+        x, y = topleft
+        if size == 1:
+            return self.levels[y][x]
+        x0, y0 = x - 1, y - 1
+        x1, y1 = x + size - 1, y + size - 1
+        result = self.sums[y1][x1]
+        if x > 0:
+            result -= self.sums[y1][x0]
+        if y > 0:
+            result -= self.sums[y0][x1]
+            if x > 0:
+                result += self.sums[y0][x0]
+        return result
 
     def get_highest_square(self, size: int = 3) -> tuple:
-        return get_highest_square(self.levels, size)
+        best = NINF
+        result = None
+        for y in range(self.size - size + 1):
+            for x in range(self.size - size + 1):
+                power = self.get_square_power((x, y), size)
+                if power > best:
+                    best = power
+                    result = (x, y, power)
+        return result
 
     def get_highest_any_square(self) -> tuple:
         best = NINF
