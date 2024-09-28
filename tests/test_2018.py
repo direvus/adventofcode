@@ -74,3 +74,7 @@ def test_y2018d11():
     assert Grid(71).get_power_level((101, 153)) == 4
     assert Grid(42).get_square_power((21, 61), 3) == 30
     assert get_day_result(11) == ((33, 45), (90, 269, 16))
+
+
+def test_y2018d12():
+    assert get_day_result(12) == (325, 0)
