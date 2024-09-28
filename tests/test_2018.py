@@ -78,3 +78,7 @@ def test_y2018d11():
 
 def test_y2018d12():
     assert get_day_result(12) == (325, 999999999374)
+
+
+def test_y2018d13():
+    assert get_day_result(13) == ((7, 3), (6, 4))
