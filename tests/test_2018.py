@@ -96,3 +96,7 @@ def test_y2018d14():
     Board((3, 7), (0, 1)).get_count_before(92510) == 18
     Board((3, 7), (0, 1)).get_count_before(59414) == 2018
     assert get_day_result(14) == ('5158916779', 18)
+
+
+def test_y2018d15():
+    assert get_day_result(15) == (0, 0)
