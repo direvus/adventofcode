@@ -25,13 +25,18 @@ class Unit:
         self.power = power
         self.health = health
 
+    def __str__(self):
+        side = 'Elf' if self.side else 'Goblin'
+        return f'{side} #{self.key}'
+
 
 class Game:
-    def __init__(self):
+    def __init__(self, grid: str = ''):
         self.walls = set()
         self.occupied = set()
         self.units = defaultdict(dict)
-        self.distance = defaultdict(lambda: defaultdict(lambda: INF))
+        if grid:
+            self.parse(grid.split('\n'))
 
     def parse(self, stream):
         y = 0
@@ -46,9 +51,9 @@ class Game:
                     case 'E' | 'G':
                         side = ch == 'E'
                         unit = Unit(unitkey, side, pos)
-                        unitkey += 1
                         self.units[side][unitkey] = unit
                         self.occupied.add(pos)
+                        unitkey += 1
             y += 1
 
     @property
@@ -58,6 +63,35 @@ class Game:
     @property
     def goblins(self):
         return self.units[False].values()
+
+    @property
+    def total_health(self) -> int:
+        """Return the total health of all remaining units."""
+        return (
+                sum(x.health for x in self.elves) +
+                sum(x.health for x in self.goblins))
+
+    def to_string(self) -> str:
+        lines = []
+        maxy = max(x[0] for x in self.walls)
+        maxx = max(x[1] for x in self.walls)
+        elves = {x.position for x in self.elves}
+        goblins = {x.position for x in self.goblins}
+        for y in range(maxy + 1):
+            line = []
+            for x in range(maxx + 1):
+                p = (y, x)
+                if p in self.walls:
+                    ch = '#'
+                elif p in elves:
+                    ch = 'E'
+                elif p in goblins:
+                    ch = 'G'
+                else:
+                    ch = ' '
+                line.append(ch)
+            lines.append(''.join(line))
+        return '\n'.join(lines) + '\n'
 
     def find_targets(self, unit: Unit) -> list:
         targets = self.units[not unit.side].values()
@@ -75,14 +109,11 @@ class Game:
         Return the number of steps in the shortest path, or None if the goal is
         not reachable.
 
-        Retain the shortest distance to each point we explore in an instance
-        attribute of the Game, so we can avoid re-calculating them later.
-
         If the path cost exceeds `limit`, give up and return None.
         """
         q = PriorityQueue()
         q.push(start, get_manhattan_distance(start, goal))
-        dist = self.distance[start]
+        dist = defaultdict(lambda: INF)
         dist[start] = 0
         explored = set()
 
@@ -90,6 +121,9 @@ class Game:
             cost, node = q.pop()
             if node == goal:
                 return cost
+
+            if cost > limit:
+                return None
 
             for n in self.get_neighbours(node):
                 score = dist[node] + 1
@@ -143,7 +177,7 @@ class Game:
         choices = []
         for n in self.get_neighbours(start):
             cost = self.find_path(n, goal, best)
-            if cost is not None and cost < best:
+            if cost is not None and cost <= best:
                 best = cost
                 choices.append((cost, n))
         choices.sort()
@@ -171,7 +205,6 @@ class Game:
         adjacent = get_adjacent(unit.position)
         target_positions = {x.position for x in targets}
         if target_positions & adjacent:
-            logging.debug(f"Not moving {unit.key}, already in range")
             return False
 
         target_adjacencies = set()
@@ -179,41 +212,92 @@ class Game:
             target_adjacencies |= get_adjacent(pos)
         target_adjacencies -= (self.walls | self.occupied)
         if not target_adjacencies:
-            logging.debug(f"Not moving {unit.key}, nowhere to go")
+            logging.debug(f"Not moving {unit}, nowhere to go")
             return False
 
         goal = self.select_move(unit.position, target_adjacencies)
         if goal is None:
-            logging.debug(f"Not moving {unit.key}, cannot reach")
+            logging.debug(f"Not moving {unit}, cannot reach")
             return False
 
         pos = self.select_step(unit.position, goal)
-        logging.debug(f"Moving {unit.key} {unit.position} -> {pos}")
+        logging.debug(f"Moving {unit} {unit.position} -> {pos}")
         self.occupied.discard(unit.position)
         self.occupied.add(pos)
         unit.position = pos
         return True
 
+    def do_attack(self, unit: Unit, targets: list[Unit]) -> int:
+        """Perform this unit's attack.
+
+        Select the adjacent target that has the lowest health, breaking ties by
+        reading order. Deal damage equal to the unit's attack power, removing
+        the target if its health goes to zero or lower.
+
+        Return the amount of damage the unit inflicted.
+        """
+        adjacent = get_adjacent(unit.position)
+        targets = {x for x in targets if x.position in adjacent}
+        if not targets:
+            return 0
+
+        if len(targets) == 1:
+            target = next(iter(targets))
+        else:
+            choices = list(targets)
+            choices.sort(key=lambda x: (x.health, x.position))
+            target = choices[0]
+
+        logging.debug(
+                f"{unit} attacks {target} at {target.position}")
+        target.health -= unit.power
+        if target.health <= 0:
+            logging.debug(f"{target} is defeated.")
+            del self.units[target.side][target.key]
+            self.occupied.discard(target.position)
+        return unit.power
+
     def do_round(self) -> bool:
         """Do a round of combat.
 
-        Return whether the game has ended during this round.
+        Return whether the game is still active and should continue after this
+        round.
         """
         units = list(self.elves) + list(self.goblins)
         units.sort(key=lambda x: x.position)
         for unit in units:
+            if unit.key not in self.units[unit.side]:
+                # The unit must have been defeated in this round
+                continue
             targets = self.find_targets(unit)
             if not targets:
+                logging.debug(f"{unit} has nothing to fight, game over.")
                 return False
             self.do_move(unit, targets)
+            self.do_attack(unit, targets)
+        return True
+
+    def run(self) -> int:
+        """Run the game until it ends.
+
+        Return the number of rounds that were completed.
+        """
+        rounds = 0
+        active = True
+        while active:
+            logging.debug(f"--- BEGIN ROUND {rounds + 1} ---")
+            active = self.do_round()
+            if active:
+                rounds += 1
+        return rounds
 
 
 def run(stream, test: bool = False):
     with timing("Part 1"):
         game = Game()
         game.parse(stream)
-        game.do_round()
-        result1 = 0
+        rounds = game.run()
+        result1 = rounds * game.total_health
 
     with timing("Part 2"):
         result2 = 0

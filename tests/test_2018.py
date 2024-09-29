@@ -99,4 +99,88 @@ def test_y2018d14():
 
 
 def test_y2018d15():
-    assert get_day_result(15) == (0, 0)
+    from y2018.d15 import Game
+    g = Game(
+            "#########\n"
+            "#G..G..G#\n"
+            "#.......#\n"
+            "#.......#\n"
+            "#G..E..G#\n"
+            "#.......#\n"
+            "#.......#\n"
+            "#G..G..G#\n"
+            "#########\n")
+    g.do_round()
+    assert {x.position for x in g.elves} == {(3, 4)}
+    assert {x.position for x in g.goblins} == {
+            (1, 2), (1, 6), (2, 4), (3, 7),
+            (4, 2), (6, 1), (6, 4), (6, 7)}
+    g.do_round()
+    assert {x.position for x in g.elves} == {(3, 4)}
+    assert {x.position for x in g.goblins} == {
+            (1, 3), (1, 5), (2, 4), (3, 6),
+            (3, 2), (5, 1), (5, 4), (5, 7)}
+
+    g = Game(
+            "#######\n"
+            "#G..#E#\n"
+            "#E#E.E#\n"
+            "#G.##.#\n"
+            "#...#E#\n"
+            "#...E.#\n"
+            "#######\n")
+    rounds = g.run()
+    assert rounds == 37
+    assert g.total_health == 982
+
+    g = Game(
+            "#######\n"
+            "#E..EG#\n"
+            "#.#G.E#\n"
+            "#E.##E#\n"
+            "#G..#.#\n"
+            "#..E#.#\n"
+            "#######\n")
+    rounds = g.run()
+    assert rounds == 46
+    assert g.total_health == 859
+
+    g = Game(
+            "#######\n"
+            "#E.G#.#\n"
+            "#.#G..#\n"
+            "#G.#.G#\n"
+            "#G..#.#\n"
+            "#...E.#\n"
+            "#######\n")
+    rounds = g.run()
+    assert rounds == 35
+    assert g.total_health == 793
+
+    g = Game(
+            "#######\n"
+            "#.E...#\n"
+            "#.#..G#\n"
+            "#.###.#\n"
+            "#E#G#G#\n"
+            "#...#G#\n"
+            "#######\n")
+    rounds = g.run()
+    assert rounds == 54
+    assert g.total_health == 536
+
+    g = Game(
+            "#########\n"
+            "#G......#\n"
+            "#.E.#...#\n"
+            "#..##..G#\n"
+            "#...##..#\n"
+            "#...#...#\n"
+            "#.G...G.#\n"
+            "#.....G.#\n"
+            "#########\n")
+    rounds = g.run()
+    assert rounds == 20
+    assert g.total_health == 937
+
+    assert get_day_result(15) == (27730, 0)
