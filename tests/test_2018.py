@@ -82,3 +82,17 @@ def test_y2018d12():
 
 def test_y2018d13():
     assert get_day_result(13) == ((7, 3), (6, 4))
+
+
+def test_y2018d14():
+    from y2018.d14 import Board
+    board = Board((3, 7), (0, 1))
+    board.get_scores(5, 10) == (0, 1, 2, 4, 5, 1, 5, 8, 9, 1)
+    board.get_scores(18, 10) == (9, 2, 5, 1, 0, 7, 1, 0, 8, 5)
+    board.get_scores(2018, 10) == (5, 9, 4, 1, 4, 2, 9, 8, 8, 2)
+
+    Board((3, 7), (0, 1)).get_count_before(51589) == 9
+    Board((3, 7), (0, 1)).get_count_before('01245') == 5
+    Board((3, 7), (0, 1)).get_count_before(92510) == 18
+    Board((3, 7), (0, 1)).get_count_before(59414) == 2018
+    assert get_day_result(14) == ('5158916779', 18)

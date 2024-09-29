@@ -137,3 +137,13 @@ def is_prime(value: int) -> bool:
         if value % n == 0:
             return False
     return True
+
+
+def get_digits(value: int) -> tuple:
+    digits = []
+    if value == 0:
+        return (0,)
+    while value > 0:
+        value, mod = divmod(value, 10)
+        digits.append(mod)
+    return tuple(reversed(digits))
