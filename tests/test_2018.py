@@ -120,6 +120,11 @@ def test_y2018d15():
     assert {x.position for x in g.goblins} == {
             (1, 3), (1, 5), (2, 4), (3, 6),
             (3, 2), (5, 1), (5, 4), (5, 7)}
+    g.do_round()
+    assert {x.position for x in g.elves} == {(3, 4)}
+    assert {x.position for x in g.goblins} == {
+            (2, 3), (2, 4), (2, 5), (3, 3),
+            (3, 5), (4, 1), (4, 4), (5, 7)}
 
     g = Game(
             "#######\n"
@@ -183,4 +188,4 @@ def test_y2018d15():
     assert rounds == 20
     assert g.total_health == 937
 
-    assert get_day_result(15) == (27730, 0)
+    assert get_day_result(15) == (27730, 4988)

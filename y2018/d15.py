@@ -6,6 +6,7 @@ https://adventofcode.com/2018/day/15
 """
 import logging  # noqa: F401
 from collections import defaultdict
+from copy import deepcopy
 
 from util import get_manhattan_distance, timing, INF, PriorityQueue
 
@@ -35,6 +36,7 @@ class Game:
         self.walls = set()
         self.occupied = set()
         self.units = defaultdict(dict)
+        self.initial_units = {}
         if grid:
             self.parse(grid.split('\n'))
 
@@ -55,6 +57,13 @@ class Game:
                         self.occupied.add(pos)
                         unitkey += 1
             y += 1
+        self.initial_units = deepcopy(self.units)
+
+    def reset(self):
+        self.units = deepcopy(self.initial_units)
+        self.occupied = (
+                {x.position for x in self.elves} |
+                {x.position for x in self.goblins})
 
     @property
     def elves(self):
@@ -155,15 +164,15 @@ class Game:
         # cycles, once we have found a shortest path, abandon any goals that
         # can't be resolved in fewer steps. In the worst case, the goal with
         # the shortest manhattan will be unreachable, then we will end up
-        # exploring the entire space. But at least we will have cached those
-        # results for the next attempt.
+        # exploring the entire space.
         goals = list(goals)
         goals.sort(key=lambda x: (get_manhattan_distance(start, x), x))
         for goal in goals:
             cost = self.find_path(start, goal, best)
-            if cost is not None and cost < best:
-                result = goal
-                best = cost
+            if cost is not None:
+                if cost < best or (cost == best and goal < result):
+                    result = goal
+                    best = cost
         return result
 
     def select_step(self, start: tuple, goal: tuple) -> tuple:
@@ -277,18 +286,53 @@ class Game:
             self.do_attack(unit, targets)
         return True
 
-    def run(self) -> int:
-        """Run the game until it ends.
+    def run(self, complete: bool = True) -> int:
+        """Run the game.
+
+        When `complete` is true, continue executing rounds of combat until one
+        side is completely defeated. Otherwise, stop the game immediately any
+        time an individual elf is defeated.
 
         Return the number of rounds that were completed.
         """
         rounds = 0
         active = True
+        num_elves = len(self.initial_units[True])
         while active:
             logging.debug(f"--- BEGIN ROUND {rounds + 1} ---")
             active = self.do_round()
+            if not complete and len(self.elves) < num_elves:
+                logging.debug("Ending early because an elf has died")
+                return rounds
             if active:
                 rounds += 1
+        return rounds
+
+    def set_elf_power(self, power: int):
+        for unit in self.elves:
+            unit.power = power
+
+    def find_attack_power(self) -> int:
+        """Find the lowest attack power for a total elf victory.
+
+        A total elf victory means that the elves win and none of them are
+        killed.
+
+        Return the number of rounds of the successful game.
+        """
+        power = 3
+        win = False
+        target = len(self.initial_units[True])
+        while not win:
+            power += 1
+            self.reset()
+            self.set_elf_power(power)
+            rounds = self.run(False)
+            result = len(self.elves)
+            logging.info(
+                    f"At {power} power, {result}/{target} elves "
+                    f"survive after {rounds} rounds")
+            win = result == target
         return rounds
 
 
@@ -300,6 +344,7 @@ def run(stream, test: bool = False):
         result1 = rounds * game.total_health
 
     with timing("Part 2"):
-        result2 = 0
+        rounds = game.find_attack_power()
+        result2 = rounds * game.total_health
 
     return (result1, result2)
