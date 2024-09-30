@@ -189,3 +189,10 @@ def test_y2018d15():
     assert g.total_health == 937
 
     assert get_day_result(15) == (27730, 4988)
+
+
+def test_y2018d16():
+    from y2018.d16 import find_matching_instructions
+    assert find_matching_instructions(
+            (3, 2, 1, 1), (2, 1, 2), (3, 2, 2, 1)) == {'mulr', 'addi', 'seti'}
+    assert get_day_result(16) == (1, 0)
