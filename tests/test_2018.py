@@ -196,3 +196,7 @@ def test_y2018d16():
     assert find_matching_instructions(
             (3, 2, 1, 1), (2, 1, 2), (3, 2, 2, 1)) == {'mulr', 'addi', 'seti'}
     assert get_day_result(16) == (1, 0)
+
+
+def test_y2018d17():
+    assert get_day_result(17) == (57, 0)
