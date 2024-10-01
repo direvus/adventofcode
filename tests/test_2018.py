@@ -215,3 +215,7 @@ def test_y2018d17():
     grid.do_flow()
     assert grid.count_water() == 66
     assert get_day_result(17) == (57, 29)
+
+
+def test_y2018d18():
+    assert get_day_result(18) == (1147, 0)
