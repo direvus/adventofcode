@@ -1,5 +1,6 @@
 import importlib
 import os
+from io import StringIO
 
 
 YEAR = 2018
@@ -199,4 +200,18 @@ def test_y2018d16():
 
 
 def test_y2018d17():
-    assert get_day_result(17) == (57, 0)
+    from y2018.d17 import Grid
+    s = StringIO("""x=494, y=3..9
+        x=503, y=3..9
+        y=9, x=494..503
+        x=497, y=5..7
+        x=499, y=5..7
+        y=5, x=497..499
+        y=7, x=497..499
+        x=506, y=1..2
+        """)
+    grid = Grid()
+    grid.parse(s)
+    grid.do_flow()
+    assert grid.count_water() == 66
+    assert get_day_result(17) == (57, 29)

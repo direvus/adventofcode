@@ -6,7 +6,7 @@ https://adventofcode.com/2018/day/17
 """
 import logging  # noqa: F401
 
-from util import timing
+from util import timing, INF
 
 
 class Grid:
@@ -15,12 +15,14 @@ class Grid:
         self.clay = set()
         self.fill = set()
         self.flow = set()
-        self.miny = 0
+        self.miny = INF
         self.maxy = 0
 
     def parse(self, stream):
         for line in stream:
             line = line.strip()
+            if line == '':
+                break
             parts = line.split(', ')
             fixed, value = parts[0].split('=')
             value = int(value)
@@ -83,7 +85,7 @@ class Grid:
         """
         q = [self.source]
         while q:
-            x, y = q.pop(0)
+            x, y = q.pop()
             if y + 1 > self.maxy:
                 # Abandon this flow.
                 continue
@@ -100,20 +102,49 @@ class Grid:
                     squares = set(lsquares) | set(rsquares) | {(x, y)}
                     self.fill |= squares
                     self.flow -= squares
-                    if y - 1 > self.miny:
-                        q.append((x, y - 1))
+                    self.flow.add((x, y - 1))
+                    q.append((x, y - 1))
                 if lfall:
                     q.append(lsquares[-1])
                 if rfall:
                     q.append(rsquares[-1])
             else:
                 # Empty space, continue falling.
-                self.flow.add(new)
+                if y + 1 >= self.miny:
+                    self.flow.add(new)
                 q.append(new)
 
     def count_water(self) -> int:
         """Return the total number of cells that have water."""
         return len(self.fill | self.flow)
+
+    def count_fill(self) -> int:
+        """Return the total number of cells that have filled water."""
+        return len(self.fill)
+
+    def to_string(self) -> str:
+        result = []
+        xs = {x for x, y in self.clay | self.flow | self.fill}
+        minx = min(xs)
+        maxx = max(xs)
+        for y in range(self.miny, self.maxy + 1):
+            cells = []
+            for x in range(minx, maxx + 1):
+                p = (x, y)
+                if p in self.clay:
+                    ch = '#'
+                elif p in self.fill:
+                    ch = '~'
+                elif p in self.flow:
+                    ch = '|'
+                else:
+                    ch = ' '
+                cells.append(ch)
+            line = ''.join(cells)
+            if '| |' in line:
+                logging.debug("Gap at {y}")
+            result.append(line)
+        return '\n'.join(result) + '\n'
 
 
 def run(stream, test: bool = False):
@@ -124,6 +155,6 @@ def run(stream, test: bool = False):
         result1 = grid.count_water()
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = grid.count_fill()
 
     return (result1, result2)
