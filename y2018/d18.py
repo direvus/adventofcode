@@ -14,6 +14,8 @@ class Grid:
         self.size = size
         self.woods = set()
         self.yards = set()
+        self.counter = 0
+        self.history = [(self.woods, self.yards)]
 
     def parse(self, stream):
         y = 0
@@ -28,6 +30,7 @@ class Grid:
         return stream.readline().strip()
 
     def update(self):
+        self.counter += 1
         newwoods = set()
         newyards = set()
 
@@ -61,10 +64,30 @@ class Grid:
                         newwoods.add(p)
         self.woods = newwoods
         self.yards = newyards
+        self.history.append((self.woods, self.yards))
 
     def run(self, count: int):
-        for i in range(count):
+        while self.counter < count:
             self.update()
+
+    def find_cycle(self) -> tuple:
+        while self.woods:
+            self.update()
+            entry = (self.woods, self.yards)
+            if entry in self.history[:-1]:
+                index = self.history.index(entry)
+                logging.info(
+                        f"Found a cycle between update {self.counter} "
+                        f"and {index}")
+                return (index, self.counter)
+
+    def predict(self, count: int) -> int:
+        start, end = self.find_cycle()
+        diff = count - start
+        period = end - start
+        index = start + (diff % period)
+        woods, yards = self.history[index]
+        return len(woods) * len(yards)
 
     @property
     def total_resource(self) -> int:
@@ -96,5 +119,8 @@ def run(stream, test: bool = False):
 
     with timing("Part 2"):
         result2 = 0
+        if not test:
+            # The test case does not cycle so we can't solve it this way.
+            result2 = grid.predict(1_000_000_000)
 
     return (result1, result2)
