@@ -219,3 +219,7 @@ def test_y2018d17():
 
 def test_y2018d18():
     assert get_day_result(18) == (1147, 0)
+
+
+def test_y2018d19():
+    assert get_day_result(19) == (6, 6)

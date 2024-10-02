@@ -139,6 +139,17 @@ def is_prime(value: int) -> bool:
     return True
 
 
+@jit
+def get_divisors(value: int) -> set:
+    result = {1, value}
+    for n in range(2, value ** 0.5 + 1):
+        div, mod = divmod(value, n)
+        if mod == 0:
+            result.add(div)
+            result.add(n)
+    return result
+
+
 def get_digits(value: int) -> tuple:
     digits = []
     if value == 0:
