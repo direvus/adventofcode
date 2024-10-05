@@ -223,3 +223,34 @@ def test_y2018d18():
 
 def test_y2018d19():
     assert get_day_result(19) == (6, 6)
+
+
+def test_y2018d20():
+    from y2018.d20 import Exp, Graph
+    g = Graph()
+    g.parse('^WNE$')
+    assert g.find_furthest_path() == 3
+
+    e = Exp()
+    e.parse('^ENWWW(NEEE|SSE(EE|N))$')
+    assert e.nodes == {0: 'ENWWW', 1: 'NEEE', 2: 'SSE', 3: 'EE', 4: 'N', 5: ''}
+    assert e.children == {0: {1, 2}, 2: {3, 4}, 3: {5}, 4: {5}}
+    g = Graph()
+    g.build(e)
+    assert g.find_furthest_path() == 10
+
+    g = Graph()
+    g.parse('^ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN$')
+    assert g.find_furthest_path() == 18
+
+    g = Graph()
+    g.parse('^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$')
+    assert g.find_furthest_path() == 23
+
+    g = Graph()
+    g.parse(
+            '^WSSEESWWWNW(S|NENNEEEENN'
+            '(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$')
+    assert g.find_furthest_path() == 31
+
+    assert get_day_result(20) == (18, 0)
