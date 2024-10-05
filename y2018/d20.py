@@ -148,11 +148,14 @@ class Graph:
 
         The furthest node is the one whose shortest path from `start` is the
         longest overall.
+
+        Shortest distance to each target node is captured in `self.dist` for
+        later reference.
         """
         # Use a Dijkstra to get the shortest distance to each node in the
         # graph, and then return the largest one.
-        dist = defaultdict(lambda: INF)
-        dist[start] = 0
+        self.dist = defaultdict(lambda: INF)
+        self.dist[start] = 0
         q = PriorityQueue()
         explored = set()
         q.push(start, 0)
@@ -163,11 +166,20 @@ class Graph:
             for n in self.get_neighbours(node):
                 if n in explored:
                     continue
-                if score < dist[n]:
-                    dist[n] = score
+                if score < self.dist[n]:
+                    self.dist[n] = score
                     q.set_priority(n, score)
             explored.add(node)
-        return max(x for x in dist.values() if x < INF)
+        return max(x for x in self.dist.values() if x < INF)
+
+    def count_rooms(self, minlength: int) -> int:
+        """Return the number of rooms at least `minlength` steps away.
+
+        Assumes that you have already run find_furthest_path() from the desired
+        starting point, so the distances will already be calculated in
+        `self.dist`.
+        """
+        return sum(1 for x in self.dist.values() if x < INF and x >= minlength)
 
 
 def run(stream, test: bool = False):
@@ -177,6 +189,6 @@ def run(stream, test: bool = False):
         result1 = g.find_furthest_path()
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = g.count_rooms(1000)
 
     return (result1, result2)
