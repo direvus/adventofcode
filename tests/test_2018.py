@@ -254,3 +254,8 @@ def test_y2018d20():
     assert g.find_furthest_path() == 31
 
     assert get_day_result(20) == (18, 0)
+
+
+def test_y2018d21():
+    # Nothing really to test with this one.
+    assert get_day_result(21) == (0, 0)
