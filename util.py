@@ -89,8 +89,12 @@ def minmax(a, b):
 
 
 def get_manhattan_distance(a: tuple[int], b: tuple[int]) -> int:
-    """Return the Manhattan distance between two points."""
-    return abs(b[0] - a[0]) + abs(b[1] - a[1])
+    """Return the Manhattan distance between two points.
+
+    Works for any number of dimensions, so long as `a` and `b` have the same
+    length.
+    """
+    return sum(abs(b[i] - a[i]) for i in range(len(a)))
 
 
 class PriorityQueue:
