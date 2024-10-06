@@ -302,3 +302,7 @@ def test_y2018d23():
             """)
     assert swarm.count_in_range_of((12, 12, 12)) == 5
     assert get_day_result(23) == (7, 36)
+
+
+def test_y2018d24():
+    assert get_day_result(24) == (5216, 0)
