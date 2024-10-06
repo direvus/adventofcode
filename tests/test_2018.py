@@ -259,3 +259,31 @@ def test_y2018d20():
 def test_y2018d21():
     # Nothing really to test with this one.
     assert get_day_result(21) == (0, 0)
+
+
+def test_y2018d22():
+    from y2018.d22 import Grid
+    g = Grid(510, (10, 10))
+    assert g.get_index((0, 0)) == 0
+    assert g.get_level((0, 0)) == 510
+    assert g.get_type((0, 0)) == 0
+
+    assert g.get_index((1, 0)) == 16807
+    assert g.get_level((1, 0)) == 17317
+    assert g.get_type((1, 0)) == 1
+
+    assert g.get_index((0, 1)) == 48271
+    assert g.get_level((0, 1)) == 8415
+    assert g.get_type((0, 1)) == 0
+
+    assert g.get_index((1, 1)) == 145722555
+    assert g.get_level((1, 1)) == 1805
+    assert g.get_type((1, 1)) == 2
+
+    assert g.get_index((10, 10)) == 0
+    assert g.get_level((10, 10)) == 510
+    assert g.get_type((10, 10)) == 0
+
+    assert g.get_risk() == 114
+
+    assert get_day_result(22) == (114, 0)
