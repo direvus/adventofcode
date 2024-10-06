@@ -5,11 +5,32 @@ Day 22: Mode Maze
 https://adventofcode.com/2018/day/22
 """
 import logging  # noqa: F401
+from collections import defaultdict
 
-from util import timing
+from util import get_manhattan_distance, timing, INF, PriorityQueue
 
 
 TYPES = '.=|'
+TOOLS = ('none', 'torch', 'climb')
+
+
+def get_adjacent(position: tuple) -> set[tuple]:
+    x, y = position
+    result = {(x, y + 1), (x + 1, y)}
+    if x > 0:
+        result.add((x - 1, y))
+    if y > 0:
+        result.add((x, y - 1))
+    return result
+
+
+def trace_to_path(trace: dict, end: tuple) -> list:
+    result = [end]
+    node = end
+    while node in trace:
+        result.insert(0, trace[node])
+        node = trace[node]
+    return result
 
 
 class Grid:
@@ -46,6 +67,69 @@ class Grid:
                 total += self.get_type((x, y))
         return total
 
+    def get_neighbours(self, node: tuple) -> dict:
+        """Return possible moves from this node.
+
+        Nodes are tuples of (x, y, tool) integers, and we return the neighbours
+        as a dict of node => cost.
+        """
+        x, y, tool = node
+        result = {}
+        currtype = self.get_type((x, y))
+        for loc in get_adjacent((x, y)):
+            nexttype = self.get_type(loc)
+            if tool != nexttype:
+                # Current tool is suitable, can move there in one
+                # time unit.
+                result[loc + (tool,)] = 1
+        # Can always stay where we are and change tools for seven time units.
+        for i in range(len(TOOLS)):
+            if i not in {tool, currtype}:
+                result[(x, y, i)] = 7
+        return result
+
+    def estimate_distance(self, node: tuple) -> int:
+        """Estimate the distance from this node to the target.
+
+        This is intended as a cost heuristic for A Star pathfinding. It uses
+        the manhattan distance, plus a fixed cost of seven to change tools, if
+        the current tool is not the torch.
+        """
+        tool = 0 if node[2] == 1 else 7
+        return get_manhattan_distance(node[:2], self.target) + tool
+
+    def find_path(self) -> int:
+        """Find the fastest path from (0, 0) to the target.
+
+        The torch must be equipped at both the start and the target.
+
+        Return the total time taken in the shortest path.
+        """
+        q = PriorityQueue()
+        start = (0, 0, 1)
+        goal = self.target + (1,)
+        q.push(start, sum(self.target))
+        dist = defaultdict(lambda: INF)
+        dist[start] = 0
+        trace = {}
+
+        while q:
+            cost, node = q.pop()
+            logging.debug(f"At {node} with cost {dist[node]} ...")
+            if node == goal:
+                logging.debug(trace_to_path(trace, goal))
+                return cost
+
+            neighbours = self.get_neighbours(node)
+            for n, cost in neighbours.items():
+                score = dist[node] + cost
+                if score < dist[n]:
+                    dist[n] = score
+                    trace[n] = node
+                    f = score + self.estimate_distance(n)
+                    q.set_priority(n, f)
+        return None
+
 
 def parse(stream) -> Grid:
     line = stream.readline().strip()
@@ -62,6 +146,6 @@ def run(stream, test: bool = False):
         result1 = grid.get_risk()
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = grid.find_path()
 
     return (result1, result2)

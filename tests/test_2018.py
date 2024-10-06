@@ -286,4 +286,4 @@ def test_y2018d22():
 
     assert g.get_risk() == 114
 
-    assert get_day_result(22) == (114, 0)
+    assert get_day_result(22) == (114, 45)
