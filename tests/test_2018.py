@@ -306,3 +306,63 @@ def test_y2018d23():
 
 def test_y2018d24():
     assert get_day_result(24) == (5216, 51)
+
+
+def test_y2018d25():
+    from y2018.d25 import parse, count_constellations
+
+    points = parse("""
+             0,0,0,0
+             3,0,0,0
+             0,3,0,0
+             0,0,3,0
+             0,0,0,3
+             0,0,0,6
+             9,0,0,0
+            12,0,0,0
+            """)
+    assert count_constellations(points) == 2
+
+    points = parse("""
+            -1,2,2,0
+            0,0,2,-2
+            0,0,0,-2
+            -1,2,0,0
+            -2,-2,-2,2
+            3,0,2,-1
+            -1,3,2,2
+            -1,0,-1,0
+            0,2,1,-2
+            3,0,0,0
+            """)
+    assert count_constellations(points) == 4
+
+    points = parse("""
+            1,-1,0,1
+            2,0,-1,0
+            3,2,-1,0
+            0,0,3,1
+            0,0,-1,-1
+            2,3,-2,0
+            -2,2,0,0
+            2,-2,0,-1
+            1,-1,0,-1
+            3,2,0,2
+            """)
+    assert count_constellations(points) == 3
+
+    points = parse("""
+            1,-1,-1,-2
+            -2,-2,0,1
+            0,2,1,3
+            -2,3,-2,1
+            0,2,3,-2
+            -1,-1,1,-2
+            0,-2,-1,0
+            -2,2,3,-1
+            1,2,2,0
+            -1,-2,0,-2
+            """)
+    assert count_constellations(points) == 8
+
+    assert get_day_result(25) == (4, 0)
