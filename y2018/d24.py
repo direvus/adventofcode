@@ -5,6 +5,7 @@ Day 24: Immune System Simulator 20XX
 https://adventofcode.com/2018/day/24
 """
 import logging  # noqa: F401
+from copy import deepcopy
 
 from util import timing
 
@@ -49,7 +50,7 @@ class Group:
         damage = attacker.calc_damage(self)
         kills = min(self.count, damage // self.hp)
         self.count -= kills
-        return self.count
+        return kills
 
 
 def parse_group(army: str, name: str, line: str) -> Group:
@@ -96,6 +97,10 @@ class Army:
     def get_total_units(self):
         return sum(x.count for x in self.groups)
 
+    def boost(self, amount: int):
+        for g in self.groups:
+            g.damage += amount
+
 
 def parse_army(name: str, stream) -> Army:
     army = Army(name)
@@ -133,28 +138,34 @@ def do_round(armies: list[Army]) -> bool:
     targetors = list(groups.values())
     targetors.sort(key=lambda x: (x.power, x.initiative), reverse=True)
     for group in targetors:
-        logging.debug(f"{group.groupid} selecting a target")
         choices = filter(
                 lambda x: x.army != group.army and x.groupid not in targeted,
                 targetors)
         target = group.select_target(choices)
         if target:
-            logging.debug(f"{group.groupid} selected {target.groupid}")
             targets[group.groupid] = target.groupid
             targeted.add(target.groupid)
+
+    if not targets:
+        # Stalemate
+        return False
 
     # Attack
     attackers = list(targets.keys())
     attackers.sort(key=lambda x: groups[x].initiative, reverse=True)
+    total_kills = 0
     for attackerid in attackers:
         attacker = groups[attackerid]
         if attacker.count <= 0:
             continue
         targetid = targets[attackerid]
         target = groups[targetid]
-        logging.debug(f"{attacker.groupid} attacks {target.groupid}")
-        remain = target.take_damage(attacker)
-        logging.debug(f"{target.groupid} has {remain} units left")
+        kills = target.take_damage(attacker)
+        total_kills += kills
+
+    if total_kills == 0:
+        # Stalemate
+        return False
 
     for army in armies:
         army.clean()
@@ -163,20 +174,39 @@ def do_round(armies: list[Army]) -> bool:
     return True
 
 
-def fight(armies: list[Army]):
+def fight(armies: list[Army]) -> tuple:
     active = True
     while active:
         active = do_round(armies)
 
-    return max(x.get_total_units() for x in armies)
+    survivors = [x for x in armies if len(x.groups) > 0]
+    if len(survivors) > 1:
+        return False, sum(x.get_total_units() for x in survivors)
+
+    winner = survivors[0]
+    return (winner.name == 'Immune System', winner.get_total_units())
+
+
+def find_min_boost(initial_armies: list[Army], boost: int) -> int:
+    win = False
+    while not win:
+        armies = deepcopy(initial_armies)
+        for army in armies:
+            if army.name == 'Immune System':
+                army.boost(boost)
+        win, units = fight(armies)
+        boost += 1
+    return units
 
 
 def run(stream, test: bool = False):
     with timing("Part 1"):
         armies = parse(stream)
-        result1 = fight(armies)
+        initial = deepcopy(armies)
+        win, result1 = fight(armies)
 
     with timing("Part 2"):
-        result2 = 0
+        initial_boost = 1570 if test else 58
+        result2 = find_min_boost(initial, initial_boost)
 
     return (result1, result2)

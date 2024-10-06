@@ -305,4 +305,4 @@ def test_y2018d23():
 
 
 def test_y2018d24():
-    assert get_day_result(24) == (5216, 0)
+    assert get_day_result(24) == (5216, 51)
