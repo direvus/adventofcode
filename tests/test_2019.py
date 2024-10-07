@@ -20,3 +20,7 @@ def test_y2019d01():
     assert get_total_fuel_nested([1969]) == 966
     assert get_total_fuel_nested([100756]) == 50346
     assert get_day_result(1) == (34241, 51316)
+
+
+def test_y2019d02():
+    assert get_day_result(2) == (3500, 0)
