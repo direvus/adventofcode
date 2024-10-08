@@ -42,4 +42,34 @@ def test_y2019d04():
 
 
 def test_y2019d05():
-    assert get_day_result(5) == (1, 0)
+    from y2019.d05 import parse
+    comp = parse("3,9,8,9,10,9,4,9,99,-1,8")
+    assert comp.run([8]) == (1,)
+
+    comp = parse("3,9,7,9,10,9,4,9,99,-1,8")
+    assert comp.run([7]) == (1,)
+    comp.reset()
+    assert comp.run([8]) == (0,)
+
+    comp = parse("3,3,1108,-1,8,3,4,3,99")
+    assert comp.run([9]) == (0,)
+    comp.reset()
+    assert comp.run([8]) == (1,)
+
+    comp = parse("3,3,1107,-1,8,3,4,3,99")
+    assert comp.run([1]) == (1,)
+    comp.reset()
+    assert comp.run([10]) == (0,)
+
+    comp = parse(
+            "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,"
+            "1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,"
+            "999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99"
+            )
+    assert comp.run([7]) == (999,)
+    comp.reset()
+    assert comp.run([8]) == (1000,)
+    comp.reset()
+    assert comp.run([9]) == (1001,)
+
+    assert get_day_result(5) == (1, 5)

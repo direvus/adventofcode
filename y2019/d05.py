@@ -24,10 +24,17 @@ class Computer:
                 2: self.do_mul,
                 3: self.do_input,
                 4: self.do_output,
+                5: self.do_jump_if_true,
+                6: self.do_jump_if_false,
+                7: self.do_less_than,
+                8: self.do_equals,
                 }
 
     def parse(self, stream):
-        line = stream.readline().strip()
+        if isinstance(stream, str):
+            line = stream.strip()
+        else:
+            line = stream.readline().strip()
         self.program = tuple(int(x) for x in line.split(','))
         self.memory = list(self.program)
 
@@ -35,6 +42,8 @@ class Computer:
         self.memory = list(self.program)
         self.pointer = 0
         self.halt = False
+        self.inputs = []
+        self.outputs = []
 
     def get_value(self, modes: int, index: int):
         pos = self.memory[self.pointer + index]
@@ -73,13 +82,42 @@ class Computer:
         a = self.memory[self.pointer + 1]
         v = self.inputs.pop(0)
         self.memory[a] = v
-        logging.debug(f"Got input {v} and stored it at {a}")
         self.pointer += 2
 
     def do_output(self, modes: int):
         v = self.get_value(modes, 1)
         self.outputs.append(v)
         self.pointer += 2
+
+    def do_jump_if_true(self, modes: int):
+        a = self.get_value(modes, 1)
+        if a != 0:
+            b = self.get_value(modes, 2)
+            self.pointer = b
+        else:
+            self.pointer += 3
+
+    def do_jump_if_false(self, modes: int):
+        a = self.get_value(modes, 1)
+        if a == 0:
+            b = self.get_value(modes, 2)
+            self.pointer = b
+        else:
+            self.pointer += 3
+
+    def do_less_than(self, modes: int):
+        a = self.get_value(modes, 1)
+        b = self.get_value(modes, 2)
+        c = self.memory[self.pointer + 3]
+        self.memory[c] = int(a < b)
+        self.pointer += 4
+
+    def do_equals(self, modes: int):
+        a = self.get_value(modes, 1)
+        b = self.get_value(modes, 2)
+        c = self.memory[self.pointer + 3]
+        self.memory[c] = int(a == b)
+        self.pointer += 4
 
     def do_instruction(self):
         value = self.memory[self.pointer]
@@ -104,10 +142,12 @@ def parse(stream) -> Computer:
 def run(stream, test: bool = False):
     with timing("Part 1"):
         comp = parse(stream)
-        outputs = comp.run([1])
+        outputs = comp.run((1,))
         result1 = outputs[-1]
 
     with timing("Part 2"):
-        result2 = 0
+        comp.reset()
+        outputs = comp.run((5,))
+        result2 = outputs[0]
 
     return (result1, result2)
