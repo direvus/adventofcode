@@ -28,3 +28,18 @@ def test_y2019d02():
 
 def test_y2019d03():
     assert get_day_result(3) == (6, 30)
+
+
+def test_y2019d04():
+    from y2019.d04 import is_valid, is_valid2
+    assert is_valid('111111') is True
+    assert is_valid('122345') is True
+    assert is_valid('223450') is False
+    assert is_valid('123789') is False
+    assert is_valid2('123444') is False
+    assert is_valid2('111122') is True
+    assert get_day_result(4) == (1385, 981)
+
+
+def test_y2019d05():
+    assert get_day_result(5) == (1, 0)
