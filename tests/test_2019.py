@@ -73,3 +73,7 @@ def test_y2019d05():
     assert comp.run([9]) == (1001,)
 
     assert get_day_result(5) == (1, 5)
+
+
+def test_y2019d06():
+    assert get_day_result(6) == (42, 4)
