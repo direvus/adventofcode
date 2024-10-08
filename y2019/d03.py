@@ -5,7 +5,7 @@ Day 3: Crossed Wires
 https://adventofcode.com/2019/day/3
 """
 import logging  # noqa: F401
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 
 from util import timing
 
@@ -28,9 +28,13 @@ def move(point: P, direction: str, length: int) -> P:
 
 
 class Line:
+    """A straight 2D line constrained to vertical or horizontal."""
     def __init__(self, a: P, b: P):
         self.a = a
         self.b = b
+
+    def __str__(self) -> str:
+        return f'({self.a.x},{self.a.y}) -> ({self.b.x},{self.b.y})'
 
     @property
     def vertical(self) -> bool:
@@ -40,14 +44,35 @@ class Line:
     def horizontal(self) -> bool:
         return self.a.y == self.b.y
 
+    @property
+    def length(self) -> int:
+        if self.vertical:
+            return abs(self.b.y - self.a.y)
+        return abs(self.b.x - self.a.x)
 
-def get_intersection(line1: Line, line2: Line) -> P | None:
-    """Return the intersection of two lines.
+    def contains(self, point: P) -> bool:
+        return point_on_line(self, point)
 
-    If the lines do not intersect at a single point (they are colinear, or
-    disjoint) then return None.
+    def get_steps_to_point(self, point: P) -> int:
+        """Return the number of steps along this line to the point.
+
+        The result only makes sense if the point actually lies on the line, and
+        this function doesn't check whether it does.
+        """
+        axis = 1 if self.vertical else 0
+        start = self.a[axis]
+        value = point[axis]
+        return abs(value - start)
+
+
+def get_line_intersection(line1: Line, line2: Line) -> P | None:
+    """Return the simple intersection of two lines.
+
+    If the lines have no intersection, or they intersect at multiple points
+    (colinear), then return None.
     """
     if line1.vertical == line2.vertical:
+        # Both vertical, or both horizontal, so no simple intersection.
         return None
 
     v = line1
@@ -62,6 +87,16 @@ def get_intersection(line1: Line, line2: Line) -> P | None:
     if minx > v.a.x or maxx < v.a.x:
         return None
     return P(v.a.x, h.a.y)
+
+
+def point_on_line(line: Line, point: P) -> bool:
+    """Return whether a point lies on a line."""
+    if line.vertical:
+        miny, maxy = sorted((line.a.y, line.b.y))
+        return line.a.x == point.x and miny <= point.y and maxy >= point.y
+    else:
+        minx, maxx = sorted((line.a.x, line.b.x))
+        return line.a.y == point.y and minx <= point.x and maxx >= point.x
 
 
 class Wire:
@@ -79,10 +114,19 @@ class Wire:
     def find_intersections(self, line: Line) -> set[P]:
         result = set()
         for segment in self.lines():
-            p = get_intersection(segment, line)
+            p = get_line_intersection(segment, line)
             if p is not None:
                 result.add(p)
         return result
+
+    def update_steps(self, points: set[P], result: dict):
+        total = 0
+        for segment in self.lines():
+            for p in points:
+                if segment.contains(p):
+                    steps = total + segment.get_steps_to_point(p)
+                    result[p] += steps
+            total += segment.length
 
 
 def parse_wire(line: str) -> Wire:
@@ -112,6 +156,14 @@ def find_intersections(wire1: Wire, wire2: Wire) -> set[P]:
     return result
 
 
+def find_fewest_steps_intersection(
+        wire1: Wire, wire2: Wire, points: set[P]) -> int:
+    steps = defaultdict(lambda: 0)
+    wire1.update_steps(points, steps)
+    wire2.update_steps(points, steps)
+    return min(steps.values())
+
+
 def run(stream, test: bool = False):
     with timing("Part 1"):
         wires = parse(stream)
@@ -120,6 +172,6 @@ def run(stream, test: bool = False):
         result1 = min(distances)
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = find_fewest_steps_intersection(*wires, intersections)
 
     return (result1, result2)
