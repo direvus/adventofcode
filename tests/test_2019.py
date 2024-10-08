@@ -96,3 +96,7 @@ def test_y2019d07():
             "27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5")
     assert chain.run_loop((9, 8, 7, 6, 5)) == 139629729
     assert get_day_result(7) == (43210, 139629729)
+
+
+def test_y2019d08():
+    assert get_day_result(8) == (1, ' *\n* ')
