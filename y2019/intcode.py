@@ -34,6 +34,15 @@ class Computer:
         self.inputs = []
         self.outputs = []
 
+    def clone(self):
+        new = Computer()
+        new.program = self.program
+        new.memory = list(self.program)
+        return new
+
+    def add_input(self, value: int):
+        self.inputs.append(value)
+
     def get_value(self, modes: int, index: int):
         pos = self.memory[self.pointer + index]
         modes = str(modes)
@@ -120,3 +129,10 @@ class Computer:
         while not self.halt:
             self.do_instruction()
         return tuple(self.outputs)
+
+    def generate(self):
+        while not self.halt:
+            while not self.halt and not self.outputs:
+                self.do_instruction()
+            if self.outputs:
+                yield self.outputs.pop(0)
