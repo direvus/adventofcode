@@ -100,3 +100,18 @@ def test_y2019d07():
 
 def test_y2019d08():
     assert get_day_result(8) == (1, ' *\n* ')
+
+
+def test_y2019d09():
+    from y2019.intcode import Computer
+    prog = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99"
+    comp = Computer(prog)
+    assert comp.run() == comp.program
+
+    comp = Computer("1102,34915192,34915192,7,4,7,99,0")
+    assert comp.run() == (1219070632396864,)
+
+    comp = Computer("104,1125899906842624,99")
+    assert comp.run() == (1125899906842624,)
+
+    assert get_day_result(9) == (prog, 0)

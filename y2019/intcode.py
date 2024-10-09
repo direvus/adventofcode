@@ -1,9 +1,13 @@
+from collections import defaultdict
+
+
 class Computer:
-    def __init__(self):
+    def __init__(self, program: str = ''):
         self.program = []
-        self.memory = []
-        self.pointer = 0
+        self.memory = defaultdict(lambda: 0)
         self.halt = False
+        self.pointer = 0
+        self.relative_base = 0
         self.inputs = []
         self.outputs = []
 
@@ -17,7 +21,10 @@ class Computer:
                 6: self.do_jump_if_false,
                 7: self.do_less_than,
                 8: self.do_equals,
+                9: self.do_adjust_relative_base,
                 }
+        if program:
+            self.parse(program)
 
     def parse(self, stream):
         if isinstance(stream, str):
@@ -25,10 +32,14 @@ class Computer:
         else:
             line = stream.readline().strip()
         self.program = tuple(int(x) for x in line.split(','))
-        self.memory = list(self.program)
+        self.load_program()
+
+    def load_program(self):
+        self.memory.clear()
+        self.memory.update({i: x for i, x in enumerate(self.program)})
 
     def reset(self):
-        self.memory = list(self.program)
+        self.load_program()
         self.pointer = 0
         self.halt = False
         self.inputs = []
@@ -37,25 +48,48 @@ class Computer:
     def clone(self):
         new = Computer()
         new.program = self.program
-        new.memory = list(self.program)
+        new.load_program()
         return new
 
     def add_input(self, value: int):
         self.inputs.append(value)
 
-    def get_value(self, modes: int, index: int):
-        pos = self.memory[self.pointer + index]
+    def get_mode(self, modes: int, index: int) -> str:
         modes = str(modes)
         try:
-            mode = modes[-index]
+            return modes[-index]
         except IndexError:
-            mode = '0'
+            return '0'
+
+    def get_value(self, modes: int, index: int):
+        value = self.memory[self.pointer + index]
+        mode = self.get_mode(modes, index)
         match mode:
             case '0':
-                return self.memory[pos]
+                return self.memory[value]
             case '1':
-                return pos
+                return value
+            case '2':
+                addr = value + self.relative_base
+                if addr < 0:
+                    raise ValueError(f"Invalid address {addr}")
+                return self.memory[addr]
         raise ValueError(f"Unknown parameter mode {mode}")
+
+    def put_value(self, modes: int, index: int, value: int):
+        addr = self.memory[self.pointer + index]
+        mode = self.get_mode(modes, index)
+        match mode:
+            case '0':
+                self.memory[addr] = value
+                return
+            case '2':
+                addr += self.relative_base
+                if addr < 0:
+                    raise ValueError(f"Invalid address {addr}")
+                self.memory[addr] = value
+                return
+        raise ValueError(f"Invalid mode for write: {mode}")
 
     def do_halt(self, modes: int):
         self.halt = True
@@ -63,23 +97,18 @@ class Computer:
     def do_add(self, modes: int):
         a = self.get_value(modes, 1)
         b = self.get_value(modes, 2)
-        c = self.memory[self.pointer + 3]
-        result = a + b
-        self.memory[c] = result
+        self.put_value(modes, 3, a + b)
         self.pointer += 4
 
     def do_mul(self, modes: int):
         a = self.get_value(modes, 1)
         b = self.get_value(modes, 2)
-        c = self.memory[self.pointer + 3]
-        result = a * b
-        self.memory[c] = result
+        self.put_value(modes, 3, a * b)
         self.pointer += 4
 
     def do_input(self, modes: int):
-        a = self.memory[self.pointer + 1]
         v = self.inputs.pop(0)
-        self.memory[a] = v
+        self.put_value(modes, 1, v)
         self.pointer += 2
 
     def do_output(self, modes: int):
@@ -106,16 +135,19 @@ class Computer:
     def do_less_than(self, modes: int):
         a = self.get_value(modes, 1)
         b = self.get_value(modes, 2)
-        c = self.memory[self.pointer + 3]
-        self.memory[c] = int(a < b)
+        self.put_value(modes, 3, int(a < b))
         self.pointer += 4
 
     def do_equals(self, modes: int):
         a = self.get_value(modes, 1)
         b = self.get_value(modes, 2)
-        c = self.memory[self.pointer + 3]
-        self.memory[c] = int(a == b)
+        self.put_value(modes, 3, int(a == b))
         self.pointer += 4
+
+    def do_adjust_relative_base(self, modes: int):
+        a = self.get_value(modes, 1)
+        self.relative_base += a
+        self.pointer += 2
 
     def do_instruction(self):
         value = self.memory[self.pointer]
@@ -125,7 +157,7 @@ class Computer:
         self.instructions[opcode](modes)
 
     def run(self, inputs: tuple[int] = ()) -> tuple[int]:
-        self.inputs = list(inputs)
+        self.inputs.extend(list(inputs))
         while not self.halt:
             self.do_instruction()
         return tuple(self.outputs)
