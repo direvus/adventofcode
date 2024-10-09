@@ -5,7 +5,9 @@ Day 12: The N-Body Problem
 https://adventofcode.com/2019/day/12
 """
 import logging  # noqa: F401
+from copy import deepcopy
 from itertools import combinations
+from math import lcm
 
 from util import timing
 
@@ -37,6 +39,9 @@ class Body:
     def total_energy(self):
         return self.potential_energy * self.kinetic_energy
 
+    def to_tuple(self) -> tuple:
+        return (*self.position, *self.velocity)
+
 
 class System:
     def __init__(self):
@@ -63,6 +68,36 @@ class System:
         for i in range(steps):
             self.update()
 
+    def find_cycles(self) -> dict:
+        """Run the system looking for cycles in each body's movement.
+
+        Continue updating until we have identified a cycle for every body, and
+        return the lengths of those cycles as a dict, mapping each body's index
+        to its cycle length.
+        """
+        cycles = {}
+        history = {}
+        for i in range(3):
+            state = tuple((x.position[i], x.velocity[i]) for x in self.bodies)
+            history[i] = {state: 0}
+        t = 0
+        while len(cycles) < 3:
+            self.update()
+            t += 1
+
+            for i in range(3):
+                state = tuple(
+                        (x.position[i], x.velocity[i]) for x in self.bodies)
+                # Is this axis in a state it has previously occupied?
+                if state in history[i]:
+                    if i not in cycles:
+                        cycles[i] = t - history[i][state]
+                        logging.debug(
+                                f"Found cycle for {'XYZ'[i]} at t {t}, "
+                                f"length {cycles[i]}")
+                history[i][state] = t
+        return cycles
+
     def get_total_energy(self) -> int:
         return sum(x.total_energy for x in self.bodies)
 
@@ -76,11 +111,14 @@ def parse(stream) -> System:
 def run(stream, test: bool = False):
     with timing("Part 1"):
         system = parse(stream)
+        orig = deepcopy(system)
         steps = 10 if test else 1000
         system.run(steps)
         result1 = system.get_total_energy()
 
     with timing("Part 2"):
-        result2 = 0
+        system = orig
+        cycles = system.find_cycles()
+        result2 = lcm(*cycles.values())
 
     return (result1, result2)
