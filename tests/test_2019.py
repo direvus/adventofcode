@@ -114,4 +114,8 @@ def test_y2019d09():
     comp = Computer("104,1125899906842624,99")
     assert comp.run() == (1125899906842624,)
 
-    assert get_day_result(9) == (prog, 0)
+    assert get_day_result(9) == (prog, prog)
+
+
+def test_y2019d10():
+    assert get_day_result(10) == (210, 0)
