@@ -118,4 +118,4 @@ def test_y2019d09():
 
 
 def test_y2019d10():
-    assert get_day_result(10) == (210, 0)
+    assert get_day_result(10) == (210, 802)

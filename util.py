@@ -1,5 +1,6 @@
 import heapq
 import logging
+import math
 import time
 from collections import namedtuple
 from contextlib import contextmanager
@@ -60,6 +61,8 @@ class Direction(Enum):
 
 INF = float('inf')
 NINF = float('-inf')
+π = math.pi
+TWOπ = 2 * π
 
 
 Point = namedtuple('point', ['y', 'x'])
