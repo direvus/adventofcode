@@ -200,4 +200,4 @@ def test_y2019d14():
     assert g.find_ore_required('FUEL') == 2210736
     assert g.get_fuel(10 ** 12) == 460664
 
-    assert get_day_result(14) == (31, 0)
+    assert get_day_result(14) == (31, 34482758620)
