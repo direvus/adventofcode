@@ -159,6 +159,7 @@ def test_y2019d14():
             3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT
             """)
     assert g.find_ore_required('FUEL') == 13312
+    assert g.get_fuel(10 ** 12) == 82892753
 
     g = Graph("""
             2 VPVL, 7 FWMGM, 2 CXFTF, 11 MNCFX => 1 STKFG
@@ -175,6 +176,7 @@ def test_y2019d14():
             176 ORE => 6 VJHF
             """)
     assert g.find_ore_required('FUEL') == 180697
+    assert g.get_fuel(10 ** 12) == 5586022
 
     g = Graph("""
             171 ORE => 8 CNZTR
@@ -196,5 +198,6 @@ def test_y2019d14():
             5 BHXH, 4 VRPVC => 5 LTCX
             """)
     assert g.find_ore_required('FUEL') == 2210736
+    assert g.get_fuel(10 ** 12) == 460664
 
     assert get_day_result(14) == (31, 0)

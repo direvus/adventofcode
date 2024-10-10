@@ -82,6 +82,24 @@ class Graph:
     def get_fuel(self, ore: int) -> int:
         """Return the amount of fuel that can be produced with `ore`."""
 
+        # Use a bisecting search to find the highest fuel value that does not
+        # exceed the allowed ore amount.
+        low = ore // self.find_ore_required('FUEL', 1)
+        high = low * 2
+        diff = high - low
+
+        while diff > 0:
+            req = self.find_ore_required('FUEL', high)
+            diff = (high - low) // 2
+            if req == ore:
+                return high
+            if req > ore:
+                high -= diff
+            else:
+                low = high
+                high += diff
+        return low
+
 
 def parse(stream) -> Graph:
     return Graph(stream)
@@ -93,6 +111,6 @@ def run(stream, test: bool = False):
         result1 = graph.find_ore_required('FUEL')
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = graph.get_fuel(10 ** 12)
 
     return (result1, result2)
