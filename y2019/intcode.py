@@ -9,6 +9,7 @@ class Computer:
         self.pointer = 0
         self.relative_base = 0
         self.inputs = []
+        self.input_hook = None
         self.outputs = []
 
         self.instructions = {
@@ -53,6 +54,27 @@ class Computer:
 
     def add_input(self, value: int):
         self.inputs.append(value)
+
+    def add_inputs(self, values: tuple[int]):
+        self.inputs.extend(values)
+
+    def set_input_hook(self, fn):
+        self.input_hook = fn
+
+    def read_input(self) -> int:
+        """Read a single input value.
+
+        If `input_hook` has been set, we expect it to be a callable that can be
+        called without arguments, and we call it to get the next input value.
+
+        Otherwise, we take the first value off the input queue.
+
+        If the computer doesn't have an input hook, and the queue is empty when
+        we try to read an input, the program will crash.
+        """
+        if self.input_hook is None:
+            return self.inputs.pop(0)
+        return self.input_hook()
 
     def get_mode(self, modes: int, index: int) -> str:
         modes = str(modes)
@@ -107,7 +129,7 @@ class Computer:
         self.pointer += 4
 
     def do_input(self, modes: int):
-        v = self.inputs.pop(0)
+        v = self.read_input()
         self.put_value(modes, 1, v)
         self.pointer += 2
 
