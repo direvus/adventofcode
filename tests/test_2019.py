@@ -201,3 +201,7 @@ def test_y2019d14():
     assert g.get_fuel(10 ** 12) == 460664
 
     assert get_day_result(14) == (31, 34482758620)
+
+
+def test_y2019d15():
+    assert get_day_result(15) == (0, 0)
