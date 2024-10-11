@@ -143,6 +143,30 @@ class Grid:
         self.run()
         return self.find_path((0, 0), self.goal)
 
+    def get_oxygenation_time(self) -> int:
+        """Return the time to fully oxygenate all open spaces.
+
+        Initially, the oxygen generator is the only square that has oxygen.
+        With each time unit that passes, oxygen spreads to all open spaces that
+        are adjacent to oxygen.
+
+        Return the total amount of time taken to fill the area.
+        """
+        oxygen = {self.goal}
+        edges = self.get_neighbours(self.goal)
+        time = 0
+
+        while edges:
+            new = set()
+            for edge in edges:
+                oxygen.add(edge)
+                new |= self.get_neighbours(edge)
+            new -= oxygen
+            time += 1
+            edges = new
+        return time
+
+
     def to_string(self) -> str:
         squares = self.walls | self.spaces
         xs = {p[0] for p in squares}
@@ -185,9 +209,8 @@ def run(stream, test: bool = False):
     with timing("Part 1"):
         grid = parse(stream)
         result1 = grid.get_steps_to_goal()
-        print(grid.to_string())
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = grid.get_oxygenation_time()
 
     return (result1, result2)
