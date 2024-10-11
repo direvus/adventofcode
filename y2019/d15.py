@@ -11,6 +11,13 @@ from util import INF, PriorityQueue, get_manhattan_distance, timing
 from y2019.intcode import Computer
 
 
+try:
+    from PIL import Image
+except ImportError:
+    # That's fine, visualisations won't be available though.
+    pass
+
+
 DIRECTIONS = 'NSWE'
 REVERSALS = (1, 0, 3, 2)
 VECTORS = ((0, -1), (0, 1), (-1, 0), (1, 0))
@@ -25,6 +32,7 @@ class Grid:
     def __init__(self, stream=None):
         self.walls = set()
         self.spaces = {(0, 0)}
+        self.oxygen = set()
         self.position = (0, 0)
         self.target = (0, 0)
         self.goal = None
@@ -32,6 +40,7 @@ class Grid:
         self.robot = Computer()
         self.robot.set_input_hook(self.get_next_input)
         self.moves = []
+        self.images = []
 
         if stream:
             self.parse(stream)
@@ -39,7 +48,7 @@ class Grid:
     def parse(self, stream):
         self.robot.parse(stream)
 
-    def run(self):
+    def run(self, draw: bool = False):
         while not self.halt:
             status = next(self.robot.generate())
             if status == 2:
@@ -55,6 +64,9 @@ class Grid:
                 # Wall
                 self.walls.add(self.target)
                 self.moves.pop()
+
+            if draw:
+                self.images.append(self.to_image())
 
     def get_unexplored_neighbour(self) -> tuple | None:
         """Return an unexplored neighbour of the current position.
@@ -131,7 +143,7 @@ class Grid:
                     q.set_priority(n, f)
         return None
 
-    def get_steps_to_goal(self) -> int | None:
+    def get_steps_to_goal(self, draw: bool = False) -> int | None:
         """Return the number of steps between the start and the goal.
 
         First we need to figure out where the goal is, so fully explore the
@@ -140,10 +152,10 @@ class Grid:
 
         Return the length of that shortest path.
         """
-        self.run()
+        self.run(draw)
         return self.find_path((0, 0), self.goal)
 
-    def get_oxygenation_time(self) -> int:
+    def get_oxygenation_time(self, draw: bool = False) -> int:
         """Return the time to fully oxygenate all open spaces.
 
         Initially, the oxygen generator is the only square that has oxygen.
@@ -152,20 +164,22 @@ class Grid:
 
         Return the total amount of time taken to fill the area.
         """
-        oxygen = {self.goal}
+        self.oxygen = {self.goal}
         edges = self.get_neighbours(self.goal)
         time = 0
 
         while edges:
             new = set()
             for edge in edges:
-                oxygen.add(edge)
+                self.oxygen.add(edge)
                 new |= self.get_neighbours(edge)
-            new -= oxygen
+            new -= self.oxygen
             time += 1
             edges = new
-        return time
 
+            if draw:
+                self.images.append(self.to_image())
+        return time
 
     def to_string(self) -> str:
         squares = self.walls | self.spaces
@@ -195,6 +209,41 @@ class Grid:
             lines.append(''.join(line))
         return '\n'.join(lines)
 
+    def to_image(self) -> Image:
+        squares = self.walls | self.spaces
+        xs = {p[0] for p in squares}
+        ys = {p[1] for p in squares}
+        minx, maxx = min(xs), max(xs)
+        miny, maxy = min(ys), max(ys)
+
+        # Each grid space requires 4 pixels plus its border
+        height = (maxy - miny + 1) * 5 + 1
+        width = (maxx - minx + 1) * 5 + 1
+        im = Image.new('RGB', (width, height), '#1a1a1a')
+        for y in range(miny, maxy + 1):
+            for x in range(minx, maxx + 1):
+                p = (x, y)
+                path = None
+                if p == self.position:
+                    path = 'assets/orange_pixel_4.png'
+                elif p == (0, 0):
+                    path = 'assets/green_pixel_4.png'
+                elif p == self.goal:
+                    path = 'assets/blue_pixel_4.png'
+                elif p in self.walls:
+                    path = 'assets/grey_pixel_4.png'
+                elif p in self.oxygen:
+                    path = 'assets/teal_pixel_4.png'
+                elif p in self.spaces:
+                    path = 'assets/white_pixel_4.png'
+
+                if path:
+                    px = Image.open(path)
+                    relx = x - minx
+                    rely = y - miny
+                    im.paste(px, (relx * 5 + 1, rely * 5 + 1))
+        return im
+
 
 def parse(stream) -> Grid:
     program = stream.readline().strip()
@@ -202,15 +251,25 @@ def parse(stream) -> Grid:
     return grid
 
 
-def run(stream, test: bool = False):
+def run(stream, test: bool = False, draw: bool = False):
     if test:
         return (0, 0)
 
     with timing("Part 1"):
         grid = parse(stream)
-        result1 = grid.get_steps_to_goal()
+        result1 = grid.get_steps_to_goal(draw)
 
     with timing("Part 2"):
-        result2 = grid.get_oxygenation_time()
+        result2 = grid.get_oxygenation_time(draw)
+
+    if draw:
+        images = grid.images
+        # Insert a full-size initial frame to get the sizing right.
+        size = images[-1].size
+        first = Image.new('RGB', size, '#1a1a1a')
+        images.insert(0, first)
+        images[0].save(
+                'out/y2019d15.gif', save_all=True,
+                append_images=images[1:], duration=25)
 
     return (result1, result2)
