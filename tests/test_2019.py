@@ -230,3 +230,7 @@ def test_y2019d16():
     do_phase(signal)
     assert np.array_equal(signal, [0, 1, 0, 2, 9, 4, 9, 8])
     assert get_day_result(16) == ('24176176', '84462026')
+
+
+def test_y2019d17():
+    assert get_day_result(17) == (0, 0)
