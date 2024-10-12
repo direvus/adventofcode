@@ -47,6 +47,16 @@ def do_phase(signal: list, offset: int = 0) -> None:
 
     Modify the signal in-place and return None.
     """
+    if offset > len(signal) // 2:
+        # Use a shortcut. Beyond the half-way point, the pattern will be all
+        # ones from the target element to the end of the array, so we can work
+        # backwards from the end and keep the sum going, and complete all the
+        # needed elements in a single pass.
+        total = 0
+        for i in range(len(signal) - 1, offset - 1, -1):
+            total += signal[i]
+            signal[i] = total % 10
+        return
     for i in range(offset, len(signal)):
         signal[i] = get_element(signal, i)
 

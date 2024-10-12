@@ -9,12 +9,20 @@ Code](https://adventofcode.com/) coding puzzles.
 
 If you don't want those puzzles spoiled for you, don't look at the code!
 
-## Requirements
+## Dependencies
 
 It runs on Python 3.10+.
 
-The puzzle-solving code is all purely Python Standard Library stuff. The only
-external dependencies are optional:
+The puzzle-solving code is almost all purely Python Standard Library stuff. The only
+required external dependency is `numpy`.
+
+### Required dependencies
+
+- `numpy`
+
+### Optional dependencies
+
+There are also some optional dependencies to enable extra features:
 
 - `rich`, for pretty printing on the console
 - `pillow`, for rendering visualisations
