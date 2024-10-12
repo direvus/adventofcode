@@ -234,3 +234,21 @@ def test_y2019d16():
 
 def test_y2019d17():
     assert get_day_result(17) == (0, 0)
+
+
+def test_y2019d18():
+    from y2019.d18 import Grid
+    grid = Grid("""
+            #################
+            #i.G..c...e..H.p#
+            ########.########
+            #j.A..b...f..D.o#
+            ########@########
+            #k.E..a...g..B.n#
+            ########.########
+            #l.F..d...h..C.m#
+            #################
+            """)
+    assert grid.find_all_keys_path() == 132
+
+    assert get_day_result(18) == (0, 0)
