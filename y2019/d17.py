@@ -32,6 +32,9 @@ class Grid:
     def parse(self, stream):
         self.computer.parse(stream)
 
+    def reset(self):
+        self.computer.reset()
+
     def get_neighbours(self, position: tuple) -> set:
         adjacent = {move(position, d) for d in range(len(DIRECTIONS))}
         return adjacent & self.scaffolds
@@ -49,7 +52,7 @@ class Grid:
             total += p[0] * p[1]
         return total
 
-    def run(self) -> str:
+    def get_camera_view(self) -> str:
         result = []
         y = 0
         x = 0
@@ -70,6 +73,40 @@ class Grid:
             x += 1
         return ''.join(result)
 
+    def format_inputs(self, inputs):
+        """Format inputs for the program.
+
+        Elements from inputs are delimited by comma and terminated by newline,
+        and the entire string is then returned as a tuple of integer ASCII
+        character codes.
+        """
+        line = ','.join(str(x) for x in inputs) + '\n'
+        return tuple(ord(x) for x in line)
+
+    def add_inputs(self, inputs):
+        self.computer.add_inputs(self.format_inputs(inputs))
+
+    def run(self) -> int:
+        """Walk the robot through the entire scaffold.
+
+        Return the final output value from the program.
+        """
+        self.reset()
+        self.computer.memory[0] = 2
+        moves_a = ('R', 6, 'L', 6, 'L', 10)
+        moves_b = ('L', 8, 'L', 6, 'L', 10, 'L', 6)
+        moves_c = ('R', 6, 'L', 8, 'L', 10, 'R', 6)
+        main = ('A', 'B', 'A', 'B', 'C', 'A', 'B', 'C', 'A', 'C')
+        self.add_inputs(main)
+        self.add_inputs(moves_a)
+        self.add_inputs(moves_b)
+        self.add_inputs(moves_c)
+        self.add_inputs('n')
+
+        for output in self.computer.generate():
+            print(chr(output), end='')
+        return output
+
 
 def parse(stream) -> Grid:
     return Grid(stream.readline().strip())
@@ -81,10 +118,10 @@ def run(stream, test: bool = False):
 
     with timing("Part 1"):
         grid = parse(stream)
-        grid.run()
+        grid.get_camera_view()
         result1 = grid.get_total_alignments()
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = grid.run()
 
     return (result1, result2)
