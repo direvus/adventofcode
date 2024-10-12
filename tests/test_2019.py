@@ -205,3 +205,25 @@ def test_y2019d14():
 
 def test_y2019d15():
     assert get_day_result(15) == (0, 0)
+
+
+def test_y2019d16():
+    from y2019.d16 import BASE, get_element, do_phase
+    inputs = (1, 2, 3, 4, 5, 6, 7, 8)
+    assert get_element(inputs, BASE, 0) == 4
+    assert get_element(inputs, BASE, 1) == 8
+    assert get_element(inputs, BASE, 2) == 2
+    assert get_element(inputs, BASE, 3) == 2
+    assert get_element(inputs, BASE, 4) == 6
+    assert get_element(inputs, BASE, 5) == 1
+    assert get_element(inputs, BASE, 6) == 5
+    assert get_element(inputs, BASE, 7) == 8
+    signal = do_phase(inputs, BASE)
+    assert signal == (4, 8, 2, 2, 6, 1, 5, 8)
+    signal = do_phase(signal, BASE)
+    assert signal == (3, 4, 0, 4, 0, 4, 3, 8)
+    signal = do_phase(signal, BASE)
+    assert signal == (0, 3, 4, 1, 5, 5, 1, 8)
+    signal = do_phase(signal, BASE)
+    assert signal == (0, 1, 0, 2, 9, 4, 9, 8)
+    assert get_day_result(16) == ('24176176', 0)
