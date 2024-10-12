@@ -5,18 +5,13 @@ Day 16: Flawed Frequency Transmission
 https://adventofcode.com/2019/day/16
 """
 import logging  # noqa: F401
-from itertools import cycle
+
+import numpy as np
 
 from util import jit, timing
 
 
 BASE = (0, 1, 0, -1)
-
-
-def expand_pattern(pattern, repeats: int):
-    for item in cycle(pattern):
-        for _ in range(repeats):
-            yield item
 
 
 @jit
@@ -27,21 +22,22 @@ def get_slices(size: int, index: int) -> tuple:
     i = index
     length = index + 1
     while i < size:
-        pos.append(slice(i, i + length))
+        pos.append((i, i + length))
         j = i + length * 2
-        neg.append(slice(j, j + length))
+        if j < size:
+            neg.append((j, j + length))
         i += length * 4
     return pos, neg
 
 
 @jit
-def get_element(inputs, index: int) -> int:
+def get_element(inputs: list, index: int) -> int:
     result = 0
     pos, neg = get_slices(len(inputs), index)
-    for s in pos:
-        result += sum(inputs[s])
-    for s in neg:
-        result -= sum(inputs[s])
+    for i, j in pos:
+        result += np.sum(inputs[i:j])
+    for i, j in neg:
+        result -= np.sum(inputs[i:j])
     return abs(result) % 10
 
 
@@ -57,7 +53,7 @@ def do_phase(signal: list, offset: int = 0) -> None:
 
 @jit
 def do_phases(inputs, count: int, offset: int = 0, length: int = 8) -> list:
-    signal = list(inputs)
+    signal = np.array(inputs, dtype=np.uint8)
     for _ in range(count):
         do_phase(signal, offset)
     return signal[offset:offset + length]

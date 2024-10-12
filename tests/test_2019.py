@@ -209,8 +209,9 @@ def test_y2019d15():
 
 def test_y2019d16():
     from y2019.d16 import get_element, get_slices, do_phase
-    inputs = (1, 2, 3, 4, 5, 6, 7, 8)
-    assert get_slices(8, 1) == ([slice(1, 3)], [slice(5, 7)])
+    import numpy as np
+    inputs = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=np.uint8)
+    assert get_slices(8, 1) == ([(1, 3)], [(5, 7)])
     assert get_element(inputs, 0) == 4
     assert get_element(inputs, 1) == 8
     assert get_element(inputs, 2) == 2
@@ -219,12 +220,13 @@ def test_y2019d16():
     assert get_element(inputs, 5) == 1
     assert get_element(inputs, 6) == 5
     assert get_element(inputs, 7) == 8
-    signal = do_phase(inputs)
-    assert signal == (4, 8, 2, 2, 6, 1, 5, 8)
-    signal = do_phase(signal)
-    assert signal == (3, 4, 0, 4, 0, 4, 3, 8)
-    signal = do_phase(signal)
-    assert signal == (0, 3, 4, 1, 5, 5, 1, 8)
-    signal = do_phase(signal)
-    assert signal == (0, 1, 0, 2, 9, 4, 9, 8)
+    signal = inputs.copy()
+    do_phase(signal)
+    assert np.array_equal(signal, [4, 8, 2, 2, 6, 1, 5, 8])
+    do_phase(signal)
+    assert np.array_equal(signal, [3, 4, 0, 4, 0, 4, 3, 8])
+    do_phase(signal)
+    assert np.array_equal(signal, [0, 3, 4, 1, 5, 5, 1, 8])
+    do_phase(signal)
+    assert np.array_equal(signal, [0, 1, 0, 2, 9, 4, 9, 8])
     assert get_day_result(16) == ('24176176', '84462026')
