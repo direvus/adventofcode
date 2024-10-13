@@ -276,3 +276,7 @@ def test_y2019d18():
     assert mg.find_all_keys_path() == 72
 
     assert get_day_result(18) == (86, 32)
+
+
+def test_y2019d19():
+    assert get_day_result(19) == (0, 0)
