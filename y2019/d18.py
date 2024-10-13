@@ -8,7 +8,7 @@ import logging  # noqa: F401
 import string
 from collections import defaultdict
 
-from util import INF, PriorityQueue, get_manhattan_distance, timing
+from util import INF, PriorityQueue, timing
 
 
 DIRECTIONS = '^>v<'
@@ -26,6 +26,7 @@ class Grid:
         self.position = (0, 0)
         self.keys = {}
         self.doors = {}
+        self.graph = Graph()
 
         if stream:
             self.parse(stream)
@@ -50,85 +51,80 @@ class Grid:
                 elif ch in string.ascii_uppercase:
                     self.doors[ch.lower()] = p
             y += 1
+        self.make_graph()
 
-    def get_neighbours(self, position: tuple, keys: set) -> set:
-        adjacent = {move(position, d) for d in range(len(DIRECTIONS))}
-        spaces = adjacent & self.spaces
-        locked = {v for k, v in self.doors.items() if k not in keys}
-        return spaces - locked
+    def get_adjacent(self, position: tuple) -> set:
+        return {move(position, d) for d in range(len(DIRECTIONS))}
 
-    def find_path(self, start: tuple, goal: tuple, keys: set) -> int | None:
-        """Find the shortest path from `start` to `goal`.
+    def make_graph(self):
+        """Assemble a graph of the grid space.
 
-        Return the number of steps in the shortest path, or None if the goal is
-        not reachable.
+        Each square that is an intersection, door, or key will become a node in
+        the graph, and linear paths between nodes will become edges.
         """
-        q = PriorityQueue()
-        q.push(start, get_manhattan_distance(start, goal))
-        dist = defaultdict(lambda: INF)
-        dist[start] = 0
-
+        graph = Graph()
+        pos = self.position
+        graph.nodes.add(pos)
+        explored = set()
+        q = [(pos, 0, pos)]
+        doors = set(self.doors.values())
+        keys = set(self.keys.values())
         while q:
-            cost, node = q.pop()
-            if node == goal:
-                return cost
+            pos, cost, start = q.pop(0)
+            adjacent = self.get_adjacent(pos) & self.spaces - explored
+            if len(adjacent) > 1 or pos in doors or pos in keys:
+                graph.nodes.add(pos)
+                if cost > 0:
+                    graph.edges[start][pos] = cost
+                    graph.edges[pos][start] = cost
+                cost = 0
+                start = pos
+            for adj in adjacent:
+                q.append((adj, cost + 1, start))
+            explored.add(pos)
+        self.graph = graph
 
-            for n in self.get_neighbours(node, keys):
-                score = dist[node] + 1
-                if score < dist[n]:
-                    dist[n] = score
-                    f = score + get_manhattan_distance(n, goal)
-                    q.set_priority(n, f)
-        return None
-
-    def find_keys_path(self, keys) -> int | None:
-        """Return the number of steps taken to get the keys in this order.
-
-        Return None if the order is not viable.
-        """
-        steps = 0
-        position = self.position
-        held = set()
-        for k in keys:
-            target = self.keys[k]
-            path = self.find_path(position, target, held)
-            if path is None:
-                return None
-            steps += path
-            held.add(k)
-            position = target
-        return steps
+    def get_neighbours(self, position: tuple, keys: set) -> dict:
+        neighbours = self.graph.edges[position]
+        locked = {v for k, v in self.doors.items() if k not in keys}
+        return {k: v for k, v in neighbours.items() if k not in locked}
 
     def find_all_keys_path(self) -> int:
         """Return the fewest steps in which we can gather all keys."""
         q = PriorityQueue()
-        q.push((0, frozenset(), self.position), (0, 0))
+        q.push((frozenset(), self.position), 0)
+        target = len(self.keys)
+        keynodes = {v: k for k, v in self.keys.items()}
+        dist = defaultdict(lambda: INF)
         best = INF
         while q:
-            _, node = q.pop()
-            cost, keys, pos = node
+            cost, node = q.pop()
             if cost >= best:
                 continue
-            logging.debug(f"At {pos} with {keys} after {cost} moves ...")
-            targets = set(self.keys.keys()) - keys
-            if not targets:
-                logging.debug(f"  collected all keys in {cost} moves")
+            keys, pos = node
+            if len(keys) == target:
                 if cost < best:
-                    logging.debug("  >>> NEW BEST PATH!")
                     best = cost
-                continue
-            for k in targets:
-                goal = self.keys[k]
-                path = self.find_path(pos, goal, keys)
-                if path is None:
                     continue
-                logging.debug(f"  could reach {k} in {path} moves")
-                newkeys = keys | {k}
-                newcost = cost + path
-                node = (newcost, frozenset(newkeys), goal)
-                priority = (-len(newkeys), newcost)
-                q.set_priority(node, priority)
+
+            neighbours = self.get_neighbours(pos, keys)
+            for n, d in neighbours.items():
+                newkeys = set(keys)
+                if n in keynodes:
+                    newkeys.add(keynodes[n])
+
+                newnode = (frozenset(newkeys), n)
+                newcost = cost + d
+                if newcost < dist[newnode]:
+                    dist[newnode] = newcost
+                    q.set_priority(newnode, newcost)
         return best
+
+
+class Graph:
+    def __init__(self):
+        self.nodes = set()
+        self.edges = defaultdict(dict)
 
 
 def parse(stream) -> Grid:
@@ -138,7 +134,7 @@ def parse(stream) -> Grid:
 def run(stream, test: bool = False):
     with timing("Part 1"):
         grid = parse(stream)
-        logging.debug(vars(grid))
+        grid.make_graph()
         result1 = grid.find_all_keys_path()
 
     with timing("Part 2"):
