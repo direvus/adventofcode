@@ -226,7 +226,8 @@ class MultiGrid(Grid):
         dist = defaultdict(lambda: INF)
         dist[start] = 0
         while q:
-            cost, node = q.pop()
+            priority, node = q.pop()
+            cost = dist[node]
             if node == goal:
                 return cost
 
@@ -253,40 +254,37 @@ class MultiGrid(Grid):
         q = PriorityQueue()
         start = (frozenset(), frozenset(self.starts))
         q.push(start, 0)
-        target = len(self.keys)
-        keynodes = {v: k for k, v in self.keys.items()}
+        count = len(self.keys)
         dist = defaultdict(lambda: INF)
         dist[start] = 0
         best = INF
         while q:
-            priority, node = q.pop()
-            cost = dist[node]
+            cost, node = q.pop()
+            keys, positions = node
             if cost >= best:
                 continue
-            keys, positions = node
             logging.debug(f"at {positions} with {keys} having moved {cost}")
-            if len(keys) == target:
+            if len(keys) == count:
                 if cost < best:
                     best = cost
                     continue
 
+            targets = set(self.keys.keys()) - keys
             for pos in positions:
-                neighbours = self.get_neighbours(pos, keys)
-                logging.debug(f"  from {pos} can go to {neighbours}")
-                for n, d in neighbours.items():
-                    newkeys = set(keys)
-                    if n in keynodes:
-                        newkeys.add(keynodes[n])
+                for target in targets:
+                    keypos = self.keys[target]
+                    d = self.find_path(pos, keypos, keys)
+                    if d is None:
+                        continue
+                    logging.debug(f"  from {pos} can get {target} in {d}")
 
-                    newpos = set(positions)
-                    newpos.discard(pos)
-                    newpos.add(n)
+                    newkeys = keys | {target}
+                    newpos = (positions | {keypos}) - {pos}
                     newnode = (frozenset(newkeys), frozenset(newpos))
                     newcost = cost + d
                     if newcost < dist[newnode]:
                         dist[newnode] = newcost
-                        priority = newcost + (target - len(newkeys)) * 20
-                        q.set_priority(newnode, priority)
+                        q.set_priority(newnode, newcost)
         return best
 
 
