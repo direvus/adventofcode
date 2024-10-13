@@ -237,7 +237,7 @@ def test_y2019d17():
 
 
 def test_y2019d18():
-    from y2019.d18 import Grid
+    from y2019.d18 import Grid, MultiGrid
     grid = Grid("""
             #################
             #i.G..c...e..H.p#
@@ -261,4 +261,18 @@ def test_y2019d18():
             """)
     assert grid.find_all_keys_path() == 81
 
-    assert get_day_result(18) == (86, 0)
+    grid = Grid("""
+            #############
+            #g#f.D#..h#l#
+            #F###e#E###.#
+            #dCba.#.BcIJ#
+            ######@######
+            #nK.L.#.G...#
+            #M###N#H###.#
+            #o#m..#i#jk.#
+            #############
+            """)
+    mg = MultiGrid(grid)
+    assert mg.find_all_keys_path() == 72
+
+    assert get_day_result(18) == (86, 32)
