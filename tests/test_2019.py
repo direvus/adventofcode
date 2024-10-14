@@ -280,3 +280,7 @@ def test_y2019d18():
 
 def test_y2019d19():
     assert get_day_result(19) == (0, 0)
+
+
+def test_y2019d20():
+    assert get_day_result(20) == (23, 0)
