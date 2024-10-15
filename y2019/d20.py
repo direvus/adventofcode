@@ -17,18 +17,18 @@ class Graph:
         self.edges = defaultdict(dict)
 
     def simplify(self, keep: set = None):
-        """Simplify this graph by removing redundant nodes
+        """Simplify this graph by removing uninteresting nodes.
 
-        We remove all nodes that only connect between two other nodes,
-        replacing them with a single edge. Continue until no such nodes remain.
-
-        Any nodes mentioned in `keep` will not be removed regardless.
+        For all nodes that are not listed in `keep`, and have fewer than three
+        connections, we remove the node. If the node had two connections, we
+        replace it with an edge joining the two other nodes. If the node had
+        one or zero connections, we remove it entirely.
         """
         if keep is None:
             keep = set()
         removable = [
                 (k, v) for k, v in self.edges.items()
-                if len(v) == 2 and k not in keep]
+                if len(v) < 3 and k not in keep]
         while removable:
             for node, edges in removable:
                 self.nodes.discard(node)
@@ -37,18 +37,20 @@ class Graph:
                 cost = sum(edges.values())
                 for other in others:
                     self.edges[other].pop(node, None)
-                a, b = others
-                self.edges[a][b] = cost
-                self.edges[b][a] = cost
+                if len(others) == 2:
+                    a, b = others
+                    self.edges[a][b] = cost
+                    self.edges[b][a] = cost
             removable = [
                     (k, v) for k, v in self.edges.items()
-                    if len(v) == 2 and k not in keep]
+                    if len(v) < 3 and k not in keep]
 
 
 class Grid:
     def __init__(self, stream):
         self.spaces = set()
         self.portals = {}
+        self.markers = {}
         self.start = (0, 0)
         self.end = (0, 0)
         self.graph = Graph()
@@ -96,6 +98,7 @@ class Grid:
                     space = (x - 1, y)
 
             if code and space:
+                self.markers[space] = code
                 if code == 'AA':
                     self.start = space
                 elif code == 'ZZ':
@@ -115,35 +118,23 @@ class Grid:
         return self.graph.edges[position]
 
     def make_graph(self):
-        """Assemble a graph of the grid space.
-
-        Each square that is an intersection or portal endpoint will become a
-        node in the graph, and linear paths between nodes will become edges.
-        The connections between portal endpoints become edges with a cost of
-        one.
-        """
+        """Assemble a graph of the grid space."""
         graph = Graph()
-        graph.nodes.add(self.start)
-        graph.nodes.add(self.end)
         keep = {self.start, self.end} | set(self.portals.keys())
         explored = set()
         pos = self.start
-        q = [(pos, 0, pos)]
+        q = [pos]
         while q:
-            pos, cost, start = q.pop(0)
+            pos = q.pop(0)
             adjacent = self.get_adjacent(pos) & self.spaces
             if pos in self.portals:
                 adjacent.add(self.portals[pos])
-            adjacent -= explored
-            if len(adjacent) > 1 or pos in keep:
-                graph.nodes.add(pos)
-                if cost > 0:
-                    graph.edges[start][pos] = cost
-                    graph.edges[pos][start] = cost
-                cost = 0
-                start = pos
+            graph.nodes.add(pos)
             for adj in adjacent:
-                q.append((adj, cost + 1, start))
+                graph.edges[pos][adj] = 1
+                graph.edges[adj][pos] = 1
+                if adj not in explored:
+                    q.append(adj)
             explored.add(pos)
         self.graph = graph
         self.graph.simplify(keep)
@@ -170,6 +161,55 @@ class Grid:
             explored.add(node)
 
 
+class LevelGrid(Grid):
+    def __init__(self, grid: Grid):
+        self.spaces = frozenset(grid.spaces)
+        self.portals = dict(grid.portals)
+        self.markers = dict(grid.markers)
+        self.start = grid.start
+        self.end = grid.end
+        self.graph = grid.graph
+
+        xs = {p[0] for p in self.spaces}
+        ys = {p[1] for p in self.spaces}
+        self.minx, self.maxx = min(xs), max(xs)
+        self.miny, self.maxy = min(ys), max(ys)
+
+    def on_outer_edge(self, position: tuple):
+        return (
+                position[0] in {self.minx, self.maxx} or
+                position[1] in {self.miny, self.maxy})
+
+    def find_path(self) -> int | None:
+        logging.debug(sorted(self.graph.nodes, key=lambda x: (x[1], x[0])))
+        logging.debug(self.graph.edges)
+        self.dist = defaultdict(lambda: INF)
+        self.dist[(self.start, 0)] = 0
+        goal = (self.end, 0)
+        q = PriorityQueue()
+        explored = set()
+        q.push((self.start, 0), 0)
+
+        while q:
+            cost, node = q.pop()
+            if node == goal:
+                return cost
+            pos, level = node
+            neighbours = self.get_neighbours(pos)
+            for p, d in neighbours.items():
+                newlevel = level
+                if pos in self.portals and p == self.portals[pos]:
+                    newlevel += -1 if self.on_outer_edge(pos) else 1
+                newnode = (p, newlevel)
+                if newnode in explored or newlevel < 0:
+                    continue
+                score = cost + d
+                if score < self.dist[newnode]:
+                    self.dist[newnode] = score
+                    q.set_priority(newnode, score)
+            explored.add(node)
+
+
 def parse(stream) -> Grid:
     return Grid(stream)
 
@@ -180,6 +220,7 @@ def run(stream, test: bool = False):
         result1 = grid.find_path()
 
     with timing("Part 2"):
-        result2 = 0
+        lg = LevelGrid(grid)
+        result2 = lg.find_path()
 
     return (result1, result2)
