@@ -332,3 +332,7 @@ def test_y2019d20():
 
 def test_y2019d21():
     assert get_day_result(21) == (0, 0)
+
+
+def test_y2019d22():
+    assert get_day_result(22) == ('3 0 7 4 1 8 5 2 9 6', 0)
