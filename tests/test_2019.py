@@ -328,3 +328,7 @@ def test_y2019d20():
     assert lg.find_path() == 396
 
     assert get_day_result(20) == (23, 26)
+
+
+def test_y2019d21():
+    assert get_day_result(21) == (0, 0)
