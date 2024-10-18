@@ -3,6 +3,7 @@ from collections import defaultdict
 
 class Computer:
     def __init__(self, program: str = ''):
+        self.name = None
         self.program = []
         self.memory = defaultdict(lambda: 0)
         self.halt = False
@@ -10,6 +11,7 @@ class Computer:
         self.relative_base = 0
         self.inputs = []
         self.input_hook = None
+        self.output_hook = None
         self.outputs = []
 
         self.instructions = {
@@ -61,6 +63,9 @@ class Computer:
     def set_input_hook(self, fn):
         self.input_hook = fn
 
+    def set_output_hook(self, fn):
+        self.output_hook = fn
+
     def read_input(self) -> int:
         """Read a single input value.
 
@@ -75,6 +80,20 @@ class Computer:
         if self.input_hook is None:
             return self.inputs.pop(0)
         return self.input_hook()
+
+    def write_output(self, value: int) -> None:
+        """Write a single output value.
+
+        Add the value to the list in `self.outputs`.
+
+        Then, if `output_hook` has been set, call the hook function with the
+        entire list of outputs as its argument.  It is the hook's
+        responsibility to remove the value from the output queue, if that needs
+        doing.
+        """
+        self.outputs.append(value)
+        if self.output_hook:
+            self.output_hook(self.outputs)
 
     def get_mode(self, modes: int, index: int) -> str:
         modes = str(modes)
@@ -103,15 +122,14 @@ class Computer:
         mode = self.get_mode(modes, index)
         match mode:
             case '0':
-                self.memory[addr] = value
-                return
+                pass
             case '2':
                 addr += self.relative_base
                 if addr < 0:
                     raise ValueError(f"Invalid address {addr}")
-                self.memory[addr] = value
-                return
-        raise ValueError(f"Invalid mode for write: {mode}")
+            case _:
+                raise ValueError(f"Invalid mode for write: {mode}")
+        self.memory[addr] = value
 
     def do_halt(self, modes: int):
         self.halt = True
@@ -135,7 +153,7 @@ class Computer:
 
     def do_output(self, modes: int):
         v = self.get_value(modes, 1)
-        self.outputs.append(v)
+        self.write_output(v)
         self.pointer += 2
 
     def do_jump_if_true(self, modes: int):
