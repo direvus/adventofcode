@@ -373,3 +373,7 @@ def test_y2019d24():
     assert g.count_bugs() == 99
 
     assert get_day_result(24) == (2129920, 1922)
+
+
+def test_y2019d25():
+    assert get_day_result(25) == (0, 0)
