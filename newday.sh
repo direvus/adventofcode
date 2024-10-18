@@ -31,7 +31,7 @@ if ! fgrep -q "test_y${yyyy}d${dd}" "$testsfile"; then
     echo -e "
 
 def test_y${yyyy}d${dd}():
-    assert get_day_result($d) == (0, 0)" >> "$testsfile"
+    assert get_day_result(YEAR, $d) == (0, 0)" >> "$testsfile"
 fi
 
 git add -N "$testinputfile" "$scriptfile"

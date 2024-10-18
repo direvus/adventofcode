@@ -1,17 +1,7 @@
-import importlib
-import os
+from tests.common import get_day_result
 
 
 YEAR = 2019
-
-
-def get_day_result(day):
-    modpath = f'y{YEAR}.d{day:02d}'
-    inpath = os.path.join(f'y{YEAR}', 'tests', f'{day:02d}')
-    m = importlib.import_module(modpath)
-    with open(inpath, 'r') as infile:
-        result = m.run(infile, test=True)
-    return result
 
 
 def test_y2019d01():
@@ -19,15 +9,15 @@ def test_y2019d01():
     assert get_total_fuel_nested([14]) == 2
     assert get_total_fuel_nested([1969]) == 966
     assert get_total_fuel_nested([100756]) == 50346
-    assert get_day_result(1) == (34241, 51316)
+    assert get_day_result(YEAR, 1) == (34241, 51316)
 
 
 def test_y2019d02():
-    assert get_day_result(2) == (3500, 0)
+    assert get_day_result(YEAR, 2) == (3500, 0)
 
 
 def test_y2019d03():
-    assert get_day_result(3) == (6, 30)
+    assert get_day_result(YEAR, 3) == (6, 30)
 
 
 def test_y2019d04():
@@ -38,7 +28,7 @@ def test_y2019d04():
     assert is_valid('123789') is False
     assert is_valid2('123444') is False
     assert is_valid2('111122') is True
-    assert get_day_result(4) == (1385, 981)
+    assert get_day_result(YEAR, 4) == (1385, 981)
 
 
 def test_y2019d05():
@@ -72,11 +62,11 @@ def test_y2019d05():
     comp.reset()
     assert comp.run([9]) == (1001,)
 
-    assert get_day_result(5) == (1, 5)
+    assert get_day_result(YEAR, 5) == (1, 5)
 
 
 def test_y2019d06():
-    assert get_day_result(6) == (42, 4)
+    assert get_day_result(YEAR, 6) == (42, 4)
 
 
 def test_y2019d07():
@@ -95,11 +85,11 @@ def test_y2019d07():
             "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,"
             "27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5")
     assert chain.run_loop((9, 8, 7, 6, 5)) == 139629729
-    assert get_day_result(7) == (43210, 139629729)
+    assert get_day_result(YEAR, 7) == (43210, 139629729)
 
 
 def test_y2019d08():
-    assert get_day_result(8) == (1, ' *\n* ')
+    assert get_day_result(YEAR, 8) == (1, ' *\n* ')
 
 
 def test_y2019d09():
@@ -114,23 +104,23 @@ def test_y2019d09():
     comp = Computer("104,1125899906842624,99")
     assert comp.run() == (1125899906842624,)
 
-    assert get_day_result(9) == (prog, prog)
+    assert get_day_result(YEAR, 9) == (prog, prog)
 
 
 def test_y2019d10():
-    assert get_day_result(10) == (210, 802)
+    assert get_day_result(YEAR, 10) == (210, 802)
 
 
 def test_y2019d11():
-    assert get_day_result(11) == (0, 0)
+    assert get_day_result(YEAR, 11) == (0, 0)
 
 
 def test_y2019d12():
-    assert get_day_result(12) == (179, 2772)
+    assert get_day_result(YEAR, 12) == (179, 2772)
 
 
 def test_y2019d13():
-    assert get_day_result(13) == (0, 0)
+    assert get_day_result(YEAR, 13) == (0, 0)
 
 
 def test_y2019d14():
@@ -200,11 +190,11 @@ def test_y2019d14():
     assert g.find_ore_required('FUEL') == 2210736
     assert g.get_fuel(10 ** 12) == 460664
 
-    assert get_day_result(14) == (31, 34482758620)
+    assert get_day_result(YEAR, 14) == (31, 34482758620)
 
 
 def test_y2019d15():
-    assert get_day_result(15) == (0, 0)
+    assert get_day_result(YEAR, 15) == (0, 0)
 
 
 def test_y2019d16():
@@ -229,11 +219,11 @@ def test_y2019d16():
     assert np.array_equal(signal, [0, 3, 4, 1, 5, 5, 1, 8])
     do_phase(signal)
     assert np.array_equal(signal, [0, 1, 0, 2, 9, 4, 9, 8])
-    assert get_day_result(16) == ('24176176', '84462026')
+    assert get_day_result(YEAR, 16) == ('24176176', '84462026')
 
 
 def test_y2019d17():
-    assert get_day_result(17) == (0, 0)
+    assert get_day_result(YEAR, 17) == (0, 0)
 
 
 def test_y2019d18():
@@ -275,11 +265,11 @@ def test_y2019d18():
     mg = MultiGrid(grid)
     assert mg.find_all_keys_path() == 72
 
-    assert get_day_result(18) == (86, 32)
+    assert get_day_result(YEAR, 18) == (86, 32)
 
 
 def test_y2019d19():
-    assert get_day_result(19) == (0, 0)
+    assert get_day_result(YEAR, 19) == (0, 0)
 
 
 def test_y2019d20():
@@ -327,19 +317,19 @@ def test_y2019d20():
     lg = LevelGrid(grid)
     assert lg.find_path() == 396
 
-    assert get_day_result(20) == (23, 26)
+    assert get_day_result(YEAR, 20) == (23, 26)
 
 
 def test_y2019d21():
-    assert get_day_result(21) == (0, 0)
+    assert get_day_result(YEAR, 21) == (0, 0)
 
 
 def test_y2019d22():
-    assert get_day_result(22) == ('3 0 7 4 1 8 5 2 9 6', 0)
+    assert get_day_result(YEAR, 22) == ('3 0 7 4 1 8 5 2 9 6', 0)
 
 
 def test_y2019d23():
-    assert get_day_result(23) == (0, 0)
+    assert get_day_result(YEAR, 23) == (0, 0)
 
 
 def test_y2019d24():
@@ -372,8 +362,8 @@ def test_y2019d24():
 
     assert g.count_bugs() == 99
 
-    assert get_day_result(24) == (2129920, 1922)
+    assert get_day_result(YEAR, 24) == (2129920, 1922)
 
 
 def test_y2019d25():
-    assert get_day_result(25) == (0, 0)
+    assert get_day_result(YEAR, 25) == (0, 0)

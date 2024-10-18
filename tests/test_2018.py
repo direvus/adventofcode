@@ -1,58 +1,49 @@
-import importlib
-import os
 from io import StringIO
+
+from tests.common import get_day_result
 
 
 YEAR = 2018
 
 
-def get_day_result(day):
-    modpath = f'y{YEAR}.d{day:02d}'
-    inpath = os.path.join(f'y{YEAR}', 'tests', f'{day:02d}')
-    m = importlib.import_module(modpath)
-    with open(inpath, 'r') as infile:
-        result = m.run(infile, test=True)
-    return result
-
-
 def test_y2018d01():
-    assert get_day_result(1) == (3, 2)
+    assert get_day_result(YEAR, 1) == (3, 2)
 
 
 def test_y2018d02():
-    assert get_day_result(2) == (12, 'abcde')
+    assert get_day_result(YEAR, 2) == (12, 'abcde')
 
 
 def test_y2018d03():
-    assert get_day_result(3) == (4, 3)
+    assert get_day_result(YEAR, 3) == (4, 3)
 
 
 def test_y2018d04():
-    assert get_day_result(4) == (240, 4455)
+    assert get_day_result(YEAR, 4) == (240, 4455)
 
 
 def test_y2018d05():
-    assert get_day_result(5) == (10, 4)
+    assert get_day_result(YEAR, 5) == (10, 4)
 
 
 def test_y2018d06():
-    assert get_day_result(6) == (17, 16)
+    assert get_day_result(YEAR, 6) == (17, 16)
 
 
 def test_y2018d07():
-    assert get_day_result(7) == ('CABDFE', 15)
+    assert get_day_result(YEAR, 7) == ('CABDFE', 15)
 
 
 def test_y2018d08():
-    assert get_day_result(8) == (138, 66)
+    assert get_day_result(YEAR, 8) == (138, 66)
 
 
 def test_y2018d09():
-    assert get_day_result(9) == (32, 22563)
+    assert get_day_result(YEAR, 9) == (32, 22563)
 
 
 def test_y2018d10():
-    r1, r2 = get_day_result(10)
+    r1, r2 = get_day_result(YEAR, 10)
     assert r1 == (
             '............\n'
             '.#...#..###.\n'
@@ -74,15 +65,15 @@ def test_y2018d11():
     assert Grid(39).get_power_level((217, 196)) == 0
     assert Grid(71).get_power_level((101, 153)) == 4
     assert Grid(42).get_square_power((21, 61), 3) == 30
-    assert get_day_result(11) == ((33, 45), (90, 269, 16))
+    assert get_day_result(YEAR, 11) == ((33, 45), (90, 269, 16))
 
 
 def test_y2018d12():
-    assert get_day_result(12) == (325, 999999999374)
+    assert get_day_result(YEAR, 12) == (325, 999999999374)
 
 
 def test_y2018d13():
-    assert get_day_result(13) == ((7, 3), (6, 4))
+    assert get_day_result(YEAR, 13) == ((7, 3), (6, 4))
 
 
 def test_y2018d14():
@@ -96,7 +87,7 @@ def test_y2018d14():
     Board((3, 7), (0, 1)).get_count_before('01245') == 5
     Board((3, 7), (0, 1)).get_count_before(92510) == 18
     Board((3, 7), (0, 1)).get_count_before(59414) == 2018
-    assert get_day_result(14) == ('5158916779', 18)
+    assert get_day_result(YEAR, 14) == ('5158916779', 18)
 
 
 def test_y2018d15():
@@ -189,14 +180,14 @@ def test_y2018d15():
     assert rounds == 20
     assert g.total_health == 937
 
-    assert get_day_result(15) == (27730, 4988)
+    assert get_day_result(YEAR, 15) == (27730, 4988)
 
 
 def test_y2018d16():
     from y2018.d16 import find_matching_instructions
     assert find_matching_instructions(
             (3, 2, 1, 1), (2, 1, 2), (3, 2, 2, 1)) == {'mulr', 'addi', 'seti'}
-    assert get_day_result(16) == (1, 0)
+    assert get_day_result(YEAR, 16) == (1, 0)
 
 
 def test_y2018d17():
@@ -214,15 +205,15 @@ def test_y2018d17():
     grid.parse(s)
     grid.do_flow()
     assert grid.count_water() == 66
-    assert get_day_result(17) == (57, 29)
+    assert get_day_result(YEAR, 17) == (57, 29)
 
 
 def test_y2018d18():
-    assert get_day_result(18) == (1147, 0)
+    assert get_day_result(YEAR, 18) == (1147, 0)
 
 
 def test_y2018d19():
-    assert get_day_result(19) == (6, 6)
+    assert get_day_result(YEAR, 19) == (6, 6)
 
 
 def test_y2018d20():
@@ -253,12 +244,12 @@ def test_y2018d20():
             '(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$')
     assert g.find_furthest_path() == 31
 
-    assert get_day_result(20) == (18, 0)
+    assert get_day_result(YEAR, 20) == (18, 0)
 
 
 def test_y2018d21():
     # Nothing really to test with this one.
-    assert get_day_result(21) == (0, 0)
+    assert get_day_result(YEAR, 21) == (0, 0)
 
 
 def test_y2018d22():
@@ -286,7 +277,7 @@ def test_y2018d22():
 
     assert g.get_risk() == 114
 
-    assert get_day_result(22) == (114, 45)
+    assert get_day_result(YEAR, 22) == (114, 45)
 
 
 def test_y2018d23():
@@ -301,11 +292,11 @@ def test_y2018d23():
             pos=<10,10,10>, r=5
             """)
     assert swarm.count_in_range_of((12, 12, 12)) == 5
-    assert get_day_result(23) == (7, 36)
+    assert get_day_result(YEAR, 23) == (7, 36)
 
 
 def test_y2018d24():
-    assert get_day_result(24) == (5216, 51)
+    assert get_day_result(YEAR, 24) == (5216, 51)
 
 
 def test_y2018d25():
@@ -365,4 +356,4 @@ def test_y2018d25():
             """)
     assert count_constellations(points) == 8
 
-    assert get_day_result(25) == (4, 0)
+    assert get_day_result(YEAR, 25) == (4, 0)
