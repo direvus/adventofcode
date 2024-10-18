@@ -44,6 +44,7 @@ class Computer:
     def reset(self):
         self.load_program()
         self.pointer = 0
+        self.relative_base = 0
         self.halt = False
         self.inputs = []
         self.outputs = []

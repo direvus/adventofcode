@@ -27,9 +27,19 @@ class Nic(Computer):
             return -1
 
 
+class Nat:
+    packet = None
+    last = None
+
+
 class Network:
-    def __init__(self, size: int, stream):
+    def __init__(self, size: int, stream, nat: bool = False):
         self.size = size
+        self.result = None
+        self.nat = None
+        self.threads = []
+        if nat:
+            self.nat = Nat()
         self.messages = defaultdict(queue.Queue)
 
         # Get the first Nic to parse the stream, all other Nics will load a
@@ -39,8 +49,7 @@ class Network:
         zero.input_queue = self.messages[0]
         zero.set_output_hook(self.send)
         self.nics = [zero]
-        self.messages[0].put(0)
-        self.result = None
+
         for i in range(1, size):
             comp = Nic()
             comp.name = str(i)
@@ -49,14 +58,29 @@ class Network:
             comp.input_queue = self.messages[i]
             comp.set_output_hook(self.send)
             self.nics.append(comp)
-            self.messages[i].put(i)
+
+    def reset(self):
+        self.result = None
+        for nic in self.nics:
+            nic.reset()
+
+        # Drain all message queues
+        for k in self.messages:
+            q = self.messages[k]
+            while not q.empty():
+                try:
+                    q.get(block=False)
+                except queue.Empty:
+                    pass
+
+        if self.nat:
+            self.nat.packet = None
+            self.nat.last = None
 
     def recv(self, addr: int) -> int:
         if self.messages[addr].empty():
-            logging.debug(f"Returning -1 (empty message queue) for {addr}")
             return -1
         value = self.messages[addr].get()
-        logging.debug(f"Returning {value} for {addr}")
         return value
 
     def send(self, outputs: list) -> None:
@@ -66,21 +90,57 @@ class Network:
             y = outputs.pop(0)
             logging.debug(f"  -> {addr} {x} {y}")
             if addr == 255:
-                self.result = y
+                # In non-NAT mode, the first packet sent to address 255 gives
+                # the final result of the run. In NAT mode, the packet goes
+                # into the NAT memory, and will get sent when the network is
+                # idle.
+                if self.nat:
+                    self.nat.packet = (x, y)
+                else:
+                    self.result = y
             if addr < 50:
                 self.messages[addr].put(x)
                 self.messages[addr].put(y)
 
+    def do_idle_check(self):
+        if self.nat.packet is None:
+            # No point continuing, we have nothing to send anyway.
+            return
+
+        # Is the network currently idle?
+        if not all(q.empty() for q in self.messages.values()):
+            return
+
+        x, y = self.nat.packet
+        logging.debug(f"Network is idle, -> 0 {x} {y}")
+        if y == self.nat.last:
+            # Sent the same Y value twice in a row, that's the final run
+            # result.
+            self.result = y
+        self.messages[0].put(x)
+        self.messages[0].put(y)
+        self.nat.last = y
+
     def run(self):
+        for i in range(self.size):
+            self.messages[i].put(i)
+
         self.threads = [Thread(target=nic.run) for nic in self.nics]
         for thread in self.threads:
             thread.start()
 
         while self.result is None:
-            self.threads[0].join(1)
+            self.threads[0].join(0.2)
+            if self.nat:
+                self.do_idle_check()
 
+        # Signal all the NICs to stop processing
         for nic in self.nics:
             nic.halt = True
+
+        # Wait for all threads to conclude
+        for thread in self.threads:
+            thread.join()
 
 
 def run(stream, test: bool = False):
@@ -94,6 +154,10 @@ def run(stream, test: bool = False):
         result1 = net.result
 
     with timing("Part 2"):
-        result2 = 0
+        net.reset()
+        # Switch on NAT mode for the second run
+        net.nat = Nat()
+        net.run()
+        result2 = net.result
 
     return (result1, result2)
