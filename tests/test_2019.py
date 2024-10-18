@@ -340,3 +340,19 @@ def test_y2019d22():
 
 def test_y2019d23():
     assert get_day_result(23) == (0, 0)
+
+
+def test_y2019d24():
+    from y2019.d24 import Grid
+    g = Grid("""
+            ....#
+            #..#.
+            #..##
+            ..#..
+            #....
+            """)
+    assert g.get_biodiversity() == 1205552
+    g.update()
+    assert g.get_biodiversity() == 7200233
+
+    assert get_day_result(24) == (2129920, 0)
