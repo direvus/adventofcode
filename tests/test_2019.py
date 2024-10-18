@@ -343,16 +343,33 @@ def test_y2019d23():
 
 
 def test_y2019d24():
-    from y2019.d24 import Grid
-    g = Grid("""
+    from y2019.d24 import Grid, NestedGrid
+    source = """
             ....#
             #..#.
             #..##
             ..#..
             #....
-            """)
+            """
+    g = Grid(source)
     assert g.get_biodiversity() == 1205552
     g.update()
     assert g.get_biodiversity() == 7200233
 
-    assert get_day_result(24) == (2129920, 0)
+    g = NestedGrid(source)
+    assert len(g.get_adjacents((4, 4, -1))) == 4
+    assert len(g.get_adjacents((1, 1, 0))) == 4
+    assert len(g.get_adjacents((3, 0, 0))) == 4
+    assert len(g.get_adjacents((4, 0, 0))) == 4
+    assert len(g.get_adjacents((3, 2, -1))) == 8
+    assert len(g.get_adjacents((2, 1, 0))) == 8
+
+    g.run(10)
+    for d in range(-5, 6):
+        print()
+        print(f"Depth {d}")
+        print(g.to_string(d))
+
+    assert g.count_bugs() == 99
+
+    assert get_day_result(24) == (2129920, 1922)
