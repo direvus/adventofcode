@@ -18,3 +18,10 @@ def test_y2020d03():
 
 def test_y2020d04():
     assert get_day_result(YEAR, 4) == (2, 2)
+
+
+def test_y2020d05():
+    from y2020.d05 import get_seat
+
+    assert get_seat('FBFBBFFRLR') == (44, 5)
+    assert get_day_result(YEAR, 5) == (820, None)
