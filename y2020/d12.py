@@ -67,6 +67,36 @@ class Ship:
         return abs(self.position[0]) + abs(self.position[1])
 
 
+class WaypointShip(Ship):
+    def __init__(self, stream=''):
+        super().__init__(stream)
+        self.waypoint = (10, -1)
+
+    def move(self, direction: int, distance: int):
+        x, y = self.waypoint
+        vx, vy = VECTORS[direction]
+        self.waypoint = (x + vx * distance, y + vy * distance)
+
+    def turn(self, change: int):
+        change %= 4
+        if change == 0:
+            return
+
+        x, y = self.waypoint
+        match change:
+            case 1:
+                self.waypoint = (-y, x)
+            case 2:
+                self.waypoint = (-x, -y)
+            case 3:
+                self.waypoint = (y, -x)
+
+    def go_forward(self, distance: int):
+        x, y = self.position
+        vx, vy = self.waypoint
+        self.position = (x + vx * distance, y + vy * distance)
+
+
 def parse(stream) -> Ship:
     return Ship(stream)
 
@@ -78,6 +108,9 @@ def run(stream, test: bool = False):
         result1 = ship.distance_from_origin
 
     with timing("Part 2"):
-        result2 = 0
+        wayship = WaypointShip()
+        wayship.actions = ship.actions
+        wayship.run()
+        result2 = wayship.distance_from_origin
 
     return (result1, result2)
