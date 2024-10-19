@@ -25,3 +25,7 @@ def test_y2020d05():
 
     assert get_seat('FBFBBFFRLR') == (44, 5)
     assert get_day_result(YEAR, 5) == (820, None)
+
+
+def test_y2020d06():
+    assert get_day_result(YEAR, 6) == (11, 6)
