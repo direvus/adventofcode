@@ -7,7 +7,7 @@ https://adventofcode.com/2020/day/13
 import logging  # noqa: F401
 from math import ceil
 
-from util import timing, NINF
+from util import timing
 
 
 def parse(stream) -> tuple[int, list]:
@@ -39,22 +39,15 @@ def find_consecutive_time(routes: list[int | None]) -> int:
     `routes` argument) are unconstrained but do occupy a time slot in the
     departure sequence.
     """
-    largest = NINF
-    index = 0
-    r = []
-    for i, x in enumerate(routes):
-        if x is None:
-            continue
-        r.append((i, x))
-        if x > largest:
-            largest = x
-            index = i
-    time = largest - index
-
-    while True:
-        if is_valid(time, r):
-            return time
-        time += largest
+    buses = [(i, x) for i, x in enumerate(routes) if x is not None]
+    _, first = buses.pop(0)
+    step = first
+    t = first
+    for i, x in buses:
+        while (t + i) % x != 0:
+            t += step
+        step *= x
+    return t
 
 
 def run(stream, test: bool = False):
