@@ -5,6 +5,7 @@ Day 16: Ticket Translation
 https://adventofcode.com/2020/day/16
 """
 import logging  # noqa: F401
+from math import prod
 
 from spans import SpanSet
 from util import timing
@@ -61,6 +62,40 @@ class Tickets:
                     result.append(n)
         return result
 
+    def discard_tickets(self, numbers: set[int]):
+        tickets = tuple(self.others)
+        for ticket in tickets:
+            if any(n in ticket for n in numbers):
+                self.others.discard(ticket)
+
+    def find_field_positions(self):
+        count = len(self.fields)
+        fields = set(self.fields.keys())
+        positions = set(range(count))
+        tickets = (self.ticket,) + tuple(self.others)
+        result = {}
+        while fields:
+            for i in range(count):
+                if i not in positions:
+                    continue
+                candidates = set(fields)
+                for ticket in tickets:
+                    value = ticket[i]
+                    candidates &= {
+                            f for f in fields
+                            if self.fields[f].contains(value)}
+                if len(candidates) == 1:
+                    field = next(iter(candidates))
+                    result[field] = i
+                    fields.discard(field)
+                    positions.discard(i)
+        return result
+
+    def get_departure_values(self, positions: dict):
+        return {
+                self.ticket[i] for k, i in positions.items()
+                if k.startswith('departure')}
+
 
 def parse(stream) -> Tickets:
     return Tickets(stream)
@@ -69,9 +104,13 @@ def parse(stream) -> Tickets:
 def run(stream, test: bool = False):
     with timing("Part 1"):
         tickets = parse(stream)
-        result1 = sum(tickets.find_invalid_numbers())
+        invalid = tickets.find_invalid_numbers()
+        result1 = sum(invalid)
 
     with timing("Part 2"):
-        result2 = 0
+        tickets.discard_tickets(invalid)
+        positions = tickets.find_field_positions()
+        values = tickets.get_departure_values(positions)
+        result2 = prod(values)
 
     return (result1, result2)
