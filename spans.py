@@ -98,6 +98,12 @@ class SpanSet:
     def __sub__(self, other):
         return self.subtract(other)
 
+    def contains(self, value: int) -> bool:
+        for low, high in self.spans:
+            if low <= value and high >= value:
+                return True
+        return False
+
     def __str__(self) -> str:
         result = []
         for low, high in sorted(self.spans):
