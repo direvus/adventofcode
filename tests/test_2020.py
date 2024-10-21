@@ -69,3 +69,7 @@ def test_y2020d15():
 
 def test_y2020d16():
     assert get_day_result(YEAR, 16) == (71, 1)
+
+
+def test_y2020d17():
+    assert get_day_result(YEAR, 17) == (112, 0)
