@@ -73,3 +73,22 @@ def test_y2020d16():
 
 def test_y2020d17():
     assert get_day_result(YEAR, 17) == (112, 848)
+
+
+def test_y2020d18():
+    from y2020.d18 import tokenise, parse_all
+
+    expr = parse_all(tokenise('2 * 3 + (4 * 5)'))
+    assert expr.evaluate() == 26
+
+    expr = parse_all(tokenise('5 + (8 * 3 + 9 + 3 * 4 * 3)'))
+    assert expr.evaluate() == 437
+
+    expr = parse_all(tokenise('5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))'))
+    assert expr.evaluate() == 12240
+
+    expr = parse_all(tokenise(
+            '((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2'))
+    assert expr.evaluate() == 13632
+
+    assert get_day_result(YEAR, 18) == (71, 0)
