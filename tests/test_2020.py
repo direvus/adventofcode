@@ -113,3 +113,7 @@ def test_y2020d18():
     assert parser.parse().evaluate() == 23340
 
     assert get_day_result(YEAR, 18) == (71, 231)
+
+
+def test_y2020d19():
+    assert get_day_result(YEAR, 19) == (2, 0)
