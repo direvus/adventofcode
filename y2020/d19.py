@@ -15,6 +15,7 @@ class Tree:
     def __init__(self, stream=''):
         self.nodes = dict
         self.messages = []
+        self.rule2 = False
 
         if stream:
             self.parse(stream)
@@ -45,13 +46,17 @@ class Tree:
                 continue
             self.messages.append(line)
 
-    def to_regex(self) -> re.Pattern:
-        expr = [0]
-        q = deque([0])
+    def to_regex(self, start: int = 0) -> re.Pattern:
+        expr = [start]
+        q = deque([start])
         while q:
             node = q.popleft()
             prods = self.nodes.get(node, [])
-            if len(prods) > 1:
+            if self.rule2 and node == 8:
+                repl = (42, '+')
+            elif self.rule2 and node == 11:
+                repl = (42, '+', 31, '+')
+            elif len(prods) > 1:
                 repl = ['(']
                 for prod in prods[:-1]:
                     repl.extend(prod)
@@ -96,6 +101,7 @@ def run(stream, test: bool = False):
         result1 = tree.count_valid_messages()
 
     with timing("Part 2"):
-        result2 = 0
+        tree.rule2 = True
+        result2 = tree.count_valid_messages()
 
     return (result1, result2)
