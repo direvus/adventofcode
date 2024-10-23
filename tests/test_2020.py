@@ -76,7 +76,7 @@ def test_y2020d17():
 
 
 def test_y2020d18():
-    from y2020.d18 import tokenise, ArithmeticParser
+    from y2020.d18 import tokenise, ArithmeticParser, ArithmeticParser2
 
     parser = ArithmeticParser(tokenise('2 * 3 + (4 * 5)'))
     assert parser.parse().evaluate() == 26
@@ -92,4 +92,24 @@ def test_y2020d18():
             '((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2'))
     assert parser.parse().evaluate() == 13632
 
-    assert get_day_result(YEAR, 18) == (71, 0)
+    parser = ArithmeticParser2(tokenise(
+            '1 + (2 * 3) + (4 * (5 + 6))'))
+    assert parser.parse().evaluate() == 51
+
+    parser = ArithmeticParser2(tokenise(
+            '2 * 3 + (4 * 5)'))
+    assert parser.parse().evaluate() == 46
+
+    parser = ArithmeticParser2(tokenise(
+            '5 + (8 * 3 + 9 + 3 * 4 * 3)'))
+    assert parser.parse().evaluate() == 1445
+
+    parser = ArithmeticParser2(tokenise(
+            '5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))'))
+    assert parser.parse().evaluate() == 669060
+
+    parser = ArithmeticParser2(tokenise(
+            '((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2'))
+    assert parser.parse().evaluate() == 23340
+
+    assert get_day_result(YEAR, 18) == (71, 231)

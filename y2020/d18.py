@@ -52,7 +52,7 @@ class Expr:
         self.right = None
 
     def __str__(self):
-        return f'{self.left} {self.op.__name__} {self.right}'
+        return f'({self.left} {self.op.__name__} {self.right})'
 
     def evaluate(self):
         left = self.left
@@ -132,6 +132,49 @@ class ArithmeticParser:
         return self.parse_expr()
 
 
+class ArithmeticParser2(ArithmeticParser):
+    """This parser uses different precedence levels for * and +.
+
+    But compared with normal arithmetic rules, the precedence levels are
+    reversed. + is evaluated before *.
+    """
+    def parse_expr(self):
+        left = self.parse_factor()
+        expr = self.parse_expr_rhs(left)
+        return expr
+
+    def parse_expr_rhs(self, lhs: Expr | int):
+        match self.get_symbol():
+            case '*':
+                symbol = self.get_symbol()
+                self.read_token(symbol)
+                expr = Expr()
+                expr.left = lhs
+                expr.op = OPERATORS[symbol]
+                expr.right = self.parse_factor()
+                return self.parse_expr_rhs(expr)
+            case _:
+                return lhs
+
+    def parse_factor(self):
+        left = self.parse_term()
+        expr = self.parse_factor_rhs(left)
+        return expr
+
+    def parse_factor_rhs(self, lhs: Expr | int):
+        match self.get_symbol():
+            case '+':
+                symbol = self.get_symbol()
+                self.read_token(symbol)
+                expr = Expr()
+                expr.left = lhs
+                expr.op = OPERATORS[symbol]
+                expr.right = self.parse_term()
+                return self.parse_factor_rhs(expr)
+            case _:
+                return lhs
+
+
 def parse(stream) -> list:
     result = []
     for line in stream:
@@ -154,5 +197,9 @@ def run(stream, test: bool = False):
 
     with timing("Part 2"):
         result2 = 0
+        for tokens in token_list:
+            parser = ArithmeticParser2(tokens)
+            expr = parser.parse()
+            result2 += expr.evaluate()
 
     return (result1, result2)
