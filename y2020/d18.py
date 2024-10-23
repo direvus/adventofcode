@@ -5,14 +5,21 @@ Day 18: Operation Order
 https://adventofcode.com/2020/day/18
 """
 import logging  # noqa: F401
-from collections import deque
 from operator import add, mul
 
 from util import timing
 
 
-def tokenise(text: str) -> deque:
-    result = deque()
+OPERATORS = {'+': add, '*': mul}
+
+
+def tokenise(text: str):
+    """Lex out tokens from a string source.
+
+    The function acts as a generator, yielding each token as it is lexed. Each
+    of the yielded tokens are tuples, the first element is a symbol name, and
+    the optional second element is an attribute value for the symbol.
+    """
     i = 0
     length = len(text)
     while i < length:
@@ -23,20 +30,19 @@ def tokenise(text: str) -> deque:
         ch = text[i]
         if ch in '()+*':
             # These symbols are always standalone tokens
-            result.append(ch)
+            yield (ch,)
             i += 1
             continue
 
         if ch.isdigit():
-            j = i
+            j = i + 1
             while j < length and text[j].isdigit():
                 j += 1
-            result.append(int(text[i:j]))
+            yield ('int', int(text[i:j]))
             i = j
             continue
 
         raise ValueError(f"Unrecognised symbol `{ch}` at position {i}")
-    return result
 
 
 class Expr:
@@ -44,6 +50,9 @@ class Expr:
         self.op = None
         self.left = None
         self.right = None
+
+    def __str__(self):
+        return f'{self.left} {self.op.__name__} {self.right}'
 
     def evaluate(self):
         left = self.left
@@ -56,85 +65,92 @@ class Expr:
         return self.op(left, right)
 
 
-def parse_expr(tokens: deque) -> Expr:
-    """Parse one expression from a list of tokens.
+class ArithmeticParser:
+    """A parser for simple arithmetic grammar with no operator precedence.
 
-    The result is an Expr object. Tokens that are consumed by parsing are
-    removed from the list.
+    Supports the + and * operators on non-negative integers only.
+
+    Values bind to operators left-associatively and the operators have equal
+    precedence.
     """
-    expr = Expr()
-    expr.left = parse_value(tokens)
-    expr.op = parse_operator(tokens)
-    expr.right = parse_value(tokens)
-    return expr
+    def __init__(self, tokens):
+        self.tokens = tuple(tokens)
+        self.pointer = 0
 
+    def get_symbol(self) -> str:
+        if self.pointer >= len(self.tokens):
+            return None
+        return self.tokens[self.pointer][0]
 
-def parse_value(tokens: deque) -> Expr | int:
-    """Parse an expression value from a list of tokens.
+    def read_token(self, symbol: str):
+        token = self.tokens[self.pointer]
+        if token[0] != symbol:
+            raise ValueError(
+                    f"Expected {symbol} at token {self.pointer}, got "
+                    f"{token} instead.")
+        self.pointer += 1
+        if len(token) > 1:
+            return token[1]
 
-    The result is either a nested expression, or a simple integer value. Tokens
-    that are consumed by parsing are removed from the list.
-    """
-    tok = tokens.popleft()
-    if isinstance(tok, int):
-        return tok
+    def parse_int(self):
+        value = self.read_token('int')
+        return value
 
-    if tok == '(':
-        expr = parse_expr(tokens)
-        while tokens:
-            if tokens[0] == ')':
-                tokens.popleft()
+    def parse_term(self):
+        match self.get_symbol():
+            case '(':
+                self.read_token('(')
+                expr = self.parse_expr()
+                self.read_token(')')
                 return expr
-            new = Expr()
-            new.left = expr
-            new.op = parse_operator(tokens)
-            new.right = parse_value(tokens)
-            expr = new
-        raise ValueError("Unterminated `(` in tokens.")
-    raise ValueError(
-            f"Unexpected `{tok}` in expression value, "
-            "expected a literal value or a nested expression.")
+            case 'int':
+                return self.parse_int()
+            case _:
+                raise ValueError(
+                        f"Expected an integer or `(` at token {self.pointer}, "
+                        f"got {self.get_symbol()} instead.")
+
+    def parse_expr_rhs(self, lhs: Expr | int):
+        match self.get_symbol():
+            case '+' | '*':
+                symbol = self.get_symbol()
+                self.read_token(symbol)
+                expr = Expr()
+                expr.left = lhs
+                expr.op = OPERATORS[symbol]
+                expr.right = self.parse_term()
+                return self.parse_expr_rhs(expr)
+            case _:
+                return lhs
+
+    def parse_expr(self):
+        left = self.parse_term()
+        expr = self.parse_expr_rhs(left)
+        return expr
+
+    def parse(self):
+        return self.parse_expr()
 
 
-def parse_operator(tokens: deque):
-    tok = tokens.popleft()
-    if tok == '+':
-        return add
-
-    if tok == '*':
-        return mul
-
-    raise ValueError(
-            f"Unexpected `{tok}` in expression operator, expected "
-            "`+` or `*`.")
-
-
-def parse_all(tokens: deque) -> Expr:
-    result = parse_expr(tokens)
-    while tokens:
-        expr = Expr()
-        expr.left = result
-        expr.op = parse_operator(tokens)
-        expr.right = parse_value(tokens)
-        result = expr
-    return result
-
-
-def parse(stream) -> list[Expr]:
+def parse(stream) -> list:
     result = []
     for line in stream:
         line = line.strip()
         if line == '':
             continue
-        tokens = tokenise(line)
-        result.append(parse_all(tokens))
+        tokens = tuple(tokenise(line))
+        result.append(tokens)
     return result
 
 
 def run(stream, test: bool = False):
     with timing("Part 1"):
-        exprs = parse(stream)
-        result1 = sum(x.evaluate() for x in exprs)
+        token_list = parse(stream)
+        result1 = 0
+        for tokens in token_list:
+            parser = ArithmeticParser(tokens)
+            expr = parser.parse()
+            result1 += expr.evaluate()
 
     with timing("Part 2"):
         result2 = 0
