@@ -37,7 +37,7 @@ if __name__ == '__main__':
     if args.input_file:
         inpath = args.input_file
     elif args.test:
-        inpath = os.path.join(year, 'tests', day)
+        inpath = os.path.join(year, 'examples', day)
     else:
         inpath = os.path.join(year, 'inputs', day)
 

@@ -173,3 +173,7 @@ def test_y2020d20():
     assert tile.transform(7).pixels == {(0, 0), (1, 0), (0, 1), (2, 1), (0, 2)}
 
     assert get_day_result(YEAR, 20) == (20899048083289, 273)
+
+
+def test_y2020d21():
+    assert get_day_result(YEAR, 21) == (0, 0)
