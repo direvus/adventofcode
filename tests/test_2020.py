@@ -120,4 +120,56 @@ def test_y2020d19():
 
 
 def test_y2020d20():
+    from y2020.d20 import Tile
+
+    tile = Tile('', '.#.\n..#\n###', 3)
+    assert tile.get_edge(0, 0) == (0, 1, 0)
+    assert tile.get_edge(1, 0) == (0, 1, 1)
+    assert tile.get_edge(2, 0) == (1, 1, 1)
+    assert tile.get_edge(3, 0) == (0, 0, 1)
+
+    assert tile.get_edge(0, 1) == (0, 1, 1)
+    assert tile.get_edge(1, 1) == (1, 1, 1)
+    assert tile.get_edge(2, 1) == (0, 0, 1)
+    assert tile.get_edge(3, 1) == (0, 1, 0)
+
+    assert tile.get_edge(0, 2) == (1, 1, 1)
+    assert tile.get_edge(1, 2) == (1, 0, 0)
+    assert tile.get_edge(2, 2) == (0, 1, 0)
+    assert tile.get_edge(3, 2) == (1, 1, 0)
+
+    assert tile.get_edge(0, 3) == (1, 0, 0)
+    assert tile.get_edge(1, 3) == (0, 1, 0)
+    assert tile.get_edge(2, 3) == (1, 1, 0)
+    assert tile.get_edge(3, 3) == (1, 1, 1)
+
+    assert tile.get_edge(0, 4) == (1, 1, 1)
+    assert tile.get_edge(1, 4) == (1, 1, 0)
+    assert tile.get_edge(2, 4) == (0, 1, 0)
+    assert tile.get_edge(3, 4) == (1, 0, 0)
+
+    assert tile.get_edge(0, 5) == (0, 1, 0)
+    assert tile.get_edge(1, 5) == (0, 0, 1)
+    assert tile.get_edge(2, 5) == (1, 1, 1)
+    assert tile.get_edge(3, 5) == (0, 1, 1)
+
+    assert tile.get_edge(0, 6) == (0, 0, 1)
+    assert tile.get_edge(1, 6) == (1, 1, 1)
+    assert tile.get_edge(2, 6) == (0, 1, 1)
+    assert tile.get_edge(3, 6) == (0, 1, 0)
+
+    assert tile.get_edge(0, 7) == (1, 1, 0)
+    assert tile.get_edge(1, 7) == (0, 1, 0)
+    assert tile.get_edge(2, 7) == (1, 0, 0)
+    assert tile.get_edge(3, 7) == (1, 1, 1)
+
+    assert tile.transform(0).pixels == {(1, 0), (2, 1), (0, 2), (1, 2), (2, 2)}
+    assert tile.transform(1).pixels == {(1, 0), (2, 0), (0, 1), (2, 1), (2, 2)}
+    assert tile.transform(2).pixels == {(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)}
+    assert tile.transform(3).pixels == {(0, 0), (0, 1), (2, 1), (0, 2), (1, 2)}
+    assert tile.transform(4).pixels == {(0, 0), (1, 0), (2, 0), (2, 1), (1, 2)}
+    assert tile.transform(5).pixels == {(1, 0), (0, 1), (0, 2), (1, 2), (2, 2)}
+    assert tile.transform(6).pixels == {(2, 0), (0, 1), (2, 1), (1, 2), (2, 2)}
+    assert tile.transform(7).pixels == {(0, 0), (1, 0), (0, 1), (2, 1), (0, 2)}
+
     assert get_day_result(YEAR, 20) == (20899048083289, 273)

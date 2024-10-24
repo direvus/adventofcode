@@ -40,7 +40,6 @@ PATTERN = {
         (1, 2), (4, 2), (7, 2), (10, 2), (13, 2), (16, 2)}
 
 
-
 class Tile:
     def __init__(self, name: int, stream, size: int = 10):
         self.name = name
@@ -52,6 +51,8 @@ class Tile:
             self.parse(stream)
 
     def parse(self, stream):
+        if isinstance(stream, str):
+            stream = stream.strip().split('\n')
         y = 0
         for line in stream:
             line = line.strip()
@@ -100,7 +101,7 @@ class Tile:
         self._edges = result
         return result
 
-    def get_edge(self, edge: int, orientation: int) -> tuple:
+    def get_edge(self, edge: int, orientation: int = 0) -> tuple:
         """Return an edge from this tile under the given orientation.
 
         `edge` should be the edge number, counting from zero at the top edge
@@ -126,7 +127,7 @@ class Tile:
                 return (y, self.size - x - 1)
             case 2:
                 # Rotate 180 degrees
-                return (self.size - y - 1, self.size - x - 1)
+                return (self.size - x - 1, self.size - y - 1)
             case 3:
                 # Rotate 90 degrees clockwise
                 return (self.size - y - 1, x)
@@ -241,13 +242,13 @@ class TileSet:
                     return p
         return None
 
-    def find_fits(self, mosaic: dict, position: tuple, tile: int):
+    def find_fits(self, mosaic: dict, position: tuple, tile: int) -> set[int]:
         """Return all the ways that the tile could fit in this position.
 
-        If the tile cannot fit into this position (its edges are not compatible
-        with the adjacent tiles in any rotation) then return the empty set.
+        The result is the set of orientation indexes where the tile's edges are
+        compatible with all the adjacent tiles.
 
-        Otherwise, return a set of the valid rotations for the tile.
+        If the tile cannot fit in this position at all, return the empty set.
         """
         result = set()
         x, y = position
@@ -401,9 +402,10 @@ def run(stream, test: bool = False):
             hits = tile.find_pattern(PATTERN, 3, 20)
             pixels = set(tile.pixels)
             if hits:
+                monsters = set()
                 for x, y in hits:
-                    pixels -= {(px + x, py + y) for px, py in PATTERN}
-                result2 = len(pixels)
+                    monsters |= {(px + x, py + y) for px, py in PATTERN}
+                result2 = len(pixels - monsters)
                 break
 
     return (result1, result2)
