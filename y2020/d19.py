@@ -16,6 +16,7 @@ class Tree:
         self.nodes = dict
         self.messages = []
         self.rule2 = False
+        self.regex = None
 
         if stream:
             self.parse(stream)
@@ -55,7 +56,12 @@ class Tree:
             if self.rule2 and node == 8:
                 repl = (42, '+')
             elif self.rule2 and node == 11:
-                repl = (42, '+', 31, '+')
+                repl = (
+                        '(', 42, 31,
+                        '|', 42, '{2}', 31, '{2}',
+                        '|', 42, '{3}', 31, '{3}',
+                        '|', 42, '{4}', 31, '{4}',
+                        ')')
             elif len(prods) > 1:
                 repl = ['(']
                 for prod in prods[:-1]:
@@ -86,7 +92,8 @@ class Tree:
         regex = self.to_regex()
         result = 0
         for message in self.messages:
-            if regex.fullmatch(message):
+            m = regex.fullmatch(message)
+            if m:
                 result += 1
         return result
 
