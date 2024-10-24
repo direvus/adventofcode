@@ -27,7 +27,11 @@ if __name__ == '__main__':
     loglevel = 'DEBUG' if args.verbose else 'INFO'
     handler = RichHandler(markup=True)
     fmt = '%(message)s'
-    logging.basicConfig(level=loglevel, format=fmt, handlers=[handler])
+    logging.basicConfig(
+            level=loglevel,
+            datefmt='%S',
+            format=fmt,
+            handlers=[handler])
 
     year = f'y{args.year}'
     day = f'{args.day:02d}'
