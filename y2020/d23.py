@@ -17,19 +17,20 @@ class Node:
 
 
 class Game:
-    def __init__(self, source: str):
+    def __init__(self, source: list[int]):
         self.maximum = 0
         self.current = None
+        self.values = {}
 
         prev = None
-        for char in source:
-            value = int(char)
+        for value in source:
             self.maximum = max(value, self.maximum)
             node = Node(value)
             if prev is None:
                 self.current = node
             else:
                 prev.tail = node
+            self.values[value] = node
             prev = node
         prev.tail = self.current
 
@@ -43,10 +44,7 @@ class Game:
         return ' '.join(line)
 
     def get_node(self, value: int) -> Node:
-        node = self.current
-        while node.value != value:
-            node = node.tail
-        return node
+        return self.values[value]
 
     def do_round(self):
         node = self.current
@@ -64,9 +62,7 @@ class Game:
         while dest in collected:
             dest = dest - 1 if dest > 1 else self.maximum
 
-        while node.value != dest:
-            node = node.tail
-
+        node = self.get_node(dest)
         tail = node.tail
         node.tail = head
         head.tail.tail.tail = tail
@@ -84,18 +80,42 @@ class Game:
             node = node.tail
         return ''.join(line)
 
+    def get_next_values(self, target: int, count: int):
+        result = []
+        node = self.get_node(target)
+        for _ in range(count):
+            node = node.tail
+            result.append(node.value)
+        return result
 
-def parse(stream) -> Game:
-    return Game(stream.readline().strip())
+
+def parse(stream) -> list[int]:
+    result = []
+    for ch in stream.readline().strip():
+        result.append(int(ch))
+    return result
 
 
 def run(stream, test: bool = False):
     with timing("Part 1"):
-        game = parse(stream)
+        source = parse(stream)
+        game = Game(source)
         game.do_rounds(100)
         result1 = game.get_order()
 
     with timing("Part 2"):
-        result2 = 0
+        maximum = max(source)
+        if test:
+            count = 1000
+            rounds = 10_000
+        else:
+            count = 1_000_000
+            rounds = 10_000_000
+        for n in range(maximum + 1, count + 1):
+            source.append(n)
+        game = Game(source)
+        game.do_rounds(rounds)
+        a, b = game.get_next_values(1, 2)
+        result2 = a * b
 
     return (result1, result2)
