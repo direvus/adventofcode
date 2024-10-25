@@ -37,12 +37,43 @@ def move(position: tuple, direction: str) -> tuple:
 class Grid:
     def __init__(self):
         self.flipped = set()
+        self.max_se = 0
+        self.min_se = 0
+        self.max_ne = 0
+        self.min_ne = 0
 
     def flip(self, position: tuple):
         if position in self.flipped:
             self.flipped.remove(position)
         else:
             self.flipped.add(position)
+            self.max_se = max(position[0], self.max_se)
+            self.min_se = min(position[0], self.min_se)
+            self.max_ne = max(position[1], self.max_ne)
+            self.min_ne = min(position[1], self.min_ne)
+
+    def get_adjacent(self, position: tuple):
+        se, ne = position
+        return {(se + vse, ne + vne) for vse, vne in VECTORS.values()}
+
+    def update(self):
+        new = set()
+        for se in range(self.min_se - 1, self.max_se + 2):
+            for ne in range(self.min_ne - 1, self.max_ne + 2):
+                p = (se, ne)
+                flipped = p in self.flipped
+                count = len(self.get_adjacent(p) & self.flipped)
+                if count == 2 or (count == 1 and flipped):
+                    new.add(p)
+                    self.max_se = max(se, self.max_se)
+                    self.min_se = min(se, self.min_se)
+                    self.max_ne = max(ne, self.max_ne)
+                    self.min_ne = min(ne, self.min_ne)
+        self.flipped = new
+
+    def run(self, count: int = 1):
+        for _ in range(count):
+            self.update()
 
 
 def parse_line(line: str) -> tuple:
@@ -76,6 +107,7 @@ def run(stream, test: bool = False):
         result1 = len(grid.flipped)
 
     with timing("Part 2"):
-        result2 = 0
+        grid.run(100)
+        result2 = len(grid.flipped)
 
     return (result1, result2)
