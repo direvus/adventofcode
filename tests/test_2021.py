@@ -50,3 +50,13 @@ def test_y2021d11():
 
 def test_y2021d12():
     assert get_day_result(YEAR, 12) == (10, 36)
+
+
+def test_y2021d13():
+    assert get_day_result(YEAR, 13) == (
+            17,
+            '#####\n'
+            '#...#\n'
+            '#...#\n'
+            '#...#\n'
+            '#####')
