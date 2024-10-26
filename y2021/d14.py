@@ -35,14 +35,23 @@ def update(polymer: str, rules: dict) -> str:
 
 
 def do_updates(template: str, rules: dict, count: int) -> str:
-    value = template
-    for i in range(count):
-        value = update(value, rules)
-    return value
+    counter = Counter(template)
+    q = []
+    for i in range(len(template) - 1):
+        q.append((0, template[i:i + 2]))
+    while q:
+        depth, node = q.pop()
+        if depth >= count:
+            continue
+        depth += 1
+        insert = rules[node]
+        counter[insert] += 1
+        q.append((depth, node[0] + insert))
+        q.append((depth, insert + node[1]))
+    return counter
 
 
-def get_score(polymer: str) -> int:
-    counter = Counter(polymer)
+def get_score(counter: Counter) -> int:
     items = [v for v in counter.values()]
     items.sort()
     least = items[0]
@@ -53,10 +62,11 @@ def get_score(polymer: str) -> int:
 def run(stream, test: bool = False):
     with timing("Part 1"):
         template, rules = parse(stream)
-        value = do_updates(template, rules, 10)
-        result1 = get_score(value)
+        counter = do_updates(template, rules, 10)
+        result1 = get_score(counter)
 
     with timing("Part 2"):
-        result2 = 0
+        counter = do_updates(template, rules, 40)
+        result2 = get_score(counter)
 
     return (result1, result2)
