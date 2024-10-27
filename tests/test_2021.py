@@ -106,4 +106,4 @@ def test_y2021d16():
     p = m.decode_packet()
     assert p.get_total_versions() == 31
 
-    assert get_day_result(YEAR, 16) == (6, 0)
+    assert get_day_result(YEAR, 16) == (6, 2021)

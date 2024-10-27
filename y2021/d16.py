@@ -5,7 +5,7 @@ Day 16: Packet Decoder
 https://adventofcode.com/2021/day/16
 """
 import logging  # noqa: F401
-from math import ceil
+from math import ceil, prod
 
 from util import timing
 
@@ -43,6 +43,27 @@ class Packet:
         for subpacket in self.packets:
             result += subpacket.get_total_versions()
         return result
+
+    def get_value(self) -> int:
+        if self.value is not None:
+            return self.value
+
+        values = [x.get_value() for x in self.packets]
+        match self.typeid:
+            case 0:
+                return sum(values)
+            case 1:
+                return prod(values)
+            case 2:
+                return min(values)
+            case 3:
+                return max(values)
+            case 5:
+                return int(values[0] > values[1])
+            case 6:
+                return int(values[0] < values[1])
+            case 7:
+                return int(values[0] == values[1])
 
 
 class Message:
@@ -141,6 +162,6 @@ def run(stream, test: bool = False):
         result1 = packet.get_total_versions()
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = packet.get_value()
 
     return (result1, result2)
