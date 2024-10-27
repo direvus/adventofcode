@@ -11,7 +11,7 @@ from util import get_manhattan_distance, timing, INF, PriorityQueue
 
 
 class Grid:
-    def __init__(self, stream):
+    def __init__(self, stream=''):
         self.height = 0
         self.width = 0
         self.rows = []
@@ -31,6 +31,9 @@ class Grid:
         if y < self.height - 1:
             result.add((x, y + 1))
         return result
+
+    def get_value(self, position: tuple) -> int:
+        return self.rows[position[1]][position[0]]
 
     def parse(self, stream):
         for line in stream:
@@ -62,13 +65,27 @@ class Grid:
                 return est
 
             for n in self.get_adjacent(node):
-                x, y = n
-                score = dist[node] + self.rows[y][x]
+                score = dist[node] + self.get_value(n)
                 if score < dist[n]:
                     dist[n] = score
                     f = score + get_manhattan_distance(n, goal)
                     q.set_priority(n, f)
         raise ValueError("Did not find any path!")
+
+
+class MultiGrid(Grid):
+    """A grid where values map back to a sub-grid."""
+    def get_value(self, position: tuple) -> int:
+        x, y = position
+        if x < self.subwidth and y < self.subheight:
+            return self.rows[y][x]
+
+        xd, xr = divmod(x, self.subwidth)
+        yd, yr = divmod(y, self.subheight)
+
+        value = self.rows[yr][xr] - 1  # offset to zero-based for modulo 9
+        value = (value + yd + xd) % 9
+        return value + 1  # reverse the offset to get values 1-9
 
 
 def parse(stream) -> Grid:
@@ -81,6 +98,12 @@ def run(stream, test: bool = False):
         result1 = grid.find_path()
 
     with timing("Part 2"):
-        result2 = 0
+        mg = MultiGrid()
+        mg.rows = grid.rows
+        mg.subwidth = grid.width
+        mg.subheight = grid.height
+        mg.width = grid.width * 5
+        mg.height = grid.height * 5
+        result2 = mg.find_path()
 
     return (result1, result2)
