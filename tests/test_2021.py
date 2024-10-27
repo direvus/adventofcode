@@ -68,3 +68,42 @@ def test_y2021d14():
 
 def test_y2021d15():
     assert get_day_result(YEAR, 15) == (40, 315)
+
+
+def test_y2021d16():
+    from y2021.d16 import Message
+
+    m = Message('38006F45291200')
+    p = m.decode_packet()
+    assert p.version == 1
+    assert p.typeid == 6
+    assert len(p.packets) == 2
+    assert p.packets[0].value == 10
+    assert p.packets[1].value == 20
+
+    m = Message('EE00D40C823060')
+    p = m.decode_packet()
+    assert p.version == 7
+    assert p.typeid == 3
+    assert len(p.packets) == 3
+    assert p.packets[0].value == 1
+    assert p.packets[1].value == 2
+    assert p.packets[2].value == 3
+
+    m = Message('8A004A801A8002F478')
+    p = m.decode_packet()
+    assert p.get_total_versions() == 16
+
+    m = Message('620080001611562C8802118E34')
+    p = m.decode_packet()
+    assert p.get_total_versions() == 12
+
+    m = Message('C0015000016115A2E0802F182340')
+    p = m.decode_packet()
+    assert p.get_total_versions() == 23
+
+    m = Message('A0016C880162017C3686B18A3D4780')
+    p = m.decode_packet()
+    assert p.get_total_versions() == 31
+
+    assert get_day_result(YEAR, 16) == (6, 0)
