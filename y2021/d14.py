@@ -23,31 +23,36 @@ def parse(stream) -> tuple[str, dict]:
     return template, rules
 
 
-def update(polymer: str, rules: dict) -> str:
-    result = []
-    for i in range(1, len(polymer)):
-        chunk = polymer[i - 1: i + 1]
-        result.append(chunk[0])
-        if chunk in rules:
-            result.append(rules[chunk])
-    result.append(polymer[-1])
-    return ''.join(result)
+class Extender:
+    def __init__(self, rules: dict):
+        self.rules = dict(rules)
+        self.cache = {}
+
+        for pair, insert in rules.items():
+            self.cache[pair] = {1: Counter(insert)}
+
+    def count_inserts(self, node: str, levels: int) -> Counter:
+        cached = self.cache.get(node, {}).get(levels)
+        if cached:
+            return cached
+
+        insert = self.rules[node]
+        counter = Counter(insert)
+
+        left = node[0] + insert
+        right = insert + node[1]
+        counter.update(self.count_inserts(left, levels - 1))
+        counter.update(self.count_inserts(right, levels - 1))
+
+        self.cache[node][levels] = counter
+        return counter
 
 
-def do_updates(template: str, rules: dict, count: int) -> str:
+def do_updates(template: str, extender: Extender, count: int) -> Counter:
     counter = Counter(template)
-    q = []
     for i in range(len(template) - 1):
-        q.append((0, template[i:i + 2]))
-    while q:
-        depth, node = q.pop()
-        if depth >= count:
-            continue
-        depth += 1
-        insert = rules[node]
-        counter[insert] += 1
-        q.append((depth, node[0] + insert))
-        q.append((depth, insert + node[1]))
+        node = template[i:i + 2]
+        counter.update(extender.count_inserts(node, count))
     return counter
 
 
@@ -62,11 +67,12 @@ def get_score(counter: Counter) -> int:
 def run(stream, test: bool = False):
     with timing("Part 1"):
         template, rules = parse(stream)
-        counter = do_updates(template, rules, 10)
+        extender = Extender(rules)
+        counter = do_updates(template, extender, 10)
         result1 = get_score(counter)
 
     with timing("Part 2"):
-        counter = do_updates(template, rules, 40)
+        counter = do_updates(template, extender, 40)
         result2 = get_score(counter)
 
     return (result1, result2)
