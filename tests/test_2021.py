@@ -107,3 +107,7 @@ def test_y2021d16():
     assert p.get_total_versions() == 31
 
     assert get_day_result(YEAR, 16) == (6, 2021)
+
+
+def test_y2021d17():
+    assert get_day_result(YEAR, 17) == (45, 112)
