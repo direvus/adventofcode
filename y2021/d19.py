@@ -5,8 +5,9 @@ Day 19: Beacon Scanner
 https://adventofcode.com/2021/day/19
 """
 import logging  # noqa: F401
+from itertools import combinations
 
-from util import timing
+from util import get_manhattan_distance, timing
 
 
 # All the possible orientations, with functions to transform coordinates from
@@ -64,7 +65,9 @@ def sub_vector(point: tuple, vector: tuple):
 class Scanner:
     def __init__(self, name, stream=''):
         self.name = name
+        self.position = (0, 0, 0)
         self.pings = []
+        self.reoriented = {}
 
         if stream:
             self.parse(stream)
@@ -76,7 +79,6 @@ class Scanner:
                 break
             pos = tuple(int(x) for x in line.split(','))
             self.pings.append(pos)
-        logging.debug(f'scanner {self.name} has {len(self.pings)} pings')
 
     def transform(self, orientation: int):
         """Transform this scanner into a different orientation.
@@ -86,14 +88,19 @@ class Scanner:
         oriented a particular way with respect to the reference frame, and
         transform its pings back into reference coordinates.
         """
+        if orientation in self.reoriented:
+            return self.reoriented[orientation]
+
         result = Scanner(f'{self.name}:{orientation}')
         fn = ORIENTATIONS[orientation]
         result.pings = list(map(fn, self.pings))
+        self.reoriented[orientation] = result
         return result
 
     def translate(self, vector):
         """Translate this scanner's pings by a vector."""
         result = Scanner(f'{self.name}-{vector}')
+        result.position = vector
         result.pings = [add_vector(p, vector) for p in self.pings]
         return result
 
@@ -128,9 +135,6 @@ class Scanner:
                 common = set(shifted.pings) & set(self.pings)
                 count = len(common)
                 if count >= limit:
-                    logging.debug(
-                            f"Found {count} common pings by matching "
-                            f"{self.pings[i]} and {trans.pings[j]}")
                     return shifted
         return None
 
@@ -152,10 +156,9 @@ class Scanner:
         return None
 
 
-def count_beacons(scanners) -> int:
+def align_scanners(scanners) -> list[Scanner]:
     fixed = [scanners[0]]
     remain = scanners[1:]
-    pings = set(scanners[0].pings)
     tested = set()
 
     while remain:
@@ -168,11 +171,17 @@ def count_beacons(scanners) -> int:
                 tested.add(pair)
                 if trans is None:
                     continue
-                pings |= set(trans.pings)
                 fixed.append(trans)
                 del remain[i]
                 break
-    return len(pings)
+    return fixed
+
+
+def count_beacons(scanners):
+    beacons = set()
+    for scanner in scanners:
+        beacons |= set(scanner.pings)
+    return len(beacons)
 
 
 def parse(stream) -> str:
@@ -187,13 +196,22 @@ def parse(stream) -> str:
     return scanners
 
 
+def get_max_distance(scanners):
+    longest = 0
+    for a, b in combinations(scanners, 2):
+        dist = get_manhattan_distance(a.position, b.position)
+        if dist > longest:
+            longest = dist
+    return longest
+
+
 def run(stream, test: bool = False):
     with timing("Part 1"):
         scanners = parse(stream)
-        logging.debug(f'got {len(scanners)} scanners')
-        result1 = count_beacons(scanners)
+        aligned = align_scanners(scanners)
+        result1 = count_beacons(aligned)
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = get_max_distance(aligned)
 
     return (result1, result2)
