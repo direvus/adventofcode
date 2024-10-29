@@ -5,7 +5,6 @@ Day 19: Beacon Scanner
 https://adventofcode.com/2021/day/19
 """
 import logging  # noqa: F401
-from itertools import combinations
 
 from util import timing
 
@@ -92,6 +91,12 @@ class Scanner:
         result.pings = list(map(fn, self.pings))
         return result
 
+    def translate(self, vector):
+        """Translate this scanner's pings by a vector."""
+        result = Scanner(f'{self.name}-{vector}')
+        result.pings = [add_vector(p, vector) for p in self.pings]
+        return result
+
     def get_alignments(self, other, orientation: int, limit: int = 12):
         """Find the aligned pings between two scanners.
 
@@ -119,14 +124,14 @@ class Scanner:
                 if (i, j) in matched:
                     continue
                 vector = sub_vector(self.pings[i], trans.pings[j])
-                pings = [add_vector(p, vector) for p in trans.pings]
-                common = set(pings) & set(self.pings)
+                shifted = trans.translate(vector)
+                common = set(shifted.pings) & set(self.pings)
                 count = len(common)
                 if count >= limit:
                     logging.debug(
                             f"Found {count} common pings by matching "
                             f"{self.pings[i]} and {trans.pings[j]}")
-                    return vector
+                    return shifted
         return None
 
     def find_alignment(self, other, limit: int = 12):
@@ -141,12 +146,33 @@ class Scanner:
         configuration, then return None.
         """
         for orientation in range(24):
-            v = self.get_alignments(other, orientation, limit)
-            if v is not None:
-                logging.debug(
-                        f"Found alignment with orientation {orientation} "
-                        f"and vector {v}")
+            result = self.get_alignments(other, orientation, limit)
+            if result is not None:
+                return result
+        return None
+
+
+def count_beacons(scanners) -> int:
+    fixed = [scanners[0]]
+    remain = scanners[1:]
+    pings = set(scanners[0].pings)
+    tested = set()
+
+    while remain:
+        for a in fixed:
+            for i, b in enumerate(remain):
+                pair = frozenset((a.name, b.name))
+                if pair in tested:
+                    continue
+                trans = a.find_alignment(b)
+                tested.add(pair)
+                if trans is None:
+                    continue
+                pings |= set(trans.pings)
+                fixed.append(trans)
+                del remain[i]
                 break
+    return len(pings)
 
 
 def parse(stream) -> str:
@@ -165,7 +191,7 @@ def run(stream, test: bool = False):
     with timing("Part 1"):
         scanners = parse(stream)
         logging.debug(f'got {len(scanners)} scanners')
-        result1 = 0
+        result1 = count_beacons(scanners)
 
     with timing("Part 2"):
         result2 = 0
