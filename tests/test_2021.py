@@ -127,3 +127,24 @@ def test_y2021d20():
 
 def test_y2021d21():
     assert get_day_result(YEAR, 21) == (739785, 7907)
+
+
+def test_y2021d22():
+    from y2021.d22 import (
+            disjoint, contains, divide,
+            get_total_volume, get_volume, Grid)
+    grid = Grid()
+    a = (10, 12, 10, 12, 10, 12)
+    b = (11, 13, 11, 13, 11, 13)
+    assert get_volume(a) == 27
+    assert disjoint(a, b) is False
+    assert contains(a, b) is False
+    assert contains(b, a) is False
+    div = divide(a, b)
+    assert get_total_volume(div) == 27
+    grid.activate(a)
+    assert grid.total_active == 27
+    grid.activate(b)
+    assert grid.total_active == 27 + 19
+
+    assert get_day_result(YEAR, 22) == (590784, 39769202357779)
