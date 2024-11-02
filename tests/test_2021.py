@@ -148,3 +148,7 @@ def test_y2021d22():
     assert grid.total_active == 27 + 19
 
     assert get_day_result(YEAR, 22) == (590784, 39769202357779)
+
+
+def test_y2021d23():
+    assert get_day_result(YEAR, 23) == (12521, 0)
