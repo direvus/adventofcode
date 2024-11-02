@@ -18,8 +18,10 @@ class Grid:
         self.spaces = set()
         self.hallway = set()
         self.nostop = set()
-        self.rooms = defaultdict(set)
+        self.rooms = {}
+        self.homes = defaultdict(list)
         self.pods = []
+        self.home_pod_cache = {}
 
         if stream:
             self.parse(stream)
@@ -43,7 +45,8 @@ class Grid:
                         self.nostop.add((x, y - 1))
                     letter = room_index[x]
                     self.spaces.add(p)
-                    self.rooms[letter].add(p)
+                    self.rooms[p] = letter
+                    self.homes[letter].append(p)
                     self.pods.append((ch, p))
             y += 1
 
@@ -59,58 +62,57 @@ class Grid:
         """
         others = {p: c for c, p in pods if p != position}
         blocked = set(others.keys())
-        # Do a BFS search for all possible destinations using basic movement
+        hallway = position in self.hallway
+
+        # Do a BFS for all possible destinations using basic movement
         # rules, then eliminate destinations that aren't available due to
         # amphipod special rules.
         q = deque()
         q.append((0, position))
         destinations = {}
+        explored = {position}
         while q:
             cost, p = q.popleft()
-            if cost > 0:
-                destinations[p] = cost
-            neighbours = self.get_adjacent_spaces(p) - blocked
-            neighbours -= set(destinations.keys())
+            neighbours = self.get_adjacent_spaces(p) - blocked - explored
             cost += COSTS[letter]
             for n in neighbours:
+                destinations[n] = cost
                 q.append((cost, n))
+            explored.add(p)
         if not destinations:
             return ()
 
-        home = True
-        for roomletter, spaces in self.rooms.items():
-            for p in spaces:
-                if roomletter != letter:
-                    # Amphipods cannot move into rooms belonging to other
-                    # letters
-                    destinations.pop(p, None)
-                else:
-                    # If there is an amphipod of a different letter in the home
-                    # room, this amphipod can't go there.
-                    if p in others and others[p] != letter:
-                        home = False
+        home_avail = True
+        for space, roomletter in self.rooms.items():
+            if roomletter != letter:
+                # Amphipods cannot move into another letter's home room
+                destinations.pop(space, None)
+                continue
+            # If there is an amphipod of a different letter in the home
+            # room, this amphipod can't go there.
+            if home_avail and space in others and others[space] != letter:
+                home_avail = False
+                if hallway:
+                    # If this amphipod is in the hallway, its only valid move
+                    # is into its home room. If it can't move into its home
+                    # room, then it can't move at all.
+                    return ()
 
-        # If this amphipod is in the hallway, its only valid move is into its
-        # home room. If it can't move into its home room (i.e., because there
-        # is another kind of amphipod in there), then it can't move at all.
-        if position in self.hallway:
-            if not home:
+        if hallway:
+            # An amphipod starting in the hallway can only move into its home
+            # room. And if it is heading for its home room, might as well force
+            # it to move as far down into the room as it can go.
+            homespaces = [p for p in self.homes[letter] if p in destinations]
+            if not homespaces:
                 return ()
-            # If it's heading for its home room, might as well force it to move
-            # as far down into the room as it can go.
-            homeroom = list(self.rooms[letter] & set(destinations.keys()))
-            if not homeroom:
-                return ()
-            homeroom.sort(reverse=True)
-            homespace = homeroom[0]
-            return ((destinations[homespace], homespace),)
+            space = homespaces[-1]
+            return ((destinations[space], space),)
 
         # Amphipods cannot stop on the spaces directly outside of rooms, so
         # eliminate those destinations
-        for p in self.nostop:
-            destinations.pop(p, None)
-
-        return tuple((v, k) for k, v in destinations.items())
+        return tuple(
+                (v, k) for k, v in destinations.items()
+                if k not in self.nostop)
 
     def get_home_pods(self, pods) -> int:
         """Return the positions of pods that are home.
@@ -118,13 +120,21 @@ class Grid:
         Being home means that the pod is in its home room, and there are no
         pods of other types in the same room.
         """
+        if pods in self.home_pod_cache:
+            return self.home_pod_cache[pods]
         result = set()
-        for letter, space in pods:
-            room = self.rooms[letter]
-            if space in room:
-                others = {p for c, p in pods if p in room and c != letter}
-                if not others:
+        locations = {p: c for c, p in pods}
+        invalid = set()
+        for space, letter in self.rooms.items():
+            if space[0] in invalid:
+                continue
+            if space in locations:
+                if locations[space] == letter:
                     result.add(space)
+                else:
+                    invalid.add(space[0])
+        result = {p for p in result if p[0] not in invalid}
+        self.home_pod_cache[pods] = result
         return result
 
     def find_least_cost(self):
@@ -167,10 +177,33 @@ def parse(stream) -> Grid:
 def run(stream, test: bool = False):
     with timing("Part 1"):
         grid = parse(stream)
-        logging.debug(vars(grid))
         result1 = grid.find_least_cost()
 
     with timing("Part 2"):
-        result2 = 0
+        # Add two extra rows to the starting configuration. First, bump the
+        # existing bottom row down 2 rows to make room.
+        for i, (letter, space) in enumerate(grid.pods):
+            x, y = space
+            if y == 3:
+                p = (x, y + 2)
+                grid.pods[i] = (letter, p)
+                roomletter = grid.rooms[space]
+                grid.rooms[(x, y + 1)] = roomletter
+                grid.rooms[(x, y + 2)] = roomletter
+                grid.homes[roomletter].append((x, y + 1))
+                grid.homes[roomletter].append((x, y + 2))
+        extras = {
+                (3, 3): 'D',
+                (5, 3): 'C',
+                (7, 3): 'B',
+                (9, 3): 'A',
+                (3, 4): 'D',
+                (5, 4): 'B',
+                (7, 4): 'A',
+                (9, 4): 'C',
+                }
+        for space, letter in extras.items():
+            grid.pods.append((letter, space))
+        result2 = grid.find_least_cost()
 
     return (result1, result2)
