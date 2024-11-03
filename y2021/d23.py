@@ -5,7 +5,7 @@ Day 23: Amphipod
 https://adventofcode.com/2021/day/23
 """
 import logging  # noqa: F401
-from collections import defaultdict, deque
+from collections import defaultdict
 from functools import cache
 
 from util import timing, PriorityQueue, INF
@@ -216,7 +216,8 @@ class Grid:
         """
         others = get_positions(pods)
         blocked = set(others.keys())
-        hallway = position[1] == 1
+        x, y = position
+        hallway = y == 1
         if hallway:
             # An amphipod starting in the hallway can only move into its home
             # room. And if it is heading for its home room, might as well force
@@ -239,27 +240,31 @@ class Grid:
                 steps += 1
             return ((steps * COSTS[letter], (x, y)),)
 
-        # Do a BFS for all possible destinations using basic movement
-        # rules, then eliminate destinations that aren't available due to
-        # amphipod special rules.
-        q = deque()
-        q.append((0, position))
-        destinations = {}
-        explored = {position}
-        while q:
-            cost, p = q.popleft()
-            neighbours = self.graph.edges[p] - blocked - explored
-            cost += COSTS[letter]
-            for n in neighbours:
-                destinations[n] = cost
-                q.append((cost, n))
-            explored.add(p)
-        if not destinations:
-            return ()
-
-        return tuple(
-                (v, k) for k, v in destinations.items()
-                if k[1] == 1 and k[0] not in HOME_COLUMNS)
+        # Work out all the possible hallway positions this pod could travel to.
+        result = []
+        steps = y - 1
+        y = 1
+        # Head to the right, adding each target position until we get blocked.
+        target = x + 1
+        while target < len(pods) + 1:
+            p = (target, y)
+            if p in blocked:
+                break
+            if target not in HOME_COLUMNS:
+                cost = (steps + (target - x)) * COSTS[letter]
+                result.append((cost, p))
+            target += 1
+        # Now do the same to the left.
+        target = x - 1
+        while target > 0:
+            p = (target, y)
+            if p in blocked:
+                break
+            if target not in HOME_COLUMNS:
+                cost = (steps + (x - target)) * COSTS[letter]
+                result.append((cost, p))
+            target -= 1
+        return result
 
     def find_least_cost(self):
         """Find the way to sort the amphipods for the least cost."""
@@ -304,6 +309,7 @@ class Grid:
                         break
 
                     moves = self.find_moves(node, letter, p)
+                    logging.debug(f'{letter} {p} has moves {moves}')
                     for energy, target in moves:
                         new = make_node(node, letter, p, target)
                         newcost = spend + energy
