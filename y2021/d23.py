@@ -309,7 +309,6 @@ class Grid:
                         break
 
                     moves = self.find_moves(node, letter, p)
-                    logging.debug(f'{letter} {p} has moves {moves}')
                     for energy, target in moves:
                         new = make_node(node, letter, p, target)
                         newcost = spend + energy
@@ -356,6 +355,7 @@ def run(stream, test: bool = False):
                 }
         for space, letter in extras.items():
             grid.pods.append((letter, space))
-        result2 = 0
+        grid.maxy += 2
+        result2 = grid.find_least_cost()
 
     return (result1, result2)
