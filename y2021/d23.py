@@ -217,6 +217,27 @@ class Grid:
         others = get_positions(pods)
         blocked = set(others.keys())
         hallway = position[1] == 1
+        if hallway:
+            # An amphipod starting in the hallway can only move into its home
+            # room. And if it is heading for its home room, might as well force
+            # it to move as far down into the room as it can go.
+            col = HOME_LETTERS[letter]
+            home_valid = is_home_col_valid(pods[col - 1], letter)
+            if not home_valid:
+                return ()
+            x, y = position
+            steps = 0
+            step = 1 if x < col else -1
+            while x != col:
+                x += step
+                if (x, y) in blocked:
+                    return ()
+                steps += 1
+            room = pods[x - 1]
+            while y < len(room) and room[y] == '':
+                y += 1
+                steps += 1
+            return ((steps * COSTS[letter], (x, y)),)
 
         # Do a BFS for all possible destinations using basic movement
         # rules, then eliminate destinations that aren't available due to
@@ -234,22 +255,6 @@ class Grid:
                 q.append((cost, n))
             explored.add(p)
         if not destinations:
-            return ()
-
-        col = HOME_LETTERS[letter]
-        home_valid = is_home_col_valid(pods[col - 1], letter)
-        if hallway:
-            # An amphipod starting in the hallway can only move into its home
-            # room. And if it is heading for its home room, might as well force
-            # it to move as far down into the room as it can go.
-            if not home_valid:
-                return ()
-            y = self.maxy
-            while y > 1:
-                p = (col, y)
-                if not pods[col - 1][y - 1] and p in destinations:
-                    return ((destinations[p], p),)
-                y -= 1
             return ()
 
         return tuple(
@@ -280,7 +285,6 @@ class Grid:
             priority, node = q.pop()
             spend = cost[node]
             homepods = get_home_pods(node)
-            logging.debug(f'{node} with {len(homepods)} home')
             if len(homepods) == count:
                 return spend
 
@@ -294,15 +298,12 @@ class Grid:
 
                     p = (x, y)
                     if p in homepods:
-                        logging.debug(f'{letter} {p} is already home')
                         break
 
                     if y == 1 and not is_home_col_valid(node[x - 1], letter):
-                        logging.debug(f'{letter} {p} in hallway and home not valid')
                         break
 
                     moves = self.find_moves(node, letter, p)
-                    logging.debug(f'{letter} {p} has moves {moves}')
                     for energy, target in moves:
                         new = make_node(node, letter, p, target)
                         newcost = spend + energy
@@ -349,6 +350,6 @@ def run(stream, test: bool = False):
                 }
         for space, letter in extras.items():
             grid.pods.append((letter, space))
-        result2 = grid.find_least_cost()
+        result2 = 0
 
     return (result1, result2)
