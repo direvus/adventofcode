@@ -22,3 +22,7 @@ def test_y2022d04():
 
 def test_y2022d05():
     assert get_day_result(YEAR, 5) == ('CMZ', 'MCD')
+
+
+def test_y2022d06():
+    assert get_day_result(YEAR, 6) == (7, 19)
