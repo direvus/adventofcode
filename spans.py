@@ -66,6 +66,14 @@ def subtract_spans(span: tuple, others: set) -> set:
     return simplify_spans(result)
 
 
+def span_overlaps(a: tuple, b: tuple) -> bool:
+    return not (a[1] < b[0] or a[0] > b[1])
+
+
+def span_contains(span: tuple, other: tuple) -> bool:
+    return other[0] >= span[0] and other[1] <= span[1]
+
+
 class SpanSet:
     def __init__(self, spans: tuple = None):
         self.spans = set()
