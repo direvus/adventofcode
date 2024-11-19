@@ -23,7 +23,6 @@ def move(position: tuple, direction: str) -> tuple:
 
 
 def update(head: tuple, tail: tuple, direction: str) -> tuple:
-    head = move(head, direction)
     dx = head[0] - tail[0]
     dy = head[1] - tail[1]
     if max(abs(dx), abs(dy)) <= 1:
@@ -36,14 +35,22 @@ def update(head: tuple, tail: tuple, direction: str) -> tuple:
     return head, tail
 
 
-def get_tail_positions(instructions) -> list:
-    head = (0, 0)
-    tail = (0, 0)
+def get_tail_positions(instructions: list, count: int) -> list:
+    knots = [(0, 0)] * count
     result = []
-    for direction, count in instructions:
-        for i in range(count):
-            head, tail = update(head, tail, direction)
-            logging.debug(f'{head} {tail}')
+    for direction, distance in instructions:
+        logging.debug(f'{direction} {distance}')
+        for i in range(distance):
+            logging.debug(f'  {direction} #{i}')
+            knots[0] = move(knots[0], direction)
+            for j in range(1, count):
+                head = knots[j - 1]
+                tail = knots[j]
+                logging.debug(f'    {head} {tail} ->')
+                head, tail = update(head, tail, direction)
+                logging.debug(f'    {head} {tail}')
+                knots[j - 1] = head
+                knots[j] = tail
             result.append(tail)
     return result
 
@@ -60,10 +67,11 @@ def parse(stream) -> list:
 def run(stream, test: bool = False):
     with timing("Part 1"):
         instructions = parse(stream)
-        tails = get_tail_positions(instructions)
+        tails = get_tail_positions(instructions, 2)
         result1 = len(set(tails))
 
     with timing("Part 2"):
-        result2 = 0
+        tails = get_tail_positions(instructions, 10)
+        result2 = len(set(tails))
 
     return (result1, result2)
