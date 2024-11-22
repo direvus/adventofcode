@@ -5,7 +5,9 @@ Day 11: Monkey in the Middle
 https://adventofcode.com/2022/day/11
 """
 import logging  # noqa: F401
+import math
 from collections import deque
+from copy import deepcopy
 from operator import add, mul
 
 from util import timing
@@ -20,6 +22,7 @@ class Monkey:
         self.true_target = None
         self.false_target = None
         self.counter = 0
+        self.modulo = None
 
     def parse(self, stream):
         # Starting items
@@ -60,7 +63,11 @@ class Monkey:
         while self.items:
             item = self.items.popleft()
             operand = item if self.operand == 'old' else self.operand
-            item = self.operation(item, operand) // 3
+            item = self.operation(item, operand)
+            if self.modulo:
+                item %= self.modulo
+            else:
+                item //= 3
             divisible = item % self.divisor == 0
             target = self.true_target if divisible else self.false_target
             self.counter += 1
@@ -92,11 +99,17 @@ def get_inspection_counts(monkeys: list, count: int = 20):
 def run(stream, test: bool = False):
     with timing("Part 1"):
         monkeys = parse(stream)
+        monkeys2 = deepcopy(monkeys)
         counts = get_inspection_counts(monkeys)
         counts.sort(reverse=True)
         result1 = counts[0] * counts[1]
 
     with timing("Part 2"):
-        result2 = 0
+        modulo = math.prod(x.divisor for x in monkeys2)
+        for monkey in monkeys2:
+            monkey.modulo = modulo
+        counts = get_inspection_counts(monkeys2, 10_000)
+        counts.sort(reverse=True)
+        result2 = counts[0] * counts[1]
 
     return (result1, result2)
