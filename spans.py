@@ -89,10 +89,20 @@ class SpanSet:
         """Return the number of distinct values enclosed by the spans."""
         return sum(high - low + 1 for low, high in self.spans)
 
+    @property
+    def values(self):
+        """Return the set of distinct values enclosed by these spans."""
+        result = set()
+        for low, high in self.spans:
+            result |= {x for x in range(low, high + 1)}
+        return result
+
     def simplify(self):
         self.spans = simplify_spans(self.spans)
 
     def add_span(self, span: tuple):
+        if not span:
+            return
         self.spans.add(tuple(sorted(span)))
         self.simplify()
 
@@ -120,3 +130,6 @@ class SpanSet:
             else:
                 result.append(f"{low}-{high}")
         return ', '.join(result)
+
+    def __bool__(self) -> bool:
+        return bool(self.spans)
