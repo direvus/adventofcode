@@ -8,7 +8,7 @@ import logging  # noqa: F401
 import re
 from collections import defaultdict
 
-from util import timing, PriorityQueue
+from util import timing, NINF, PriorityQueue
 
 
 PATTERN = re.compile(
@@ -41,19 +41,20 @@ class Graph:
         Moving from one node to an adjacent node costs one time unit, and
         opening a valve also costs one time unit.
         """
-        start = ('AA', 0, 0, frozenset())
+        start = ('AA', 0, frozenset())
         q = PriorityQueue()
         q.push(start, 0)
+        released = defaultdict(lambda: NINF)
+        released[start] = 0
         best = 0
         size = len(self.nodes)
 
         while q:
             priority, node = q.pop()
-            valve, time, pressure, opened = node
-            logging.debug(f'{node}')
+            valve, time, opened = node
+            pressure = released[node]
 
             if pressure > best:
-                logging.debug(f'New best solution: {node}')
                 best = pressure
 
             if time == limit or len(opened) == size:
@@ -67,12 +68,16 @@ class Graph:
                 # We could open the valve
                 newopen = frozenset(opened | {valve})
                 release = flow * (limit - (time + 1)) + pressure
-                new = (valve, newtime, release, newopen)
-                q.set_priority(new, (-release, newtime))
+                new = (valve, newtime, newopen)
+                if release > released[new]:
+                    released[new] = release
+                    q.set_priority(new, (-release, newtime))
 
             for edge in self.edges[valve]:
                 # We could move to another valve
-                new = (edge, newtime, pressure, opened)
+                new = (edge, newtime, opened)
+                if pressure > released[new]:
+                    released[new] = pressure
                 q.set_priority(new, (-pressure, newtime))
         return best
 
