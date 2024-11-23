@@ -11,6 +11,95 @@ from spans import SpanSet
 from util import get_manhattan_distance, timing
 
 
+def disjoint(a: tuple, b: tuple):
+    return (a[1] < b[0] or b[1] < a[0] or
+            a[3] < b[2] or b[3] < a[2])
+
+
+def contains(a: tuple, b: tuple):
+    return (a[0] <= b[0] and a[1] >= b[1] and
+            a[2] <= b[2] and a[3] >= b[3])
+
+
+def divide_axis(box: tuple, axis: int, low: int, high: int) -> tuple:
+    i = axis * 2
+    a, b = box[i: i + 2]
+    if high < a or low > b:
+        return box, set()
+
+    outers = set()
+    if low > a:
+        new = list(box)
+        new[i + 1] = low - 1
+        outers.add(tuple(new))
+
+        box = list(box)
+        box[i] = low
+
+    if high < b:
+        new = list(box)
+        new[i] = high + 1
+        outers.add(tuple(new))
+
+        box = list(box)
+        box[i + 1] = high
+
+    return tuple(box), outers
+
+
+def divide(a: tuple, b: tuple) -> set[tuple]:
+    result = set()
+    for axis in range(2):
+        i = axis * 2
+        low, high = b[i: i + 2]
+        inner, outers = divide_axis(a, axis, low, high)
+        result |= outers
+        a = inner
+    result.add(a)
+    return result
+
+
+def get_rect(center: tuple, r: int) -> tuple:
+    """Get a rectangular representation of a sensor region.
+
+    The return is a 4-tuple of the boundaries of the sensor region, in
+    (SW, NE, NW, SE) order.
+
+    These diagonal boundaries are each expressed as a single integer.  For SW
+    and NE boundaries it is the difference between the X and Y values at every
+    point along those lines, and for NW and SE, it is the sum of the X and Y
+    values.
+    """
+    left = center[0] - r
+    top = center[1] - r
+    bottom = center[1] + r
+    return (
+            left - center[1],
+            center[0] - top,
+            left + center[1],
+            center[0] + bottom,
+            )
+
+
+def subtract_rect(regions: set, rect: tuple) -> set:
+    """Remove a rectangular region from a set of rectangular regions.
+
+    Return a new set of regions that excludes all of the space contained by
+    `rect`.
+    """
+    result = set()
+    for region in regions:
+        if disjoint(region, rect):
+            result.add(region)
+            continue
+        # Split the region up into subregions so that each subregion is either
+        # fully disjoint from, or fully contained by, `rect`. Then, add only
+        # those regions that are disjoint to the final result.
+        subs = divide(region, rect)
+        result |= {x for x in subs if disjoint(x, rect)}
+    return result
+
+
 class Grid:
     def __init__(self):
         self.sensors = set()
@@ -66,17 +155,25 @@ class Grid:
         return spans.total - len(beacons)
 
     def find_beacon(self, limit: int) -> tuple:
-        space = SpanSet()
-        space.add_span((0, limit))
-        for y in range(0, limit):
-            spans = SpanSet()
-            for sensor in self.sensors:
-                span = self.get_sensor_slice(sensor, y)
-                spans.add_span(span)
-            remain = space - spans
-            if remain:
-                values = remain.values
-                return (next(iter(values)), y)
+        region = (-limit, limit, 0, limit + limit)
+        regions = {region}
+        for sensor in self.sensors:
+            rect = get_rect(sensor, self.ranges[sensor])
+            regions = subtract_rect(regions, rect)
+            logging.debug(regions)
+
+        # Expecting to find exactly one region that contains a single cell.
+        singles = tuple(x for x in regions if x[0] == x[1] and x[2] == x[3])
+        assert len(singles) == 1
+
+        # Now we have to map the diagonal bounds of the diamond region shape
+        # back to an actual cell coordinate.
+        remain = next(iter(singles))
+        sw = remain[0]
+        nw = remain[2]
+        x = (sw + nw) // 2
+        y = nw - x
+        return (x, y)
 
 
 def parse(stream) -> list:
