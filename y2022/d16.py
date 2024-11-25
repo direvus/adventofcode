@@ -133,6 +133,70 @@ class Graph:
                     q.set_priority(new, (-release, newtime))
         return best
 
+    def find_best_multi(self, limit: int = 26):
+        """Find the best pressure that can be released with two agents.
+
+        Works like find_best_release(), except that two agents are moving
+        through the graph and opening valves simultaneously.
+        """
+        start = (('AA', 'AA'), (0, 0), frozenset())
+        q = PriorityQueue()
+        q.push(start, 0)
+        released = defaultdict(lambda: NINF)
+        released[start] = 0
+        best = 0
+        targets = {node for node, flow in self.nodes.items() if flow > 0}
+        size = len(targets)
+
+        while q:
+            priority, node = q.pop()
+            valves, times, opened = node
+            pressure = released[node]
+
+            if pressure > best:
+                best = pressure
+
+            lowtime = min(times)
+            if lowtime >= limit or len(opened) == size:
+                # If we've run out of time, or all the valves that can be
+                # opened are open, then there are no further moves to be made.
+                continue
+
+            index = 0 if times[0] <= times[1] else 1
+            source = valves[index]
+
+            # For each remaining openable valve that this agent could reach in
+            # the remaining time, queue up a move to that valve.
+            remain = targets - opened
+            totalflow = sum(self.nodes[x] for x in remain)
+            maxpressure = pressure + totalflow * (limit - lowtime - 1)
+            if maxpressure < best:
+                # There's no way we can do better than the best solution so
+                # far, so don't bother computing any next moves.
+                continue
+
+            for target in targets - opened:
+                path = self.paths[frozenset({source, target})]
+                newtime = times[index] + len(path)
+                if newtime > limit:
+                    continue
+
+                newtimes = list(times)
+                newtimes[index] = newtime
+
+                newvalves = list(valves)
+                newvalves[index] = target
+
+                newopen = frozenset(opened | {target})
+                new = (tuple(newvalves), tuple(newtimes), newopen)
+
+                flow = self.nodes[target]
+                release = flow * (limit - newtime) + pressure
+                if release > released[new]:
+                    released[new] = release
+                    q.set_priority(new, (-release, newtime))
+        return best
+
 
 def parse(stream) -> Graph:
     graph = Graph()
@@ -146,6 +210,6 @@ def run(stream, test: bool = False):
         result1 = graph.find_best_release()
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = graph.find_best_multi()
 
     return (result1, result2)
