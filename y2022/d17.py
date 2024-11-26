@@ -44,6 +44,7 @@ class Grid:
         self.height = 0
         self.rocks = 0
         self.rounds = 0
+        self.history = []
 
     def drop_rock(self):
         index = self.rocks % len(ROCKS)
@@ -77,14 +78,68 @@ class Grid:
                 cells = get_cells(rock, x, y)
                 break
 
-        logging.debug((x, y))
         self.dropped |= cells
         self.rocks += 1
         self.height = max(self.height, y + ROCK_HEIGHTS[index])
+        self.history.append((x, self.height))
 
     def drop_rocks(self, count: int):
         for i in range(count):
             self.drop_rock()
+
+    def find_cycle(self, rock: int):
+        self.dropped = set()
+        self.height = 0
+        self.rocks = 0
+        self.rounds = 0
+        self.history = []
+        step = len(ROCKS)
+        while True:
+            self.drop_rock()
+            if len(self.history) < 100 or self.rocks % step != rock:
+                continue
+
+            index = len(self.history) - step
+            pattern = tuple(x[0] for x in self.history[index:])
+            i = index - step
+            while i >= 0:
+                xs = tuple(x[0] for x in self.history[i: i + step])
+                if xs == pattern:
+                    # Check the previous two iterations of this cycle
+                    cycle = index - i
+                    if i < cycle * 2:
+                        # Not enough history to check two full cycles
+                        break
+                    i1 = i - cycle
+                    i2 = i - cycle * 2
+                    x1 = tuple(x[0] for x in self.history[i1: i1 + step])
+                    x2 = tuple(x[0] for x in self.history[i2: i2 + step])
+                    if x1 == pattern and x2 == pattern:
+                        return (i, index)
+                i -= step
+
+    def predict_height(self, rocks: int):
+        i1, i2 = self.find_cycle(rocks % len(ROCKS))
+        h1 = self.history[i1][1]
+        h2 = self.history[i2][1]
+        growth = h2 - h1
+        cycle = i2 - i1
+        logging.debug(f'height grows {growth} per {cycle} rocks from {i2}')
+
+        diff = rocks - i2 - 1
+        cycles, remain = divmod(diff, cycle)
+        logging.debug(
+                f'require {diff} more rocks = {cycles} cycles '
+                f'and {remain} remaining')
+
+        height = h2 + growth * cycles
+        i = i2 + cycle * cycles
+        logging.debug(f'height will be {height} at rock {i}')
+
+        h = self.history[i1 + remain][1] - h1
+        logging.debug(f'tower grew {h} over {remain} drops')
+
+        return height + h
 
     def __str__(self) -> str:
         lines = []
@@ -105,6 +160,6 @@ def run(stream, test: bool = False):
         result1 = grid.height
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = grid.predict_height(1000000000000)
 
     return (result1, result2)
