@@ -6,7 +6,7 @@ https://adventofcode.com/2022/day/19
 """
 import logging  # noqa: F401
 from collections import deque
-from math import ceil
+from math import ceil, prod
 from operator import sub
 
 from util import timing
@@ -86,6 +86,23 @@ class Blueprint:
                 if geodes > best:
                     best = geodes
 
+            # Get an upper limit on how many geodes we could possibly produce
+            # from here -- if we did nothing but build geode-cracking robots
+            # every minute until the time limit. If that number doesn't beat
+            # the best solution found so far, we can abandon this branch.
+            if remain == 1:
+                maxgeodes = materials[0] + robots[0]
+                if maxgeodes <= best:
+                    continue
+            elif remain > 0:
+                maxgeodes = materials[0]
+                bots = robots[0]
+                for _ in range(remain):
+                    maxgeodes += bots
+                    bots += 1
+                if maxgeodes <= best:
+                    continue
+
             for i in range(SIZE):
                 wait = self.get_time_to_build(i, robots, materials)
                 if wait is None or wait + 1 >= remain:
@@ -147,6 +164,13 @@ def run(stream, test: bool = False):
         result1 = sum(levels)
 
     with timing("Part 2"):
-        result2 = 0
+        if not test:
+            # Part 2 is too slow for automated test runs, and besides, it
+            # doesn't touch any code paths that aren't already tested by Part
+            # 1.
+            geodes = [x.find_maximum_geodes(32) for x in blueprints[:3]]
+            result2 = prod(geodes)
+        else:
+            result2 = 0
 
     return (result1, result2)
