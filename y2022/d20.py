@@ -9,6 +9,9 @@ import logging  # noqa: F401
 from util import timing
 
 
+KEY = 811589153
+
+
 class Node:
     def __init__(self, value, head=None, tail=None):
         self.value = value
@@ -40,24 +43,20 @@ class Mixer:
         last.tail = first
 
     def shift_node(self, node):
-        value = node.value
-        if value == 0:
+        steps = node.value % (self.size - 1)
+        if steps == 0:
             return
 
         head = node.head
         tail = node.tail
+
         # remove the node from its current position
         head.tail = tail
         tail.head = head
 
-        if value > 0:
-            pos = tail
-            for _ in range(value):
-                pos = pos.tail
-        else:
-            pos = head
-            for _ in range(abs(value) - 1):
-                pos = pos.head
+        pos = tail
+        for _ in range(steps):
+            pos = pos.tail
 
         # insert the node back into the list at this new position
         head = pos.head
@@ -85,15 +84,20 @@ class Mixer:
 
     def __str__(self) -> str:
         items = []
-        for node in self.values:
+        node = self.zero
+        items.append(str(node.value))
+        while node.tail != self.zero:
+            node = node.tail
             items.append(str(node.value))
         return ','.join(items)
 
 
 def parse(stream) -> list:
+    result = []
     for line in stream:
         value = int(line.strip())
-        yield value
+        result.append(value)
+    return result
 
 
 def run(stream, test: bool = False):
@@ -104,6 +108,10 @@ def run(stream, test: bool = False):
         result1 = sum(mixer.get_coords())
 
     with timing("Part 2"):
-        result2 = 0
+        values2 = map(lambda x: x * KEY, values)
+        mixer2 = Mixer(values2)
+        for _ in range(10):
+            mixer2.mix()
+        result2 = sum(mixer2.get_coords())
 
     return (result1, result2)
