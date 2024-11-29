@@ -101,4 +101,4 @@ def test_y2022d22():
 
 
 def test_y2022d23():
-    assert get_day_result(YEAR, 23) == (110, 0)
+    assert get_day_result(YEAR, 23) == (110, 20)

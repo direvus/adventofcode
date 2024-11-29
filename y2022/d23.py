@@ -6,6 +6,7 @@ https://adventofcode.com/2022/day/23
 """
 import logging  # noqa: F401
 from collections import deque, Counter
+from functools import cache
 
 from util import timing
 
@@ -28,14 +29,16 @@ OPTIONS = (
         )
 
 
-def move(position: tuple, direction: str):
+@cache
+def move(position: tuple, direction: int):
     x, y = position
     vx, vy = VECTORS[direction]
     return x + vx, y + vy
 
 
+@cache
 def get_adjacent(position: tuple):
-    return (move(position, i) for i in range(8))
+    return tuple(move(position, i) for i in range(8))
 
 
 def parse(stream) -> set:
@@ -52,9 +55,10 @@ def parse(stream) -> set:
 
 def plan_moves(elves, options):
     moves = []
+    occupied = set(elves)
     for elf in elves:
-        adj = tuple(get_adjacent(elf))
-        present = tuple(map(lambda x: x in elves, adj))
+        adj = get_adjacent(elf)
+        present = tuple(x in occupied for x in adj)
         if not any(present):
             moves.append(elf)
             continue
@@ -89,6 +93,23 @@ def do_rounds(elves, rounds: int = 10):
         elves = new
         options.append(options.popleft())
     return elves
+
+
+def count_rounds(elves):
+    """Continue until a round completes with no elves moving.
+
+    Return the total number of rounds that have completed.
+    """
+    options = deque(OPTIONS)
+    rounds = 0
+    while True:
+        moves = plan_moves(elves, options)
+        new = do_moves(elves, moves)
+        rounds += 1
+        if new == elves:
+            return rounds
+        elves = new
+        options.append(options.popleft())
 
 
 def count_empty_spaces(positions: list) -> int:
@@ -128,6 +149,6 @@ def run(stream, test: bool = False):
         result1 = count_empty_spaces(positions)
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = count_rounds(elves)
 
     return (result1, result2)
