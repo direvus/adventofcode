@@ -106,3 +106,18 @@ def test_y2022d23():
 
 def test_y2022d24():
     assert get_day_result(YEAR, 24) == (18, 54)
+
+
+def test_y2022d25():
+    from y2022.d25 import encode_snafu
+    assert encode_snafu(1) == '1'
+    assert encode_snafu(2) == '2'
+    assert encode_snafu(3) == '1='
+    assert encode_snafu(4) == '1-'
+    assert encode_snafu(5) == '10'
+    assert encode_snafu(6) == '11'
+    assert encode_snafu(7) == '12'
+    assert encode_snafu(8) == '2='
+    assert encode_snafu(9) == '2-'
+    assert encode_snafu(10) == '20'
+    assert get_day_result(YEAR, 25) == ('2=-1=0', 0)
