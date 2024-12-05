@@ -1,6 +1,6 @@
 """Advent of Code 2024
 
-Day 4: _TITLE_
+Day 4: Ceres Search
 
 https://adventofcode.com/2024/day/4
 """

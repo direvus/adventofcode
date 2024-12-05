@@ -4,6 +4,7 @@ out/
 # Python
 .py[co]
 __pycache__/
+.venv/
 
 # Editor
 .*.sw?
