@@ -5,6 +5,7 @@ import importlib
 import logging
 import os
 import sys
+from urllib.request import urlopen, Request
 
 from rich import box
 from rich.console import Console
@@ -21,6 +22,10 @@ def make_url(year: int, day: int) -> str:
     return f'https://adventofcode.com/{year}/day/{day}'
 
 
+def make_input_url(year: int, day: int) -> str:
+    return f'https://adventofcode.com/{year}/day/{day}/input'
+
+
 def load_module(year, day):
     cachekey = (year, day)
     if cachekey in MODULES:
@@ -32,6 +37,23 @@ def load_module(year, day):
     mod = importlib.import_module(modpath, 'adventofcode')
     MODULES[cachekey] = mod
     return mod
+
+
+def download_input(year: int, day: int, filename: str):
+    url = make_input_url(year, day)
+    try:
+        with open('.session', 'r') as fp:
+            session = fp.read().strip()
+    except OSError:
+        raise RuntimeException(
+                "Could not load session cookie. Please ensure your session "
+                "cookie is saved in the file '.session'")
+    cookie = f'session={session}'
+    req = Request(url, headers={'Cookie': cookie})
+
+    with urlopen(req) as resp:
+        with open(filename, 'w') as fp:
+            fp.write(resp.read().decode('utf8'))
 
 
 def run_day(
@@ -153,43 +175,77 @@ def run_interactive(
     print_config_table(console, year, day, verbose, draw)
 
     while True:
-        choices = 'rtdvsq'
-        prompt = ' [blue]|[/] '.join((
-                r'[yellow]\[R][/]un',
-                r'[yellow]\[T][/]est',
-                r'Toggle [yellow]\[d][/]rawing mode',
-                r'Toggle [yellow]\[v][/]erbose mode',
-                r'[yellow]\[S][/]elect year and day',
-                r'[yellow]\[Q][/]uit',
-                )) + ' [yellow]>[/] '
+        choices = 'RTDVSQL'
+        prompt = (
+                ' [blue]|[/] '.join((
+                    r'[yellow]\[R][/]un',
+                    r'[yellow]\[T][/]est',
+                    r'[yellow]\[S][/]elect year and day',
+                    r'[yellow]\[L][/]oad input',
+                    r'[yellow]\[Q][/]uit',
+                    )) + '\n'
+                r'Toggle modes: [yellow]\[D][/]rawing [blue]|[/] '
+                r'[yellow]\[V][/]erbose logging [yellow]>[/] '
+                )
         console.print()
-        choice = console.input(prompt)[:1].lower()
+        choice = console.input(prompt)[:1].upper()
 
         while choice not in choices:
             console.print(f':x: [red]"{choice}" is not a valid selection![/]')
             console.print()
-            choice = console.input(prompt)[:1].lower()
+            choice = console.input(prompt)[:1].upper()
 
         console.print()
-        if choice == 'q':
+        if choice == 'Q':
             console.print(':wave:\n')
             break
-        elif choice == 'v':
+
+        elif choice == 'V':
             verbose = not verbose
             configure_logging(verbose)
             label = 'verbose' if verbose else 'normal'
             print_config_table(console, year, day, verbose, draw)
             console.print(f':white_check_mark: OK, logging level is now [green]{label}[/]')
-        elif choice == 'd':
+
+        elif choice == 'D':
             draw = not draw
             label = 'enabled' if draw else 'disabled'
             print_config_table(console, year, day, verbose, draw)
             console.print(f':white_check_mark: OK, drawing is now [green]{label}[/]')
-        elif choice == 'r':
+
+        elif choice == 'R':
+            # Run in actual mode
             run_day(year, day, None, False, draw)
-        elif choice == 't':
+
+        elif choice == 'T':
+            # Run in test mode
             run_day(year, day, None, True, draw)
-        elif choice == 's':
+
+        elif choice == 'L':
+            # Download puzzle input
+            filename = os.path.join(f'y{year}', 'inputs', f'{day:02d}')
+            if os.path.exists(filename):
+                console.print(
+                        f'\n:x: Input file {filename} already exists, '
+                        'not downloading it again.')
+                continue
+
+            if not os.path.exists('.session'):
+                console.print(
+                        '\n:x: Session cookie file .session does not exist, '
+                        'please create this file before trying again.')
+                continue
+
+            try:
+                download_input(year, day, filename)
+                console.print(
+                        '\n:white_check_mark: OK, it was downloaded :thumbs_up:')
+            except Exception as e:
+                console.print(
+                        f'\n:x: Download failed: {e}')
+
+        elif choice == 'S':
+            # Select year and day
             value = console.input(f'Select year: \\[[blue]{year}[/]] [yellow]>[/] ')
             if value != '':
                 try:
