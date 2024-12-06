@@ -57,14 +57,44 @@ def print_grid(height, width, blocked, visited):
     print('\n'.join(lines))
 
 
+def is_loop(height, width, start, blocked, position):
+    x, y = start
+    visited = set()
+    blocked = blocked | {position}
+    facing = 0
+    while x >= 0 and x < width and y >= 0 and y < height:
+        state = (x, y, facing)
+        if state in visited:
+            return True
+        visited.add(state)
+        vx, vy = FACING[facing]
+        newpos = x + vx, y + vy
+        if newpos in blocked:
+            facing = (facing + 1) % 4
+        else:
+            x, y = newpos
+    return False
+
+
+def get_loop_positions(height, width, start, blocked, visited):
+    result = set()
+    for y in range(height):
+        for x in range(width):
+            p = (x, y)
+            if p not in blocked and p in visited and p != start:
+                if is_loop(height, width, start, blocked, p):
+                    result.add(p)
+    return result
+
+
 def run(stream, test: bool = False):
     with timing("Part 1"):
         parsed = parse(stream)
         visited = get_positions(*parsed)
-        print_grid(parsed[0], parsed[1], parsed[3], visited)
         result1 = len(visited)
 
     with timing("Part 2"):
-        result2 = 0
+        loops = get_loop_positions(*parsed, visited)
+        result2 = len(loops)
 
     return (result1, result2)
