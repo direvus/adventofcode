@@ -45,7 +45,7 @@ def download_input(year: int, day: int, filename: str):
         with open('.session', 'r') as fp:
             session = fp.read().strip()
     except OSError:
-        raise RuntimeException(
+        raise Exception(
                 "Could not load session cookie. Please ensure your session "
                 "cookie is saved in the file '.session'")
     cookie = f'session={session}'
