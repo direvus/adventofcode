@@ -5,7 +5,7 @@ Day 7: Bridge Repair
 https://adventofcode.com/2024/day/7
 """
 import logging  # noqa: F401
-from itertools import product
+from collections import deque
 from operator import add, mul
 
 from util import timing
@@ -29,21 +29,21 @@ def parse(stream) -> str:
     return result
 
 
-def evaluate(target, operands, operations):
-    result = operands[0]
-    for i, op in enumerate(operations):
-        result = op(result, operands[i + 1])
-        if result > target:
-            return result
-    return result
-
-
 def is_solvable(target, operands, operations):
-    count = len(operands) - 1
-    for sequence in product(operations, repeat=count):
-        result = evaluate(target, operands, sequence)
-        if result == target:
-            return True
+    q = deque()
+    q.append((operands[0], operands[1:]))
+    while q:
+        state, remain = q.pop()
+        if state > target:
+            continue
+
+        if not remain:
+            if state == target:
+                return True
+            continue
+
+        for op in operations:
+            q.append((op(state, remain[0]), remain[1:]))
     return False
 
 
