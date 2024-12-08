@@ -15,6 +15,8 @@ from rich.table import Table
 from util import timing
 
 
+PROMPT_SEPARATOR = ' [blue]|[/] '
+PROMPT_SUFFIX = ' [yellow]>[/] '
 MODULES = {}
 
 
@@ -24,6 +26,20 @@ def make_url(year: int, day: int) -> str:
 
 def make_input_url(year: int, day: int) -> str:
     return f'https://adventofcode.com/{year}/day/{day}/input'
+
+
+def create_dirs(year: int, day: int):
+    yeardir = f'y{year}'
+    os.makedirs(os.path.join(yeardir, 'inputs'), exist_ok=True)
+    os.makedirs(os.path.join(yeardir, 'examples'), exist_ok=True)
+
+
+def make_prompt_option(text: str, highlight: str = '', start: int = 0) -> str:
+    if highlight:
+        index = text.index(highlight, start)
+        replacement = rf'[yellow]\[{highlight}][/]'
+        return ''.join((text[:index], replacement, text[index + 1:]))
+    return text
 
 
 def load_module(year, day):
@@ -54,6 +70,23 @@ def download_input(year: int, day: int, filename: str):
     with urlopen(req) as resp:
         with open(filename, 'w') as fp:
             fp.write(resp.read().decode('utf8'))
+
+
+def write_input_to_file(filename: str) -> tuple:
+    result = []
+    line_count = 0
+    char_count = 0
+    with open(filename, 'w') as fp:
+        while True:
+            try:
+                line = input() + '\n'
+                fp.write(line)
+                result.append(line)
+                line_count += 1
+                char_count += len(line)
+            except EOFError:
+                break
+    return line_count, char_count
 
 
 def run_day(
@@ -172,21 +205,28 @@ def run_interactive(
         today = datetime.date.today()
         day = today.day
 
+    create_dirs(year, day)
     print_config_table(console, year, day, verbose, draw)
 
     while True:
-        choices = 'RTDVSQL'
-        prompt = (
-                ' [blue]|[/] '.join((
-                    r'[yellow]\[R][/]un',
-                    r'[yellow]\[T][/]est',
-                    r'[yellow]\[S][/]elect year and day',
-                    r'[yellow]\[L][/]oad input',
-                    r'[yellow]\[Q][/]uit',
-                    )) + '\n'
-                r'Toggle modes: [yellow]\[D][/]rawing [blue]|[/] '
-                r'[yellow]\[V][/]erbose logging [yellow]>[/] '
+        choices = 'RTDVSQLE'
+        lines = (
+                PROMPT_SEPARATOR.join((
+                    make_prompt_option('Select year and day', 'S'),
+                    make_prompt_option('Run', 'R'),
+                    make_prompt_option('Test', 'T'),
+                    make_prompt_option('Quit', 'Q'),
+                    )),
+                PROMPT_SEPARATOR.join((
+                    make_prompt_option('Load real input', 'L'),
+                    make_prompt_option('Write example input', 'e', 4),
+                    )),
+                'Toggle modes: ' + PROMPT_SEPARATOR.join((
+                    make_prompt_option('Drawing', 'D'),
+                    make_prompt_option('Verbose logging', 'V'),
+                    )),
                 )
+        prompt = '\n'.join(lines) + PROMPT_SUFFIX
         console.print()
         choice = console.input(prompt)[:1].upper()
 
@@ -244,6 +284,33 @@ def run_interactive(
                 console.print(
                         f'\n:x: Download failed: {e}')
 
+        elif choice == 'E':
+            # Paste in example input
+            filename = os.path.join(f'y{year}', 'examples', f'{day:02d}')
+            if os.path.exists(filename):
+                console.print(
+                        f'\n:thinking_face: Example file {filename} '
+                        'already exists, are you sure you want to '
+                        'overwrite it?')
+                prompt = PROMPT_SEPARATOR.join((
+                        make_prompt_option('Yes', 'Y'),
+                        make_prompt_option('no', 'n'),
+                        )) + PROMPT_SUFFIX
+                choice = ''
+                while choice not in {'Y', 'N'}:
+                    choice = console.input(prompt)[:1].strip().upper() or 'Y'
+
+                if choice != 'Y':
+                    continue
+
+            console.print(
+                    '\n:point_down: Enter mutli-line input below, '
+                    'terminate with EOF (Ctrl-D) [yellow]>>>[/]')
+            lines, chars = write_input_to_file(filename)
+            console.print(
+                    '\n\n:white_check_mark: OK, wrote '
+                    f'{lines} lines and {chars} characters to {filename}')
+
         elif choice == 'S':
             # Select year and day
             value = console.input(f'Select year: \\[[blue]{year}[/]] [yellow]>[/] ')
@@ -275,6 +342,7 @@ def run_interactive(
 
             console.print()
             console.print(f':white_check_mark: OK, selected [green]{year} day {day}[/]')
+            create_dirs(year, day)
 
 
 if __name__ == '__main__':
