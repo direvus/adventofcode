@@ -24,6 +24,9 @@ class List:
         self.start = None
         self.end = None
         self.space = 0
+        self.index = []
+        self.spacemap = []
+        self.files = {}
 
     def append(self, value):
         node = Node(value, self.end)
@@ -34,6 +37,7 @@ class List:
         self.end = node
         if value is None:
             self.space += 1
+        self.index.append(node)
         return node
 
     def pop(self):
@@ -58,10 +62,18 @@ def parse(stream) -> str:
 
 def make_list(values) -> Node:
     result = List()
+    offset = 0
     for i, value in enumerate(values):
         blank = (i % 2 != 0)
+        fileid = i // 2
         for _ in range(value):
-            result.append(None if blank else i // 2)
+            result.append(None if blank else fileid)
+        if value > 0:
+            if blank:
+                result.spacemap.append((offset, value))
+            else:
+                result.files[fileid] = (offset, value)
+        offset += value
     return result
 
 
@@ -82,12 +94,31 @@ def defrag(nodes: List):
         space -= 1
 
 
+def defrag_files(nodes: List):
+    fileids = reversed(sorted(nodes.files.keys()))
+    for fileid in fileids:
+        offset, length = nodes.files[fileid]
+        for i in range(len(nodes.spacemap)):
+            space_offset, space_length = nodes.spacemap[i]
+            if space_offset > offset:
+                break
+            if space_length >= length:
+                for j in range(length):
+                    nodes.index[space_offset + j].value = fileid
+                    nodes.index[offset + j].value = None
+                space_offset += length
+                space_length -= length
+                nodes.spacemap[i] = (space_offset, space_length)
+                break
+
+
 def get_checksum(nodes: List) -> int:
     node = nodes.start
     i = 0
     result = 0
     while node is not None:
-        result += i * node.value
+        if node.value is not None:
+            result += i * node.value
         node = node.tail
         i += 1
     return result
@@ -101,6 +132,8 @@ def run(stream, test: bool = False):
         result1 = get_checksum(nodes)
 
     with timing("Part 2"):
-        result2 = 0
+        nodes = make_list(parsed)
+        defrag_files(nodes)
+        result2 = get_checksum(nodes)
 
     return (result1, result2)
