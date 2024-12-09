@@ -42,6 +42,11 @@ def turn(direction: int, steps: int = 1) -> int:
     return (direction + steps) % 4
 
 
+def get_distance(a: tuple, b: tuple) -> int:
+    """Return the Manhattan distance between two points."""
+    return abs(b[0] - a[0]) + abs(b[1] - a[1])
+
+
 class Grid:
     """A two-dimensional, dense, bounded grid system.
 
@@ -53,16 +58,20 @@ class Grid:
         self.cells = []
 
     def parse_cell(self, position: tuple, value: str | int):
-        self.cells[position[1]][position[0]] = value
+        return value
 
     def parse(self, stream):
         y = 0
         for line in stream:
+            row = []
             for x, ch in enumerate(line.strip()):
-                self.parse_cell((x, y), ch)
+                value = self.parse_cell((x, y), ch)
+                row.append(value)
             y += 1
+            self.cells.append(row)
         self.width = x + 1
         self.height = y
+        return self
 
     def in_bound(self, position):
         return in_bound(self.width, self.height, position)
@@ -84,6 +93,16 @@ class SparseGrid(Grid):
     def parse_cell(self, position: tuple, value: str | int):
         if value == '#':
             self.cells.add(position)
+
+    def parse(self, stream):
+        y = 0
+        for line in stream:
+            for x, ch in enumerate(line.strip()):
+                self.parse_cell((x, y), ch)
+            y += 1
+        self.width = x + 1
+        self.height = y
+        return self
 
 
 class InfiniteGrid(SparseGrid):
