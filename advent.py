@@ -17,6 +17,7 @@ from util import timing
 
 PROMPT_SEPARATOR = ' [blue]|[/] '
 PROMPT_SUFFIX = ' [yellow]>[/] '
+TEMPLATE_FILENAME = 'skeleton.py'
 MODULES = {}
 
 
@@ -32,6 +33,34 @@ def create_dirs(year: int, day: int):
     yeardir = f'y{year}'
     os.makedirs(os.path.join(yeardir, 'inputs'), exist_ok=True)
     os.makedirs(os.path.join(yeardir, 'examples'), exist_ok=True)
+
+
+def create_program_file(filename: str, year: int, day: int):
+    with open(TEMPLATE_FILENAME, 'r') as fp:
+        text = fp.read()
+
+    text = text.replace('_YEAR_', f'{year}')
+    text = text.replace('_DAY_', f'{day}')
+
+    with open(filename, 'w') as fp:
+        fp.write(text)
+
+
+def add_unit_test(year: int, day: int):
+    filename = os.path.join('tests', f'test_{year}.py')
+    exists = os.path.exists(filename)
+
+    with open(filename, 'a') as fp:
+        if not exists:
+            # Starting a new test file for the year
+            fp.write(
+                    "from tests.common import get_day_result\n\n\n"
+                    f"YEAR = {year}\n")
+        fp.write(
+                "\n\n"
+                f"def test_y{year}d{day:02d}():\n"
+                f"    assert get_day_result(YEAR, {day}) == (0, 0)\n"
+                )
 
 
 def make_prompt_option(text: str, highlight: str = '', start: int = 0) -> str:
@@ -181,6 +210,30 @@ def print_config_table(
     console.print()
 
 
+def run_interactive_setup(console, year: int, day: int):
+    filename = os.path.join(f'y{year}', f'd{day:02d}.py')
+    if os.path.exists(filename):
+        return
+
+    console.print(
+            f'\n:thinking_face: Puzzle program {filename} '
+            'does not exist, do you want to create it now?')
+    prompt = PROMPT_SEPARATOR.join((
+            make_prompt_option('Yes', 'Y'),
+            make_prompt_option('no', 'n'),
+            )) + PROMPT_SUFFIX
+    choice = ''
+    while choice not in {'Y', 'N'}:
+        choice = console.input(prompt)[:1].strip().upper() or 'Y'
+
+    if choice == 'Y':
+        create_program_file(filename, year, day)
+        add_unit_test(year, day)
+        console.print(
+                '\n:white_check_mark: OK, '
+                f'program file created at {filename}')
+
+
 def run_interactive(
         year: int = None, day: int = None,
         verbose: bool = False, draw: bool = False):
@@ -203,10 +256,14 @@ def run_interactive(
 
     if day is None:
         today = datetime.date.today()
-        day = today.day
+        if today.month == 12:
+            day = min(today.day, 25)
+        else:
+            day = 25
 
     create_dirs(year, day)
     print_config_table(console, year, day, verbose, draw)
+    run_interactive_setup(console, year, day)
 
     while True:
         choices = 'RTDVSQLE'
@@ -343,6 +400,7 @@ def run_interactive(
             console.print()
             console.print(f':white_check_mark: OK, selected [green]{year} day {day}[/]')
             create_dirs(year, day)
+            run_interactive_setup(console, year, day)
 
 
 if __name__ == '__main__':
