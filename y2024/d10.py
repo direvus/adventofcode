@@ -5,7 +5,7 @@ Day 10: _TITLE_
 https://adventofcode.com/2024/day/10
 """
 import logging  # noqa: F401
-from collections import defaultdict
+from collections import defaultdict, deque
 
 import grid
 from util import timing, INF, PriorityQueue
@@ -52,6 +52,23 @@ class Grid(grid.Grid):
                     q.set_priority(n, f)
         return False
 
+    def count_paths(self, start) -> int:
+        """Return the number of distinct paths from start to any goal."""
+        result = 0
+        # BFS
+        q = deque()
+        q.append(start)
+
+        while q:
+            node = q.pop()
+            if node in self.goals:
+                result += 1
+                continue
+
+            for n in self.get_neighbours(node):
+                q.append(n)
+        return result
+
     def get_trailhead_score(self, start):
         result = 0
         for goal in self.goals:
@@ -66,6 +83,12 @@ class Grid(grid.Grid):
             result.append(score)
         return result
 
+    def get_trailhead_rating(self, start):
+        return self.count_paths(start)
+
+    def get_total_rating(self):
+        return sum(self.get_trailhead_rating(x) for x in self.starts)
+
 
 def parse(stream) -> str:
     return stream.readline().strip()
@@ -77,6 +100,6 @@ def run(stream, test: bool = False):
         result1 = sum(grid.get_trailhead_scores())
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = grid.get_total_rating()
 
     return (result1, result2)
