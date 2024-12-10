@@ -1,6 +1,6 @@
 """Advent of Code 2024
 
-Day 10: _TITLE_
+Day 10: Hoof It
 
 https://adventofcode.com/2024/day/10
 """
