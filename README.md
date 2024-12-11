@@ -67,4 +67,4 @@ Using Breadth-first search (left) and A Star (right) to solve the maze.
 
 ### 2024 Day 9, "Disk Fragmenter"
 
-![2024 Day 9](vis/y2024d09.mp4)
+![2024 Day 9 (mp4 video)](vis/y2024d09.mp4)
