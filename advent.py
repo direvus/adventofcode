@@ -4,6 +4,7 @@ import datetime
 import importlib
 import logging
 import os
+import subprocess
 import sys
 from urllib.request import urlopen, Request
 
@@ -46,7 +47,7 @@ def create_program_file(filename: str, year: int, day: int):
         fp.write(text)
 
 
-def add_unit_test(year: int, day: int):
+def add_unit_test(year: int, day: int) -> str:
     filename = os.path.join('tests', f'test_{year}.py')
     exists = os.path.exists(filename)
 
@@ -61,6 +62,7 @@ def add_unit_test(year: int, day: int):
                 f"def test_y{year}d{day:02d}():\n"
                 f"    assert get_day_result(YEAR, {day}) == (0, 0)\n"
                 )
+    return filename
 
 
 def make_prompt_option(text: str, highlight: str = '', start: int = 0) -> str:
@@ -228,10 +230,18 @@ def run_interactive_setup(console, year: int, day: int):
 
     if choice == 'Y':
         create_program_file(filename, year, day)
-        add_unit_test(year, day)
+        testfile = add_unit_test(year, day)
         console.print(
                 '\n:white_check_mark: OK, '
                 f'program file created at {filename}')
+
+        args = ['git', 'add', '-N', filename, testfile]
+        try:
+            subprocess.run(args, check=True)
+        except subprocess.CalledProcessError:
+            console.print(
+                '\n:frowning: There was a problem scheduling the '
+                'files for addition to git though.')
 
 
 def run_interactive(
