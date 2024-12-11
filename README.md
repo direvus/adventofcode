@@ -64,3 +64,7 @@ Using Breadth-first search (left) and A Star (right) to solve the maze.
 ### 2019 Day 15, "Oxygen System"
 
 ![2019 Day 15](vis/y2019d15.gif)
+
+### 2024 Day 9, "Disk Fragmenter"
+
+![2024 Day 9](vis/y2024d09.mp4)
