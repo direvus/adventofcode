@@ -42,3 +42,7 @@ def test_y2024d09():
 
 def test_y2024d10():
     assert get_day_result(YEAR, 10) == (36, 81)
+
+
+def test_y2024d11():
+    assert get_day_result(YEAR, 11) == (0, 0)
