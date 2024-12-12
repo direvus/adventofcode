@@ -171,6 +171,25 @@ class DoubleList(List):
         self.length -= 1
         return node.value
 
+    def popleft(self):
+        """Remove and return the value from the front of the list.
+
+        Raises IndexError if the list is empty.
+        """
+        if self.start is None:
+            raise IndexError("Cannot popleft() from an empty DoubleList")
+
+        node = self.start
+        self.start = node.tail
+
+        if node.tail is None:
+            self.end = None
+        else:
+            node.tail.head = None
+
+        self.length -= 1
+        return node.value
+
     def remove(self, node: DoubleNode):
         """Remove `node` from this list, and return its value.
 

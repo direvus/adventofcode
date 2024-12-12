@@ -151,6 +151,21 @@ def test_dlist_pop():
     assert len(a) == 0
 
 
+def test_dlist_popleft():
+    a = linkedlist.DoubleList(['a', 'b', 'c'])
+    assert a.popleft() == 'a'
+    assert tuple(x for x in a) == ('b', 'c')
+    assert len(a) == 2
+
+    assert a.popleft() == 'b'
+    assert tuple(x for x in a) == ('c',)
+    assert len(a) == 1
+
+    assert a.popleft() == 'c'
+    assert tuple(x for x in a) == tuple()
+    assert len(a) == 0
+
+
 def test_dlist_remove():
     a = linkedlist.DoubleList(['a', 'b', 'c'])
     node = a.start.tail  # 'b'
