@@ -62,6 +62,16 @@ def test_parse():
     assert g.height == 2
 
 
+def test_get_value():
+    g = grid.Grid().parse(['abc', 'def'])
+    assert g.get_value((0, 0)) == 'a'
+    assert g.get_value((1, 0)) == 'b'
+    assert g.get_value((2, 0)) == 'c'
+    assert g.get_value((0, 1)) == 'd'
+    assert g.get_value((1, 1)) == 'e'
+    assert g.get_value((2, 1)) == 'f'
+
+
 def test_bounded_adjacent():
     g = grid.Grid().parse(['abc', 'def'])
     assert g.get_adjacent((0, 0)) == {(1, 0), (0, 1)}

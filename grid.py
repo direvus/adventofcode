@@ -76,6 +76,9 @@ class Grid:
     def in_bound(self, position):
         return in_bound(self.width, self.height, position)
 
+    def get_value(self, position):
+        return self.cells[position[1]][position[0]]
+
     def get_adjacent(self, position):
         return {x for x in get_adjacent(position) if self.in_bound(x)}
 
