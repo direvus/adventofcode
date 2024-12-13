@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 from collections import namedtuple
-from fractions import Fraction
 from itertools import combinations
 
 from rich import print
 
+from matrix import solve_gaussian
 from util import timing
 
 
@@ -78,61 +78,6 @@ def get_intersections_xy(
     return count
 
 
-def scale_iter(v, f):
-    return tuple((x * f for x in v))
-
-
-def num_leading_zeros(row: list) -> int:
-    for i, n in enumerate(row):
-        if n != 0:
-            return i
-    return i + 1
-
-
-def get_non_echelon_row(matrix: list) -> int:
-    prev = -1
-    for i, row in enumerate(matrix):
-        z = num_leading_zeros(row)
-        if z == len(row):
-            return None
-        if z <= prev:
-            return i
-        prev = z
-    return None
-
-
-def eliminate(matrix: list) -> list:
-    """Perform a Gaussian elimination on an augmented matrix.
-
-    Return the list of values in the solution, or raise an exception if a
-    unique solution cannot be found.
-    """
-    while True:
-        matrix.sort(key=num_leading_zeros)
-        i = get_non_echelon_row(matrix)
-        if i is None:
-            break
-        j = num_leading_zeros(matrix[i])
-        upper = matrix[i - 1]
-        for i in range(i, len(matrix)):
-            lead = matrix[i][j]
-            if lead == 0:
-                break
-            factor = Fraction(0 - lead, upper[j])
-            scaled = scale_iter(upper, factor)
-            matrix[i] = tuple(map(lambda a, b: a + b, matrix[i], scaled))
-
-    width = len(matrix[0]) - 1
-    solution = [None] * width
-    for row in reversed(matrix):
-        z = num_leading_zeros(row)
-        aug = row[width]
-        for j in range(z + 1, width):
-            aug -= row[j] * solution[j]
-        solution[z] = Fraction(aug, row[z])
-    return solution
-
-
 def get_matrix_rows(a: Hail, b: Hail) -> list:
     ap, av = a
     bp, bv = b
@@ -157,7 +102,7 @@ def get_intercept(hails: list[Hail]) -> Hail:
     matrix = []
     matrix.extend(get_matrix_rows(a, b))
     matrix.extend(get_matrix_rows(a, c))
-    solution = eliminate(matrix)
+    solution = solve_gaussian(matrix)
     rounded = ([int(round(x)) for x in solution])
     return Hail(Point3(*rounded[:3]), Vector(*rounded[3:]))
 
