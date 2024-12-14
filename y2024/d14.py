@@ -55,6 +55,45 @@ def do_moves(width, height, robots, count):
     return robots
 
 
+def generate_christmas_tree(width, height) -> set:
+    result = set()
+    minx = width // 2
+    maxx = width // 2 + 1
+    for y in range(min(width, height) - 1):
+        for x in range(minx, maxx):
+            result.add((x, y))
+        minx -= 1
+        maxx += 1
+    return result
+
+
+def get_text(width, height, positions):
+    lines = []
+    for y in range(height):
+        line = []
+        for x in range(width):
+            line.append('#' if (x, y) in positions else '.')
+        lines.append(''.join(line))
+    return '\n'.join(lines)
+
+
+def find_christmas_tree(width, height, robots):
+    pattern = generate_christmas_tree(width, height)
+    threshold = len(robots) * 0.9
+    i = 0
+    while True:
+        positions = {(x, y) for x, y, _, _ in robots}
+        if len(positions & pattern) > threshold:
+            print(get_text(width, height, positions))
+            return i
+        new = []
+        for x, y, vx, vy in robots:
+            x, y = move(width, height, x, y, vx, vy)
+            new.append((x, y, vx, vy))
+        robots = new
+        i += 1
+
+
 def run(stream, test: bool = False):
     with timing("Part 1"):
         parsed = parse(stream)
@@ -64,6 +103,10 @@ def run(stream, test: bool = False):
         result1 = get_score(width, height, robots)
 
     with timing("Part 2"):
-        result2 = 0
+        if not test:
+            result2 = find_christmas_tree(width, height, parsed)
+        else:
+            # No way to run Part 2 on the example input.
+            result2 = 0
 
     return (result1, result2)
