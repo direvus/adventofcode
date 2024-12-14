@@ -4,10 +4,57 @@ Day 14: Restroom Redoubt
 
 https://adventofcode.com/2024/day/14
 """
+import bisect
 import logging  # noqa: F401
+from collections import OrderedDict
 from math import prod
+from operator import add, sub
 
+import visualise
 from util import timing
+
+
+def ease_cubic_in_out(x):
+    if x < 0.5:
+        return 4 * (x ** 3)
+    else:
+        return 1 - ((x * -2 + 2) ** 3) / 2
+
+
+def position_to_image_coords(position):
+    return tuple(map(lambda v: 1 + 5 * v, position))
+
+
+class Sprite(visualise.Sprite):
+    def __init__(self, *args, **kwargs):
+        self.transitions = OrderedDict()
+        kwargs['final_status'] = visualise.Status.PERMANENT
+        super().__init__(*args, **kwargs)
+
+    def add_transition(self, start, duration, source, dest):
+        self.transitions[start] = (start, duration, source, dest)
+        self.stop = start + duration
+
+    def get_position(self, time):
+        keys = list(self.transitions.keys())
+        key = bisect.bisect_right(keys, time)
+        if not key:
+            return position_to_image_coords(self.position)
+        index = keys[key - 1]
+        start, duration, source, dest = self.transitions[index]
+        end = start + duration
+        if end <= time:
+            # It's already completed
+            return position_to_image_coords(dest)
+        progress = (time - start) / duration
+        easing = ease_cubic_in_out(progress)
+        source_coords = position_to_image_coords(source)
+        dest_coords = position_to_image_coords(dest)
+        vector = map(
+                lambda v: round(v * easing),
+                map(sub, dest_coords, source_coords))
+        result = tuple(map(add, source_coords, vector))
+        return result
 
 
 def parse(stream) -> str:
@@ -77,24 +124,42 @@ def get_text(width, height, positions):
     return '\n'.join(lines)
 
 
-def find_christmas_tree(width, height, robots):
+def find_christmas_tree(width, height, robots, draw: bool = False):
+    if draw:
+        pixel = 'assets/green_pixel_4.png'
+        # Allow 4 pixels per tile, plus border.
+        size = (5 * width + 1, 5 * height + 1)
+        im = visualise.Animation(size, 24, '#1a1a1a')
+        sprites = []
+        for i in range(len(robots)):
+            sprite = Sprite(pixel, robots[i][:2], start=0, fade_in=6)
+            sprites.append(sprite)
+            im.add_element(sprite)
+
     pattern = generate_christmas_tree(width, height)
     threshold = len(robots) * 0.9
     i = 0
+    t = 6
+
     while True:
         positions = {(x, y) for x, y, _, _ in robots}
         if len(positions & pattern) > threshold:
-            print(get_text(width, height, positions))
+            if draw:
+                im.render('out/y2024d14.gif', t - 120, t - 2)
             return i
         new = []
-        for x, y, vx, vy in robots:
-            x, y = move(width, height, x, y, vx, vy)
-            new.append((x, y, vx, vy))
+        for r in range(len(robots)):
+            x, y, vx, vy = robots[r]
+            nx, ny = move(width, height, x, y, vx, vy)
+            new.append((nx, ny, vx, vy))
+            if draw:
+                sprites[r].add_transition(t, 10, (x, y), (nx, ny))
         robots = new
         i += 1
+        t += 12
 
 
-def run(stream, test: bool = False):
+def run(stream, test: bool = False, draw: bool = False):
     with timing("Part 1"):
         parsed = parse(stream)
         width = 11 if test else 101
@@ -104,7 +169,7 @@ def run(stream, test: bool = False):
 
     with timing("Part 2"):
         if not test:
-            result2 = find_christmas_tree(width, height, parsed)
+            result2 = find_christmas_tree(width, height, parsed, draw)
         else:
             # No way to run Part 2 on the example input.
             result2 = 0

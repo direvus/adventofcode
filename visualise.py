@@ -3,7 +3,10 @@
 Utility module for building animated visualisations.
 """
 from enum import Enum
+
 from PIL import Image
+
+from util import INF
 
 
 class Status(Enum):
@@ -44,11 +47,17 @@ class Sprite(Element):
         return 1 - (time ** 3)
 
     def get_alpha(self, time):
-        if self.start is not None and time <= self.start + self.fade_in:
+        if (
+                self.fade_in is not None and
+                self.start is not None and
+                time <= self.start + self.fade_in):
             offset = (time - self.start) / self.fade_in
             return round(255 * self.get_fade_in_alpha(offset))
 
-        if self.stop is not None and time >= self.stop - self.fade_out:
+        if (
+                self.fade_out is not None and
+                self.stop is not None and
+                time >= self.stop - self.fade_out):
             start = self.stop - self.fade_out
             offset = (time - start) / self.fade_out
             return round(255 * self.get_fade_out_alpha(offset))
@@ -106,10 +115,10 @@ class Animation:
                     if i not in delete]
         return im
 
-    def render(self, filename: str):
+    def render(self, filename: str, start: int = 0, stop: int = INF):
         frames = []
-        t = 0
-        while self.elements:
+        t = start
+        while self.elements and t <= stop:
             frame = self.render_frame(t)
             frames.append(frame)
             t += 1
