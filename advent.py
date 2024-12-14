@@ -212,6 +212,11 @@ def print_config_table(
     console.print()
 
 
+def add_to_git_intent(*filenames):
+    args = ['git', 'add', '-N', *filenames]
+    subprocess.run(args, check=True)
+
+
 def run_interactive_setup(console, year: int, day: int):
     filename = os.path.join(f'y{year}', f'd{day:02d}.py')
     if os.path.exists(filename):
@@ -235,9 +240,8 @@ def run_interactive_setup(console, year: int, day: int):
                 '\n:white_check_mark: OK, '
                 f'program file created at {filename}')
 
-        args = ['git', 'add', '-N', filename, testfile]
         try:
-            subprocess.run(args, check=True)
+            add_to_git_intent(filename, testfile)
         except subprocess.CalledProcessError:
             console.print(
                 '\n:frowning: There was a problem scheduling the '
@@ -374,6 +378,10 @@ def run_interactive(
                     '\n:point_down: Enter mutli-line input below, '
                     'terminate with EOF (Ctrl-D) [yellow]>>>[/]')
             lines, chars = write_input_to_file(filename)
+            try:
+                add_to_git_intent(filename)
+            except subprocess.CalledProcessError:
+                pass
             console.print(
                     '\n\n:white_check_mark: OK, wrote '
                     f'{lines} lines and {chars} characters to {filename}')
