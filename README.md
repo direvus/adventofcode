@@ -69,6 +69,6 @@ Using Breadth-first search (left) and A Star (right) to solve the maze.
 
 ![2024 Day 9 (mp4 video)](vis/y2024d09.mp4)
 
-### 2024 Day 14, "Restroom Robot"
+### 2024 Day 14, "Restroom Redoubt"
 
 ![2024 Day 14](vis/y2024d14.gif)
