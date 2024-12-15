@@ -72,3 +72,7 @@ Using Breadth-first search (left) and A Star (right) to solve the maze.
 ### 2024 Day 14, "Restroom Redoubt"
 
 ![2024 Day 14](vis/y2024d14.gif)
+
+### 2024 Day 15, "Warehouse Woes"
+
+![2024 Day 15 Part 1](vis/y2024d15p1.gif)

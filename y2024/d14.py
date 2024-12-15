@@ -14,13 +14,6 @@ import visualise
 from util import timing
 
 
-def ease_cubic_in_out(x):
-    if x < 0.5:
-        return 4 * (x ** 3)
-    else:
-        return 1 - ((x * -2 + 2) ** 3) / 2
-
-
 def position_to_image_coords(position):
     return tuple(map(lambda v: 1 + 5 * v, position))
 
@@ -50,7 +43,7 @@ class Sprite(visualise.Sprite):
             coords = position_to_image_coords(dest)
             return coords
         progress = (time - start) / duration
-        easing = ease_cubic_in_out(progress)
+        easing = visualise.ease_cubic_in_out(progress)
         vector = map(lambda v: v * easing, vector)
         position = map(mod, map(add, source, vector), self.grid_size)
         coords = position_to_image_coords(position)

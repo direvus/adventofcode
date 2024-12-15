@@ -9,6 +9,13 @@ from PIL import Image
 from util import INF
 
 
+def ease_cubic_in_out(x):
+    if x < 0.5:
+        return 4 * (x ** 3)
+    else:
+        return 1 - ((x * -2 + 2) ** 3) / 2
+
+
 class Status(Enum):
     ACTIVE = 0
     EXTINCT = 1
