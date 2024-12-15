@@ -8,7 +8,7 @@ import bisect
 import logging  # noqa: F401
 from collections import OrderedDict
 from math import prod
-from operator import add, sub
+from operator import add, mod
 
 import visualise
 from util import timing
@@ -26,34 +26,35 @@ def position_to_image_coords(position):
 
 
 class Sprite(visualise.Sprite):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, grid_size, *args, **kwargs):
+        self.grid_size = grid_size
         self.transitions = OrderedDict()
         kwargs['final_status'] = visualise.Status.PERMANENT
         super().__init__(*args, **kwargs)
 
-    def add_transition(self, start, duration, source, dest):
-        self.transitions[start] = (start, duration, source, dest)
+    def add_transition(self, start, duration, source, vector):
+        self.transitions[start] = (start, duration, source, vector)
         self.stop = start + duration
 
-    def get_position(self, time):
+    def get_position(self, canvas, time):
         keys = list(self.transitions.keys())
         key = bisect.bisect_right(keys, time)
         if not key:
             return position_to_image_coords(self.position)
         index = keys[key - 1]
-        start, duration, source, dest = self.transitions[index]
+        start, duration, source, vector = self.transitions[index]
         end = start + duration
         if end <= time:
             # It's already completed
-            return position_to_image_coords(dest)
+            dest = tuple(map(mod, map(add, source, vector), self.grid_size))
+            coords = position_to_image_coords(dest)
+            return coords
         progress = (time - start) / duration
         easing = ease_cubic_in_out(progress)
-        source_coords = position_to_image_coords(source)
-        dest_coords = position_to_image_coords(dest)
-        vector = map(
-                lambda v: round(v * easing),
-                map(sub, dest_coords, source_coords))
-        result = tuple(map(add, source_coords, vector))
+        vector = map(lambda v: v * easing, vector)
+        position = map(mod, map(add, source, vector), self.grid_size)
+        coords = position_to_image_coords(position)
+        result = tuple(map(round, coords))
         return result
 
 
@@ -126,13 +127,23 @@ def get_text(width, height, positions):
 
 def find_christmas_tree(width, height, robots, draw: bool = False):
     if draw:
-        pixel = 'assets/green_pixel_4.png'
+        pixels = (
+                'assets/green_pixel_4.png',
+                'assets/green_pixel_4.png',
+                'assets/green_pixel_4.png',
+                'assets/green_pixel_4.png',
+                'assets/gold_pixel_4.png',
+                'assets/red_pixel_4.png',
+                )
         # Allow 4 pixels per tile, plus border.
+        grid_size = (width, height)
         size = (5 * width + 1, 5 * height + 1)
         im = visualise.Animation(size, 24, '#1a1a1a')
         sprites = []
         for i in range(len(robots)):
-            sprite = Sprite(pixel, robots[i][:2], start=0, fade_in=6)
+            pixel = pixels[i % len(pixels)]
+            sprite = Sprite(
+                    grid_size, pixel, robots[i][:2], start=0, fade_in=6)
             sprites.append(sprite)
             im.add_element(sprite)
 
@@ -140,12 +151,14 @@ def find_christmas_tree(width, height, robots, draw: bool = False):
     threshold = len(robots) * 0.9
     i = 0
     t = 6
+    rate = 32
+    trans = round(rate * 0.8)
 
     while True:
         positions = {(x, y) for x, y, _, _ in robots}
         if len(positions & pattern) > threshold:
             if draw:
-                im.render('out/y2024d14.gif', t - 120, t - 2)
+                im.render('out/y2024d14.gif', t - rate * 5, t)
             return i
         new = []
         for r in range(len(robots)):
@@ -153,10 +166,10 @@ def find_christmas_tree(width, height, robots, draw: bool = False):
             nx, ny = move(width, height, x, y, vx, vy)
             new.append((nx, ny, vx, vy))
             if draw:
-                sprites[r].add_transition(t, 10, (x, y), (nx, ny))
+                sprites[r].add_transition(t + 2, trans, (x, y), (vx, vy))
         robots = new
         i += 1
-        t += 12
+        t += rate
 
 
 def run(stream, test: bool = False, draw: bool = False):

@@ -35,7 +35,7 @@ class Sprite(Element):
         self.fade_in = fade_in
         self.fade_out = fade_out
 
-    def get_position(self, time):
+    def get_position(self, canvas, time):
         return self.position
 
     def get_fade_in_alpha(self, time: float) -> float:
@@ -65,22 +65,25 @@ class Sprite(Element):
         return None
 
     def render(self, canvas, time) -> Status:
+        status = Status.ACTIVE
         if self.start is not None and time < self.start:
             # Not ready to be displayed yet
-            return Status.ACTIVE
+            return status
 
         if self.stop is not None and time > self.stop:
             # Finished displaying
-            return self.final_status
+            status = self.final_status
+            if status == Status.EXTINCT:
+                return status
 
-        position = self.get_position(time)
+        position = self.get_position(canvas, time)
         alpha = self.get_alpha(time)
         if alpha is None:
             canvas.paste(self.image, position)
         else:
             self.image.putalpha(alpha)
             canvas.alpha_composite(self.image, position)
-        return Status.ACTIVE
+        return status
 
 
 class Animation:
