@@ -5,6 +5,7 @@ Day 15: Warehouse Woes
 https://adventofcode.com/2024/day/15
 """
 import logging  # noqa: F401
+from collections import deque
 
 from util import timing
 import grid
@@ -67,12 +68,83 @@ class Grid(grid.SparseGrid):
         return '\n'.join(lines)
 
 
+class WideGrid(Grid):
+    def parse_cell(self, position: tuple, value: str | int):
+        x, y = position
+        x *= 2
+        position = (x, y)
+        if value == '#':
+            self.walls.add(position)
+            self.walls.add((x + 1, y))
+        elif value == 'O':
+            self.boxes.add(position)
+        elif value == '@':
+            self.start = position
+
+    def parse(self, stream):
+        super().parse(stream)
+        self.width *= 2
+        return self
+
+    def get_box(self, position):
+        if position in self.boxes:
+            return position
+        left = (position[0] - 1, position[1])
+        if left in self.boxes:
+            return left
+        return None
+
+    def do_move(self, position, direction: int):
+        boxes = set()
+        q = deque()
+        q.append(position)
+        visited = set()
+        while q:
+            p = q.popleft()
+            ahead = grid.move(p, direction)
+            if ahead in self.walls:
+                # Move not possible
+                return position
+
+            if ahead in visited:
+                continue
+
+            box = self.get_box(ahead)
+            if box:
+                side = (box[0] + 1, box[1])
+                boxes.add(box)
+                q.append(box)
+                q.append(side)
+                visited |= {box, side}
+        # Remove all the boxes that are getting pushed, then re-add them in
+        # their new positions.
+        self.boxes -= boxes
+        for box in boxes:
+            self.boxes.add(grid.move(box, direction))
+        return grid.move(position, direction)
+
+    def __str__(self):
+        lines = []
+        for y in range(self.height):
+            line = []
+            for x in range(self.width):
+                p = (x, y)
+                ch = (
+                        '#' if p in self.walls else
+                        '[' if p in self.boxes else
+                        ']' if (x - 1, y) in self.boxes else
+                        '.')
+                line.append(ch)
+            lines.append(''.join(line))
+        return '\n'.join(lines)
+
+
 def parse(stream) -> str:
     data = stream.read()
     plan, moves = data.split('\n\n')
     plan = plan.split('\n')
     moves = ''.join(moves.split())
-    moves = map(lambda x: grid.FACING.index(x), moves.strip())
+    moves = tuple(map(lambda x: grid.FACING.index(x), moves.strip()))
     return plan, moves
 
 
@@ -88,6 +160,8 @@ def run(stream, test: bool = False):
         result1 = grid.get_total_box_score()
 
     with timing("Part 2"):
-        result2 = 0
+        wide = WideGrid().parse(plan)
+        wide.do_moves(moves)
+        result2 = wide.get_total_box_score()
 
     return (result1, result2)
