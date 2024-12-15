@@ -16,6 +16,9 @@ import grid
 import visualise
 
 
+BACKGROUND_COLOUR = '#1a1a1a'
+
+
 def get_coords(position):
     return tuple(map(lambda v: 1 + 5 * v, position))
 
@@ -69,6 +72,13 @@ class Grid(grid.SparseGrid):
         elif value == '@':
             self.start = position
 
+    def get_box_image(self):
+        return Image.open('assets/white_pixel_4.png')
+
+    @property
+    def output_filename(self):
+        return 'out/y2024d15p1.gif'
+
     def do_move(
             self, position, direction: int,
             draw: bool = False, time: int | None = None):
@@ -105,11 +115,11 @@ class Grid(grid.SparseGrid):
         rate = 4  # frames per movement round
         if draw:
             wall = Image.open('assets/grey_pixel_4.png')
-            box = Image.open('assets/white_pixel_4.png')
+            box = self.get_box_image()
 
             grid_size = (self.width, self.height)
             size = get_coords(grid_size)
-            anim = visualise.Animation(size, 24, '#1a1a1a')
+            anim = visualise.Animation(size, 48, BACKGROUND_COLOUR)
 
             for p in self.walls:
                 sprite = visualise.Sprite(
@@ -117,7 +127,7 @@ class Grid(grid.SparseGrid):
                         final_status=visualise.Status.PERMANENT)
                 anim.add_element(sprite)
             self.robot_sprite = Sprite(
-                    'assets/gold_pixel_4.png', self.start,
+                    'assets/green_pixel_4.png', self.start,
                     fade_in=lead)
             anim.add_element(self.robot_sprite)
             self.box_sprites = {}
@@ -133,7 +143,7 @@ class Grid(grid.SparseGrid):
             time += rate
 
         if draw:
-            anim.render('out/y2024d15p1.gif', 0, min(time, 3000))
+            anim.render(self.output_filename, 0, min(time, 3000))
 
     def get_total_box_score(self):
         return sum(map(get_box_score, self.boxes.values()))
@@ -171,6 +181,17 @@ class WideGrid(Grid):
         self.width *= 2
         return self
 
+    @property
+    def output_filename(self):
+        return 'out/y2024d15p2.gif'
+
+    def get_box_image(self):
+        im = Image.new('RGB', (9, 4), BACKGROUND_COLOUR)
+        pixel = Image.open('assets/white_pixel_4.png')
+        im.paste(pixel, (0, 0))
+        im.paste(pixel, (5, 0))
+        return im
+
     def do_move(
             self, position, direction: int,
             draw: bool = False, time: int | None = None):
@@ -205,7 +226,13 @@ class WideGrid(Grid):
         # Relocate all boxes that are getting pushed
         for box in boxes:
             p = grid.move(self.boxes[box], direction)
+            if draw:
+                self.box_sprites[box].add_transition(
+                        time, 6, self.boxes[box], grid.VECTORS[direction])
             self.boxes[box] = p
+        if draw:
+            self.robot_sprite.add_transition(
+                    time, 6, position, grid.VECTORS[direction])
         return grid.move(position, direction)
 
     def __str__(self):
@@ -247,7 +274,7 @@ def run(stream, test: bool = False, draw: bool = False):
 
     with timing("Part 2"):
         wide = WideGrid().parse(plan)
-        wide.do_moves(moves)
+        wide.do_moves(moves, draw)
         result2 = wide.get_total_box_score()
 
     return (result1, result2)

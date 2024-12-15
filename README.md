@@ -75,4 +75,4 @@ Using Breadth-first search (left) and A Star (right) to solve the maze.
 
 ### 2024 Day 15, "Warehouse Woes"
 
-![2024 Day 15 Part 1](vis/y2024d15p1.gif)
+![2024 Day 15 Part 1](vis/y2024d15p1.gif) ![2024 Day 15 Part 2](vis/y2024d15p2.gif)
