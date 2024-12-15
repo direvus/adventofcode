@@ -1,5 +1,7 @@
 from PIL import Image
 
+import visualise
+
 
 def parse(stream) -> list:
     results = []
@@ -42,19 +44,21 @@ class Screen:
         for i, on in enumerate(col):
             self.rows[i][index] = on
 
-    def draw(self) -> Image:
-        pixel_size = 14
-        height = (pixel_size + 1) * self.height + 1  # 1 pixel border
-        width = (pixel_size + 1) * self.width + 1
-        pixel = Image.open('assets/green_pixel_14.png')
-        im = Image.new('RGB', (width, height), '#000')
+    def draw(self, animation, pixel, sprites, time):
         for i in range(self.height):
             for j in range(self.width):
-                y = 1 + i * (pixel_size + 1)
-                x = 1 + j * (pixel_size + 1)
-                if self.rows[i][j]:
-                    im.paste(pixel, (x, y))
-        return im
+                if self.rows[i][j] and (j, i) not in sprites:
+                    x = 1 + (pixel.size[0] + 1) * j
+                    y = 1 + (pixel.size[1] + 1) * i
+                    sprite = visualise.Sprite(
+                            pixel, (x, y),
+                            start=time, fade_in=4, fade_out=4)
+                    animation.add_element(sprite)
+                    sprites[(j, i)] = sprite
+                elif not self.rows[i][j] and (j, i) in sprites:
+                    sprite = sprites[(j, i)]
+                    sprite.stop = time - 1
+                    del sprites[(j, i)]
 
     def run_instruction(self, instruction, operands):
         match instruction:
@@ -72,12 +76,23 @@ class Screen:
         for inst, ops in program:
             self.run_instruction(inst, ops)
 
-    def run_and_draw(self, program: list) -> list[Image]:
-        images = []
+    def run_and_draw(self, program: list):
+        pixel_size = 14
+        image_size = (
+                (pixel_size + 1) * self.width + 1,
+                (pixel_size + 1) * self.height + 1,
+                )
+        pixel = Image.open('assets/green_pixel_14.png')
+        anim = visualise.Animation(image_size, 24, '#000')
+        sprites = {}
+        rate = 12  # frames per update
+        t = 0
+
         for inst, ops in program:
             self.run_instruction(inst, ops)
-            images.append(self.draw())
-        return images
+            self.draw(anim, pixel, sprites, t)
+            t += rate
+        anim.render('out/y2016d08.gif', stop=t - 1)
 
     def count_on(self):
         return sum(sum(row) for row in self.rows)
@@ -92,10 +107,7 @@ def run(stream, test=False, draw=False):
     screen = Screen(*size)
 
     if draw:
-        images = screen.run_and_draw(program)
-        images[0].save(
-                'out/y2016d08.gif', save_all=True,
-                append_images=images[1:], duration=300)
+        screen.run_and_draw(program)
     else:
         screen.run_program(program)
 
