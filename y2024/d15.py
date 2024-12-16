@@ -4,10 +4,8 @@ Day 15: Warehouse Woes
 
 https://adventofcode.com/2024/day/15
 """
-import bisect
 import logging  # noqa: F401
-from collections import deque, OrderedDict
-from operator import add
+from collections import deque
 
 from PIL import Image
 
@@ -24,35 +22,10 @@ def get_coords(position):
 
 
 class Sprite(visualise.Sprite):
-    def __init__(self, *args, **kwargs):
-        self.transitions = OrderedDict()
-        kwargs['final_status'] = visualise.Status.PERMANENT
-        super().__init__(*args, **kwargs)
+    final_status = visualise.Status.PERMANENT
 
-    def add_transition(self, start, duration, source, vector):
-        self.transitions[start] = (start, duration, source, vector)
-        self.stop = start + duration
-
-    def get_position(self, canvas, time):
-        keys = list(self.transitions.keys())
-        key = bisect.bisect_right(keys, time)
-        if not key:
-            return get_coords(self.position)
-        index = keys[key - 1]
-        start, duration, source, vector = self.transitions[index]
-        end = start + duration
-        if end <= time:
-            # It's already completed
-            dest = tuple(map(add, source, vector))
-            coords = get_coords(dest)
-            return coords
-        progress = (time - start) / duration
-        easing = visualise.ease_cubic_in_out(progress)
-        vector = map(lambda v: v * easing, vector)
-        position = map(add, source, vector)
-        coords = get_coords(position)
-        result = tuple(map(round, coords))
-        return result
+    def get_coordinates(self, position):
+        return get_coords(position)
 
 
 class Grid(grid.SparseGrid):
@@ -100,10 +73,10 @@ class Grid(grid.SparseGrid):
             dest = grid.move(self.boxes[box], direction)
             self.boxes[box] = dest
             if draw:
-                self.box_sprites[box].add_transition(
+                self.box_sprites[box].add_movement(
                         time, 6, source, grid.VECTORS[direction])
         if draw:
-            self.robot_sprite.add_transition(
+            self.robot_sprite.add_movement(
                     time, 6, position, grid.VECTORS[direction])
         result = grid.move(position, direction)
         return result
@@ -227,11 +200,11 @@ class WideGrid(Grid):
         for box in boxes:
             p = grid.move(self.boxes[box], direction)
             if draw:
-                self.box_sprites[box].add_transition(
+                self.box_sprites[box].add_movement(
                         time, 6, self.boxes[box], grid.VECTORS[direction])
             self.boxes[box] = p
         if draw:
-            self.robot_sprite.add_transition(
+            self.robot_sprite.add_movement(
                     time, 6, position, grid.VECTORS[direction])
         return grid.move(position, direction)
 

@@ -2,11 +2,22 @@
 
 Utility module for building animated visualisations.
 """
+import bisect
+from collections import OrderedDict
 from enum import Enum
+from operator import add
 
 from PIL import Image
 
 from util import INF
+
+
+def ease_cubic_out(time: float) -> float:
+    return 1 - ((1 - time) ** 3)
+
+
+def ease_cubic_in(time: float) -> float:
+    return 1 - (time ** 3)
 
 
 def ease_cubic_in_out(x):
@@ -28,9 +39,11 @@ class Element:
 
 
 class Sprite(Element):
+    final_status = Status.EXTINCT
+
     def __init__(
             self, image, position=None, start=None, stop=None,
-            final_status=Status.EXTINCT, fade_in=None, fade_out=None):
+            final_status=None, fade_in=None, fade_out=None):
         if isinstance(image, Image.Image):
             self.image = image
         else:
@@ -38,20 +51,57 @@ class Sprite(Element):
         self.position = position
         self.start = start
         self.stop = stop
-        self.final_status = final_status
+        if final_status is not None:
+            self.final_status = final_status
+        self.fades = OrderedDict()
+        self.movements = OrderedDict()
         self.fade_in = fade_in
         self.fade_out = fade_out
 
+    def add_fade(self, start, duration, initial, final, easing=None):
+        transition = (start, duration, initial, final, easing)
+        self.fades[start] = transition
+        return transition
+
+    def add_movement(self, start, duration, origin, vector, easing=None):
+        if easing is None:
+            easing = ease_cubic_in_out
+        transition = (start, duration, origin, vector, easing)
+        self.movements[start] = transition
+        return transition
+
+    def get_coordinates(self, position):
+        """Translate a position into image pixel coordinates.
+
+        By default, no translation is performed and the position is returned
+        as-is.
+
+        Override this method when the sprite position is in a different
+        coordinate system than the image canvas.
+        """
+        return position
+
     def get_position(self, canvas, time):
-        return self.position
-
-    def get_fade_in_alpha(self, time: float) -> float:
-        # Default to a cubic ease-out
-        return 1 - ((1 - time) ** 3)
-
-    def get_fade_out_alpha(self, time: float) -> float:
-        # Default to a cubic ease-in
-        return 1 - (time ** 3)
+        keys = list(self.movements.keys())
+        key = bisect.bisect_right(keys, time)
+        if not key:
+            return self.get_coordinates(self.position)
+        index = keys[key - 1]
+        start, duration, source, vector, easing = self.movements[index]
+        end = start + duration
+        if end <= time:
+            # The latest movement has completed at this `time`, so return its
+            # final position.
+            dest = tuple(map(add, source, vector))
+            coords = self.get_coordinates(dest)
+            return coords
+        progress = (time - start) / duration
+        value = easing(progress)
+        scaledvector = (v * value for v in vector)
+        position = map(add, source, scaledvector)
+        coords = self.get_coordinates(position)
+        result = tuple(map(round, coords))
+        return result
 
     def get_alpha(self, time):
         if (
@@ -59,7 +109,7 @@ class Sprite(Element):
                 self.start is not None and
                 time <= self.start + self.fade_in):
             offset = (time - self.start) / self.fade_in
-            return round(255 * self.get_fade_in_alpha(offset))
+            return round(255 * ease_cubic_out(offset))
 
         if (
                 self.fade_out is not None and
@@ -67,9 +117,25 @@ class Sprite(Element):
                 time >= self.stop - self.fade_out):
             start = self.stop - self.fade_out
             offset = (time - start) / self.fade_out
-            return round(255 * self.get_fade_out_alpha(offset))
+            return round(255 * ease_cubic_in(offset))
 
-        return None
+        keys = list(self.fades.keys())
+        key = bisect.bisect_right(keys, time)
+        if not key:
+            return None
+        index = keys[key - 1]
+        start, duration, initial, final, easing = self.fades[index]
+        end = start + duration
+        if end <= time:
+            # The latest fade has completed at this `time`, so return its
+            # final value.
+            return round(255 * final)
+
+        progress = (time - start) / duration
+        scale = easing(progress)
+        diff = (final - initial) * scale
+        value = start + diff
+        return round(255 * value)
 
     def render(self, canvas, time) -> Status:
         status = Status.ACTIVE
