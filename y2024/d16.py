@@ -33,58 +33,20 @@ class Grid(grid.SparseGrid):
         q.push(node, grid.get_distance(self.start, self.end))
         dist = defaultdict(lambda: INF)
         dist[node] = 0
-
-        while q:
-            est, node = q.pop()
-            position, facing = node
-            if position == self.end:
-                return est
-
-            cost = dist[node]
-            neighbours = set()
-            left = grid.turn(facing, -1)
-            right = grid.turn(facing, 1)
-
-            if grid.move(position, left, 1) not in self.walls:
-                neighbours.add(((position, left), cost + 1000))
-            if grid.move(position, right, 1) not in self.walls:
-                neighbours.add(((position, right), cost + 1000))
-
-            ahead = grid.move(position, facing, 1)
-            if ahead not in self.walls:
-                neighbours.add(((ahead, facing), cost + 1))
-
-            for n in neighbours:
-                node, cost = n
-                if cost < dist[node]:
-                    dist[node] = cost
-                    f = cost + grid.get_distance(node[0], self.end)
-                    q.set_priority(node, f)
-        return False
-
-    def find_best_path_tiles(self, limit):
-        """Find all paths through the maze that cost no more than `limit`.
-
-        Return all of the cells that occur along any of those paths, as a set.
-        """
-        result = {self.start, self.end}
-        q = PriorityQueue()
-        node = (self.start, 1)
-        q.push(node, grid.get_distance(self.start, self.end))
-        dist = defaultdict(lambda: INF)
-        dist[node] = 0
         trace = defaultdict(set)
         ends = set()
+        best = None
 
         while q:
             est, node = q.pop()
             position, facing = node
             if position == self.end:
                 ends.add(node)
+                best = dist[node]
                 continue
 
             cost = dist[node]
-            if cost >= limit:
+            if best is not None and cost >= best:
                 continue
 
             neighbours = set()
@@ -114,12 +76,13 @@ class Grid(grid.SparseGrid):
 
         q = deque()
         q.extend(ends)
+        tiles = set()
         while q:
             node = q.popleft()
-            result.add(node[0])
+            tiles.add(node[0])
             q.extend(trace[node])
 
-        return result
+        return best, tiles
 
 
 def parse(stream) -> str:
@@ -129,9 +92,9 @@ def parse(stream) -> str:
 def run(stream, test: bool = False):
     with timing("Part 1"):
         grid = Grid().parse(stream)
-        result1 = grid.find_best_path()
+        result1, tiles = grid.find_best_path()
 
     with timing("Part 2"):
-        result2 = len(grid.find_best_path_tiles(result1))
+        result2 = len(tiles)
 
     return (result1, result2)
