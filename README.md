@@ -29,10 +29,20 @@ There are also some optional dependencies to enable extra features:
 - `numba`, to speed up some of the number-crunchy solutions
 - `pytest`, to run the test suite
 
+## Installation
+
+1. Clone the repo
+2. Change into the top-level repo directory
+3. Execute `python3 -m venv .venv` to create a Python virtual environment
+4. Execute `source .venv/bin/activate` to activate the virtual environment
+5. Execute `pip install -r requirements.txt` to install all required and
+   optional Python package dependencies
+
 ## Usage
 
-Execute `advent.py` at the top-level of the repository, with the year and day
-number.
+To simply run the solution for a puzzle, execute `advent.py` at the top-level
+of the repository, with the year and day number as positional arguments, for
+example:
 
 ```
 ./advent.py 2023 9
@@ -42,6 +52,21 @@ You can give the `-t/--test` argument to run the test case from the puzzle
 explanation instead of the actual puzzle, `-v/--verbose` to enable debug
 logging, or `-d/--draw` to output a visualisation (if the puzzle code supports
 that).
+
+You can also run `./advent.py` without any arguments to enter an interactive
+mode which looks like this:
+
+![Interactive mode screenshot](doc/advent-interactive.png)
+
+In the interactive mode, you can set up a new puzzle solution module from a
+template, add example inputs, download your actual inputs, toggle the
+visualisation and logging modes and run your solution in real or testing mode.
+
+The interactive mode uses hot module loading, so in most cases you can re-run
+your solution after making changes without ever leaving interactive mode. The
+exceptions are when you make changes in another module that is imported by the
+solution, or you are changing functions that are under numba.jit compilation.
+In those cases you will need to exit and restart the interactive mode.
 
 ## Visualisations
 
