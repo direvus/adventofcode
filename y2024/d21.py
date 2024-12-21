@@ -102,9 +102,9 @@ def find_best_length(sequence, level):
     return result
 
 
-def get_complexity(code: str) -> int:
+def get_complexity(code: str, depth: int = 2) -> int:
     num = int(code.replace('A', ''))
-    return num * find_best_length(code, 2)
+    return num * find_best_length(code, depth)
 
 
 def run(stream, test: bool = False):
@@ -113,6 +113,6 @@ def run(stream, test: bool = False):
         result1 = sum(get_complexity(x) for x in parsed)
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = sum(get_complexity(x, 25) for x in parsed)
 
     return (result1, result2)
