@@ -5,208 +5,106 @@ Day 21: Keypad Conundrum
 https://adventofcode.com/2024/day/21
 """
 import logging  # noqa: F401
+from collections import deque
+from functools import cache
 
-from util import timing
+import grid
+from util import timing, INF
 
 
 KEYPAD = {
-        '7': {
-            '8': '>',
-            '9': '>>',
-            '4': 'v',
-            '5': '>v',
-            '6': '>>v',
-            '1': 'vv',
-            '2': '>vv',
-            '3': '>>vv',
-            '0': '>vvv',
-            'A': '>>vvv',
-            },
-        '4': {
-            '7': '^',
-            '8': '^>',
-            '9': '^>>',
-            '5': '>',
-            '6': '>>',
-            '1': 'v',
-            '2': '>v',
-            '3': '>>v',
-            '0': '>vv',
-            'A': '>>vv',
-            },
-        '1': {
-            '7': '^^',
-            '8': '^^>',
-            '9': '^^>>',
-            '4': '^',
-            '5': '^>',
-            '6': '^>>',
-            '2': '>',
-            '3': '>>',
-            '0': '>v',
-            'A': '>>v',
-            },
-        '8': {
-            '7': '<',
-            '9': '>',
-            '4': 'v<',
-            '5': 'v',
-            '6': '>v',
-            '1': 'vv<',
-            '2': 'vv',
-            '3': '>vv',
-            '0': 'vvv',
-            'A': '>vvv',
-            },
-        '5': {
-            '7': '<^',
-            '8': '^',
-            '9': '^>',
-            '4': '<',
-            '6': '>',
-            '1': 'v<',
-            '2': 'v',
-            '3': '>v',
-            '0': 'vv',
-            'A': '>vv',
-            },
-        '2': {
-            '7': '<^^',
-            '8': '^^',
-            '9': '^^>',
-            '4': '<^',
-            '5': '^',
-            '6': '^>',
-            '1': '<',
-            '3': '>',
-            '0': 'v',
-            'A': '>v',
-            },
-        '0': {
-            '7': '<^^^',
-            '8': '^^^',
-            '9': '^^^>',
-            '4': '<^^',
-            '5': '^^',
-            '6': '^^>',
-            '1': '<^',
-            '2': '^',
-            '3': '^>',
-            'A': '>',
-            },
-        '9': {
-            '7': '<<',
-            '8': '<',
-            '4': 'v<<',
-            '5': 'v<',
-            '6': 'v',
-            '1': 'vv<<',
-            '2': 'vv<',
-            '3': 'vv',
-            '0': 'vvv<',
-            'A': 'vvv',
-            },
-        '6': {
-            '7': '<<^',
-            '8': '^<',
-            '9': '^',
-            '4': '<<',
-            '5': '<',
-            '1': 'v<<',
-            '2': 'v<',
-            '3': 'v',
-            '0': 'vv<',
-            'A': 'vv',
-            },
-        '3': {
-            '7': '<<^^',
-            '8': '<^^',
-            '9': '^^',
-            '4': '<<^',
-            '5': '^<',
-            '6': '^',
-            '1': '<<',
-            '2': '<',
-            '0': 'v<',
-            'A': 'v',
-            },
-        'A': {
-            '7': '<<^^^',
-            '8': '<^^^',
-            '9': '^^^',
-            '4': '<<^^',
-            '5': '<^^',
-            '6': '^^',
-            '1': '<<^',
-            '2': '<^',
-            '3': '^',
-            '0': '<',
-            },
+        (0, 0): '7', (1, 0): '8', (2, 0): '9',
+        (0, 1): '4', (1, 1): '5', (2, 1): '6',
+        (0, 2): '1', (1, 2): '2', (2, 2): '3',
+                     (1, 3): '0', (2, 3): 'A',
         }
+KEY_SYMBOLS = {v: k for k, v in KEYPAD.items()}
+
 DIRPAD = {
-        'A': {
-            '^': '<',
-            'v': 'v<',
-            '<': 'v<<',
-            '>': 'v',
-            },
-        '^': {
-            'A': '>',
-            'v': 'v',
-            '<': 'v<',
-            '>': '>v',
-            },
-        '>': {
-            'A': '^',
-            'v': '<',
-            '<': '<<',
-            '^': '^<',
-            },
-        '<': {
-            'A': '>>^',
-            'v': '>',
-            '>': '>>',
-            '^': '>^',
-            },
-        'v': {
-            'A': '>^',
-            '<': '<',
-            '>': '>',
-            '^': '^',
-            },
+                     (1, 0): '^', (2, 0): 'A',
+        (0, 1): '<', (1, 1): 'v', (2, 1): '>',  # noqa: E131
         }
+DIR_SYMBOLS = {v: k for k, v in DIRPAD.items()}
 
 
 def parse(stream) -> str:
     return tuple(line.strip() for line in stream)
 
 
-def get_sequence(pad: dict, code: str) -> str:
-    seq = []
-    position = 'A'
-    for char in code:
-        if position != char:
-            move = pad[position][char]
-        else:
-            move = ''
-        seq.append(move + 'A')
-        logging.debug(f'{position} -> {char} = {move + "A"}')
-        position = char
-    logging.debug(seq)
-    return ''.join(seq)
+@cache
+def find_paths(start: str, end: str):
+    if start == end:
+        return []
+
+    result = []
+    keypad = (start.isdigit() or end.isdigit())
+    pad = KEYPAD if keypad else DIRPAD
+    symbols = KEY_SYMBOLS if keypad else DIR_SYMBOLS
+
+    position = symbols[start]
+    target = symbols[end]
+    q = deque()
+    q.append((position,))
+    distance = grid.get_distance(position, target)
+
+    while q:
+        path = q.popleft()
+        p = path[-1]
+        if p == target:
+            result.append(path)
+        if len(path) > distance:
+            continue
+        adjacent = (grid.get_adjacent(p) & pad.keys()) - set(path)
+        for n in adjacent:
+            q.append(path + (n,))
+    return result
 
 
-def get_nested_sequence(code: str) -> str:
-    seq1 = get_sequence(KEYPAD, code)
-    seq2 = get_sequence(DIRPAD, seq1)
-    seq3 = get_sequence(DIRPAD, seq2)
-    logging.debug(f'{code} {seq3} {len(seq3)}')
-    return seq3
+@cache
+def path_to_dpad(path):
+    result = []
+    for i in range(1, len(path)):
+        ax, ay = path[i - 1]
+        bx, by = path[i]
+        d = (
+                '>' if bx > ax else
+                '<' if bx < ax else
+                '^' if by < ay else
+                'v')
+        result.append(d)
+    result.append('A')
+    return ''.join(result)
+
+
+@cache
+def find_best_length(sequence, level):
+    result = 0
+    for i in range(len(sequence)):
+        start = 'A' if i == 0 else sequence[i - 1]
+        end = sequence[i]
+
+        paths = find_paths(start, end)
+
+        if level == 0:
+            length = min(len(x) for x in paths) if paths else 1
+            result += length
+            continue
+
+        if not paths:
+            result += 1
+            continue
+
+        lengths = set()
+        for path in paths:
+            dpad = path_to_dpad(path)
+            lengths.add(find_best_length(dpad, level - 1))
+        result += min(lengths)
+    return result
 
 
 def get_complexity(code: str) -> int:
     num = int(code.replace('A', ''))
-    return num * len(get_nested_sequence(code))
+    return num * find_best_length(code, 2)
 
 
 def run(stream, test: bool = False):
