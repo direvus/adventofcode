@@ -7,7 +7,7 @@ https://adventofcode.com/2015/day/22
 import logging
 import os
 from collections import namedtuple
-from operator import add
+from operator import add, sub
 
 from PIL import Image, ImageFont
 
@@ -183,6 +183,9 @@ class Game:
             case 'Recharge':
                 self.recharge_sprite.stop = self.time
                 self.recharge_sprite.fade_out = BEAT
+            case 'Poison':
+                self.poison_sprite.stop = self.time
+                self.poison_sprite.fade_out = BEAT
         self.time += LONG_BEAT * 2
 
     def modify_player_hp(self, diff: int) -> int:
@@ -321,6 +324,22 @@ class Game:
         self.recharge_sprite = sprite
         self.animation.add_element(sprite)
 
+    def do_poison(self):
+        self.effects.append(('Poison', 6))
+        if not self.animation:
+            return
+
+        self.add_message('Poison\nbegins!')
+        path = os.path.join(ASSETDIR, 'poison.png')
+        image = Image.open(path)
+        width, _ = image.size
+        position = (444, 72)
+
+        sprite = visualise.Sprite(
+                image, position, start=self.time, fade_in=BEAT)
+        self.poison_sprite = sprite
+        self.animation.add_element(sprite)
+
     def do_shield(self):
         self.effects.append(('Shield', 6))
         if not self.animation:
@@ -373,14 +392,15 @@ class Game:
 
         path = os.path.join(ASSETDIR, 'drain.png')
         image = Image.open(path)
-        position = (396, 156)
-        vector = (126 - position[0], 0)
+        origin = (396, 120)
+        dest = (126, 156)
+        vector = tuple(map(sub, dest, origin))
 
         sprite = visualise.Sprite(
-                image, position, start=self.time,
+                image, origin, start=self.time,
                 stop=(self.time + LONG_BEAT), fade_in=(BEAT // 2))
         sprite.add_movement(
-                self.time, LONG_BEAT, position, vector)
+                self.time, LONG_BEAT, origin, vector)
         self.animation.add_element(sprite)
 
         self.do_boss_knockback()
@@ -397,8 +417,7 @@ class Game:
             case 'Shield':
                 self.do_shield()
             case 'Poison':
-                self.add_message('Poison\nbegins!')
-                self.effects.append((action, 6))
+                self.do_poison()
             case 'Recharge':
                 self.do_recharge()
 
