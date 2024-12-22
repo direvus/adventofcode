@@ -180,6 +180,9 @@ class Game:
             case 'Shield':
                 self.shield_sprite.stop = self.time
                 self.shield_sprite.fade_out = BEAT
+            case 'Recharge':
+                self.recharge_sprite.stop = self.time
+                self.recharge_sprite.fade_out = BEAT
         self.time += LONG_BEAT * 2
 
     def modify_player_hp(self, diff: int) -> int:
@@ -273,6 +276,22 @@ class Game:
         sprite.add_movement(self.time, BEAT, position, vector)
         sprite.add_movement(self.time + BEAT, BEAT, dest, reverse)
 
+    def do_boss_attack(self):
+        if not self.animation:
+            return
+
+        sprite = self.boss_sprite
+        position = BOSS_POSITION
+        x, y = position
+        vector = (132 - x, 0)
+        reverse = (x - 132, 0)
+        dest = tuple(map(add, position, vector))
+
+        sprite.add_movement(
+                self.time, BEAT, position, vector,
+                easing=visualise.ease_cubic_in)
+        sprite.add_movement(self.time + BEAT, BEAT, dest, reverse)
+
     def do_boss_knockback(self):
         if not self.animation:
             return
@@ -285,6 +304,22 @@ class Game:
 
         sprite.add_movement(self.time, BEAT, position, vector)
         sprite.add_movement(self.time + BEAT, BEAT, dest, reverse)
+
+    def do_recharge(self):
+        self.effects.append(('Recharge', 5))
+        if not self.animation:
+            return
+
+        self.add_message('Recharge\nbegins!')
+        path = os.path.join(ASSETDIR, 'recharge.png')
+        image = Image.open(path)
+        width, _ = image.size
+        position = (0, 72)
+
+        sprite = visualise.Sprite(
+                image, position, start=self.time, fade_in=BEAT)
+        self.recharge_sprite = sprite
+        self.animation.add_element(sprite)
 
     def do_shield(self):
         self.effects.append(('Shield', 6))
@@ -365,8 +400,7 @@ class Game:
                 self.add_message('Poison\nbegins!')
                 self.effects.append((action, 6))
             case 'Recharge':
-                self.add_message('Recharge\nbegins!')
-                self.effects.append((action, 5))
+                self.do_recharge()
 
     def do_round(self, action: str) -> bool | None:
         """Run one round of this game.
@@ -432,14 +466,17 @@ class Game:
         # Enemy turn
         damage = max(1, self.boss_damage - turn_armor)
         self.modify_player_hp(-damage)
-        self.do_player_knockback()
         self.add_message(f'Boss atk:\n-{damage} HP')
+        self.do_boss_attack()
+        self.time += BEAT
+        self.do_player_knockback()
+        self.time += BEAT
 
         if self.player_hp <= 0:
             self.do_player_loss()
             return False
         self.turn += 1
-        self.time += LONG_BEAT * 2
+        self.time += LONG_BEAT
         return None
 
 
