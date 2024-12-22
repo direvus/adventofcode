@@ -233,7 +233,9 @@ class Sprite(Element):
 
 
 class Text(Element):
-    def __init__(self, font, size, text='', *args, **kwargs):
+    def __init__(
+            self, font, size, text='', colour='#ffffff', align='left',
+            spacing=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if isinstance(font, str):
             self.font = ImageFont.truetype(font)
@@ -242,6 +244,9 @@ class Text(Element):
         self.font = font
         self.size = size
         self.text = text
+        self.colour = colour
+        self.align = align
+        self.spacing = spacing
 
     def render(self, canvas, time) -> Status:
         status = Status.ACTIVE
@@ -257,7 +262,13 @@ class Text(Element):
 
         image = Image.new('RGBA', self.size)
         draw = ImageDraw.Draw(image)
-        draw.text((0, 0), self.text, '#ffffff')
+        draw.text(
+                xy=(0, 0),
+                text=self.text,
+                fill=self.colour,
+                font=self.font,
+                align=self.align,
+                spacing=self.spacing)
 
         crop = self.get_crop(time)
         if crop is not None:

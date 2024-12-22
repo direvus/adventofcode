@@ -8,7 +8,7 @@ import logging
 import os
 from collections import namedtuple
 
-from PIL import Image
+from PIL import Image, ImageFont
 
 import visualise
 
@@ -30,6 +30,11 @@ ASSETDIR = 'assets/wizardsim'
 FRAMERATE = 24
 BEAT = 12
 LONG_BEAT = 24
+
+# Pixel12x10 is by Corne2Plum3, and the repo is located at
+# https://github.com/Corne2Plum3/Pixel12x10
+FONTPATH = os.path.join(ASSETDIR, 'Pixel12x10-v1.1.0.ttf')
+FONT = ImageFont.truetype(FONTPATH, 72)
 
 
 class Game:
@@ -115,6 +120,17 @@ class Game:
                 game.effects,
                 ) = value
         return game
+
+    def add_message(self, message: str):
+        if not self.animation:
+            return
+        element = MessageBox(
+                text=message.upper(),
+                start=self.time,
+                stop=self.time + LONG_BEAT * 2,
+                fade_in=BEAT,
+                fade_out=BEAT)
+        self.animation.add_element(element)
 
     def do_effects(self) -> int:
         """Apply all the current spell effects.
@@ -209,6 +225,7 @@ class Game:
         self.boss_health_bar.fade_out = LONG_BEAT
         self.boss_sprite.stop = self.time
         self.boss_sprite.fade_out = LONG_BEAT
+        self.add_message('Boss\ndefeated!')
 
     def do_player_loss(self):
         if not self.animation:
@@ -230,6 +247,25 @@ class Game:
                 image, position, start=self.time, fade_in=BEAT)
         self.shield_sprite = shield
         self.animation.add_element(shield)
+
+    def do_action(self, action):
+        text = action.upper()
+        if ' ' in text:
+            text = '\n'.join(text.split())
+        self.add_message(text)
+
+        match action:
+            case 'Magic Missile':
+                self.modify_boss_hp(-4)
+            case 'Drain':
+                self.modify_boss_hp(-2)
+                self.modify_player_hp(2)
+            case 'Shield':
+                self.do_shield()
+            case 'Poison':
+                self.effects.append((action, 6))
+            case 'Recharge':
+                self.effects.append((action, 5))
 
     def do_round(self, action: str) -> bool | None:
         """Run one round of this game.
@@ -272,25 +308,14 @@ class Game:
             self.do_player_loss()
             return False
 
-        match action:
-            case 'Magic Missile':
-                self.modify_boss_hp(-4)
-            case 'Drain':
-                self.modify_boss_hp(-2)
-                self.modify_player_hp(2)
-            case 'Shield':
-                self.do_shield()
-            case 'Poison':
-                self.effects.append((action, 6))
-            case 'Recharge':
-                self.effects.append((action, 5))
+        self.do_action(action)
 
         if self.boss_hp <= 0:
             self.do_player_win()
             return True
 
         self.turn += 1
-        self.time += BEAT
+        self.time += LONG_BEAT * 2
         turn_armor = self.do_effects()
 
         if self.boss_hp <= 0:
@@ -304,7 +329,7 @@ class Game:
             self.do_player_loss()
             return False
         self.turn += 1
-        self.time += BEAT
+        self.time += LONG_BEAT * 2
         return None
 
 
@@ -347,10 +372,11 @@ class PlayerManaBar(visualise.Sprite):
 
 class MessageBox(visualise.Text):
     def __init__(self, *args, **kwargs):
-        position = (12, 212)
-        size = (538, 184)
-        fontfile = os.path.join(ASSETDIR, 'upheavtt.ttf')
-        super().__init__(fontfile, size, position=position, *args, **kwargs)
+        position = (36, 240)
+        size = (502, 160)
+        super().__init__(
+                FONT, size, position=position, align='left',
+                spacing=12, *args, **kwargs)
 
 
 def parse(stream) -> tuple:
