@@ -24,7 +24,12 @@ SPELLS = {
         'Poison': 173,
         'Recharge': 229,
         }
+
+# Visualisation settings
 ASSETDIR = 'assets/wizardsim'
+FRAMERATE = 24
+BEAT = 12
+LONG_BEAT = 24
 
 
 class Game:
@@ -36,21 +41,48 @@ class Game:
             draw: bool = False):
         self.difficulty = difficulty
         self.turn = 0
+        self.time = 0
         self.effects = []
         self.animation = None
-        self.boss_damage = boss.damage if boss else None
-        self.boss_hp = boss.health if boss else None
-        self.player_hp = player.health if player else None
-        self.mana = player.mana if player else None
+
+        if boss:
+            self.boss_damage = boss.damage
+            self.boss_hp = boss.health
+            self.boss_max_hp = boss.health
+        else:
+            self.boss_damage = None
+            self.boss_hp = None
+            self.boss_max_hp = None
+
+        if player:
+            self.player_hp = player.health
+            self.player_max_hp = player.health
+            self.player_mana = player.mana
+            self.player_max_mana = player.mana
+        else:
+            self.player_hp = None
+            self.player_max_hp = None
+            self.player_mana = None
+            self.player_max_mana = None
 
         if draw:
             background = Image.open('assets/wizardsim/background.png')
             self.animation = visualise.Animation(
-                    background.size, 24, background)
+                    background.size, FRAMERATE, background)
             self.player_sprite = PlayerSprite()
             self.boss_sprite = BossSprite()
-            self.animation.add_element(self.player_sprite)
-            self.animation.add_element(self.boss_sprite)
+            self.player_health_bar = PlayerHealthBar()
+            self.boss_health_bar = BossHealthBar()
+            self.player_mana_bar = PlayerManaBar()
+
+            self.animation.add_elements(
+                    self.player_sprite,
+                    self.boss_sprite,
+                    self.player_health_bar,
+                    self.boss_health_bar,
+                    self.player_mana_bar,
+                    )
+            self.shield_sprite = None
 
     @property
     def as_tuple(self) -> tuple:
@@ -58,9 +90,12 @@ class Game:
                 self.difficulty,
                 self.turn,
                 self.boss_hp,
+                self.boss_max_hp,
                 self.boss_damage,
                 self.player_hp,
-                self.mana,
+                self.player_max_hp,
+                self.player_mana,
+                self.player_max_mana,
                 self.effects,
                 )
 
@@ -71,9 +106,12 @@ class Game:
                 game.difficulty,
                 game.turn,
                 game.boss_hp,
+                game.boss_max_hp,
                 game.boss_damage,
                 game.player_hp,
-                game.mana,
+                game.player_max_hp,
+                game.player_mana,
+                game.player_max_mana,
                 game.effects,
                 ) = value
         return game
@@ -93,14 +131,105 @@ class Game:
                 case 'Shield':
                     armor += 7
                 case 'Poison':
-                    self.boss_hp -= 3
+                    self.modify_boss_hp(-3)
                 case 'Recharge':
-                    self.mana += 101
+                    self.modify_player_mana(101)
             timer -= 1
             if timer > 0:
                 next_effects.append((effect, timer))
+            else:
+                self.do_end_effect(effect)
         self.effects = next_effects
         return armor
+
+    def do_end_effect(self, effect):
+        if not self.animation:
+            return
+
+        match effect:
+            case 'Shield':
+                self.time += BEAT
+                self.shield_sprite.stop = self.time
+                self.shield_sprite.fade_out = BEAT
+
+    def modify_player_hp(self, diff: int) -> int:
+        prev = self.player_hp
+        self.player_hp += diff
+        if self.animation and diff != 0:
+            maxhp = self.player_max_hp
+            bar = self.player_health_bar
+            width, height = bar.image.size
+            p = prev / maxhp
+            p = max(0, min(1, p))
+            initial = (0, 0, round(width * p), height)
+            p = self.player_hp / maxhp
+            p = max(0, min(1, p))
+            final = (0, 0, round(width * p), height)
+            bar.add_crop(self.time, BEAT, initial, final)
+        return self.player_hp
+
+    def modify_boss_hp(self, diff: int) -> int:
+        prev = self.boss_hp
+        self.boss_hp += diff
+        if self.animation and diff != 0:
+            bar = self.boss_health_bar
+            maxhp = self.boss_max_hp
+            width, height = bar.image.size
+            p = (maxhp - prev) / maxhp
+            p = max(0, min(1, p))
+            initial = (round(width * p), 0, width, height)
+            p = (maxhp - self.boss_hp) / maxhp
+            p = max(0, min(1, p))
+            final = (round(width * p), 0, width, height)
+            bar.add_crop(self.time, BEAT, initial, final)
+        return self.boss_hp
+
+    def modify_player_mana(self, diff: int) -> int:
+        prev = self.player_mana
+        self.player_mana += diff
+        if self.animation and diff != 0:
+            maxmana = self.player_max_mana
+            bar = self.player_mana_bar
+            width, height = bar.image.size
+            p = prev / maxmana
+            p = max(0, min(1, p))
+            initial = (0, 0, round(width * p), height)
+            p = self.player_mana / maxmana
+            p = max(0, min(1, p))
+            final = (0, 0, round(width * p), height)
+            bar.add_crop(self.time, BEAT, initial, final)
+        return self.player_mana
+
+    def do_player_win(self):
+        if not self.animation:
+            return
+
+        self.time += LONG_BEAT
+        self.boss_health_bar.stop = self.time
+        self.boss_health_bar.fade_out = LONG_BEAT
+        self.boss_sprite.stop = self.time
+        self.boss_sprite.fade_out = LONG_BEAT
+
+    def do_player_loss(self):
+        if not self.animation:
+            return
+
+    def do_shield(self):
+        self.effects.append(('Shield', 6))
+        if not self.animation:
+            return
+
+        path = os.path.join(ASSETDIR, 'shield.png')
+        image = Image.open(path)
+        width, _ = image.size
+        crop = (0, 0, width, 132)
+        image = image.crop(crop)
+        position = (18, 72)
+
+        shield = visualise.Sprite(
+                image, position, start=self.time, fade_in=BEAT)
+        self.shield_sprite = shield
+        self.animation.add_element(shield)
 
     def do_round(self, action: str) -> bool | None:
         """Run one round of this game.
@@ -112,60 +241,70 @@ class Game:
         """
         if self.difficulty > 0:
             # Hard mode - player loses health
-            self.player_hp -= 1
+            self.modify_player_hp(-1)
             if self.player_hp <= 0:
                 return False
 
         turn_armor = self.do_effects()
 
         if self.boss_hp <= 0:
+            self.do_player_win()
             return True
 
         # Player turn
         if not action:
             logging.debug(
                     f"Player has no action selected on turn {self.turn + 1}")
+            self.do_player_loss()
             return False
-        self.mana -= SPELLS[action]
-        if self.mana < 0:
+        self.modify_player_mana(-SPELLS[action])
+        if self.player_mana < 0:
             logging.debug(
                     f"Not enough mana to cast {action} "
                     f"on turn {self.turn + 1}")
+            self.do_player_loss()
             return False
         active = {name for name, _ in self.effects}
         if action in active:
             logging.debug(
                     f"Cannot cast {action} on turn {self.turn + 1}, "
                     "it is active")
+            self.do_player_loss()
             return False
+
         match action:
             case 'Magic Missile':
-                self.boss_hp -= 4
+                self.modify_boss_hp(-4)
             case 'Drain':
-                self.boss_hp -= 2
-                self.player_hp += 2
+                self.modify_boss_hp(-2)
+                self.modify_player_hp(2)
             case 'Shield':
-                self.effects.append((action, 6))
+                self.do_shield()
             case 'Poison':
                 self.effects.append((action, 6))
             case 'Recharge':
                 self.effects.append((action, 5))
 
         if self.boss_hp <= 0:
+            self.do_player_win()
             return True
 
         self.turn += 1
+        self.time += BEAT
         turn_armor = self.do_effects()
 
         if self.boss_hp <= 0:
+            self.do_player_win()
             return True
 
         # Enemy turn
-        self.player_hp -= max(1, self.boss_damage - turn_armor)
+        self.modify_player_hp(-max(1, self.boss_damage - turn_armor))
 
         if self.player_hp <= 0:
+            self.do_player_loss()
             return False
         self.turn += 1
+        self.time += BEAT
         return None
 
 
@@ -173,7 +312,7 @@ class PlayerSprite(visualise.Sprite):
     def __init__(self):
         image = os.path.join(ASSETDIR, 'wizard.png')
         position = (72, 102)
-        super().__init__(image, position, start=0, fade_in=24)
+        super().__init__(image, position, start=0, fade_in=LONG_BEAT)
 
 
 class BossSprite(visualise.Sprite):
@@ -181,8 +320,37 @@ class BossSprite(visualise.Sprite):
         image = os.path.join(ASSETDIR, 'boss.png')
         origin = (564, 102)
         vector = (-180, 0)
-        super().__init__(image, origin, start=24)
-        self.add_movement(24, 24, origin, vector)
+        super().__init__(image, origin, start=LONG_BEAT)
+        self.add_movement(LONG_BEAT, LONG_BEAT, origin, vector)
+
+
+class PlayerHealthBar(visualise.Sprite):
+    def __init__(self):
+        image = os.path.join(ASSETDIR, 'healthbar.png')
+        position = (12, 12)
+        super().__init__(image, position, start=0, fade_in=LONG_BEAT)
+
+
+class BossHealthBar(visualise.Sprite):
+    def __init__(self):
+        image = os.path.join(ASSETDIR, 'healthbar.png')
+        position = (312, 12)
+        super().__init__(image, position, start=0, fade_in=LONG_BEAT)
+
+
+class PlayerManaBar(visualise.Sprite):
+    def __init__(self):
+        image = os.path.join(ASSETDIR, 'manabar.png')
+        position = (12, 42)
+        super().__init__(image, position, start=0, fade_in=LONG_BEAT)
+
+
+class MessageBox(visualise.Text):
+    def __init__(self, *args, **kwargs):
+        position = (12, 212)
+        size = (538, 184)
+        fontfile = os.path.join(ASSETDIR, 'upheavtt.ttf')
+        super().__init__(fontfile, size, position=position, *args, **kwargs)
 
 
 def parse(stream) -> tuple:
@@ -206,6 +374,7 @@ def fight(boss, player, actions, draw: bool = False) -> tuple:
     after the fight ends.
     """
     game = Game(boss, player, draw=draw)
+    game.time = LONG_BEAT
     outcome = None
     for action in actions:
         outcome = game.do_round(action)
@@ -213,7 +382,8 @@ def fight(boss, player, actions, draw: bool = False) -> tuple:
             break
 
     if draw:
-        game.animation.render('out/y2015d22.gif', stop=48)
+        time = game.time + BEAT
+        game.animation.render('out/y2015d22.gif', stop=time)
 
     return (outcome, game.boss_hp, game.player_hp, game.turn)
 
@@ -256,7 +426,7 @@ def find_least_mana_win(boss, player, difficulty: int = 0) -> int:
         active = {name for name, timer in game.effects if timer > 1}
         spells = [
                 name for name, cost in SPELLS.items()
-                if cost <= game.mana and name not in active]
+                if cost <= game.player_mana and name not in active]
         spells.sort(key=lambda x: SPELLS[x])
         state = game.as_tuple
         for action in spells:
