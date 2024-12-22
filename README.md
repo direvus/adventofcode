@@ -70,11 +70,16 @@ In those cases you will need to exit and restart the interactive mode.
 
 ## Visualisations
 
-Here's a sample of some of the visualisations I generated for these puzzles:
+Here's a sample of some of the visualisations I generated for these puzzles,
+using my own custom animation rendering code, plus Pillow:
 
 ### 2015 Day 18, part 1 "Like a GIF For Your Yard"
 
 ![2015 Day 18 Part 1](vis/y2015d18p1.gif)
+
+### 2015 Day 22 "Wizard Simulator 20XX"
+
+![2015 Day 22](vis/y2015d22.gif)
 
 ### 2016 Day 8 "Two-Factor Authentication"
 
