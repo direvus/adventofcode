@@ -48,7 +48,9 @@ class Game:
             self.animation = visualise.Animation(
                     background.size, 24, background)
             self.player_sprite = PlayerSprite()
+            self.boss_sprite = BossSprite()
             self.animation.add_element(self.player_sprite)
+            self.animation.add_element(self.boss_sprite)
 
     @property
     def as_tuple(self) -> tuple:
@@ -175,7 +177,12 @@ class PlayerSprite(visualise.Sprite):
 
 
 class BossSprite(visualise.Sprite):
-    pass
+    def __init__(self):
+        image = os.path.join(ASSETDIR, 'boss.png')
+        origin = (564, 102)
+        vector = (-180, 0)
+        super().__init__(image, origin, start=24)
+        self.add_movement(24, 24, origin, vector)
 
 
 def parse(stream) -> tuple:

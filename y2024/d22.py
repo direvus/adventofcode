@@ -59,7 +59,6 @@ def run(stream, test: bool = False):
     with timing("Part 2"):
         if test:
             secrets, sequences = get_best_price([1, 2, 3, 2024])
-        logging.debug(sequences.most_common(1))
         result2 = sequences.most_common(1)[0][1]
 
     return (result1, result2)
