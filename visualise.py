@@ -3,6 +3,7 @@
 Utility module for building animated visualisations.
 """
 import bisect
+import logging  # noqa: F401
 from collections import OrderedDict
 from enum import Enum
 from operator import add
@@ -109,7 +110,7 @@ class Sprite(Element):
                 self.start is not None and
                 time <= self.start + self.fade_in):
             offset = (time - self.start) / self.fade_in
-            return round(255 * ease_cubic_out(offset))
+            return ease_cubic_out(offset)
 
         if (
                 self.fade_out is not None and
@@ -117,7 +118,7 @@ class Sprite(Element):
                 time >= self.stop - self.fade_out):
             start = self.stop - self.fade_out
             offset = (time - start) / self.fade_out
-            return round(255 * ease_cubic_in(offset))
+            return ease_cubic_in(offset)
 
         keys = list(self.fades.keys())
         key = bisect.bisect_right(keys, time)
@@ -129,13 +130,13 @@ class Sprite(Element):
         if end <= time:
             # The latest fade has completed at this `time`, so return its
             # final value.
-            return round(255 * final)
+            return final
 
         progress = (time - start) / duration
         scale = easing(progress)
         diff = (final - initial) * scale
         value = start + diff
-        return round(255 * value)
+        return value
 
     def render(self, canvas, time) -> Status:
         status = Status.ACTIVE
@@ -151,11 +152,30 @@ class Sprite(Element):
 
         position = self.get_position(canvas, time)
         alpha = self.get_alpha(time)
-        if alpha is None:
+        if alpha is None and not self.image.has_transparency_data:
             canvas.paste(self.image, position)
-        else:
-            self.image.putalpha(alpha)
+            return status
+
+        if alpha is None:
+            alpha = 1.0
+        if not self.image.has_transparency_data:
+            # Just apply the transparency as a static value to the entire image
+            self.image.putalpha(round(255 * alpha))
             canvas.alpha_composite(self.image, position)
+            return status
+
+        # If we've arrived here, then the sprite has its own transparency
+        # channel, which we need to scale according to the alpha value to get
+        # the new alpha channel.  This will only work with images that have a
+        # channel named 'A', so pretty much only 'RGBA' or 'LA' image modes.
+        mask = self.image.getchannel('A')
+        data = list(mask.getdata())
+        data = [round(alpha * x) for x in data]
+
+        temp = self.image.copy()  # Avoid modifying the original sprite
+        mask.putdata(data)
+        temp.putalpha(mask)
+        canvas.alpha_composite(temp, position)
         return status
 
 

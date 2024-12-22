@@ -1,6 +1,16 @@
+"""Advent of Code 2015
+
+Day 22: Wizard Simulator 20XX
+
+https://adventofcode.com/2015/day/22
+"""
+import logging
+import os
 from collections import namedtuple
 
-from rich import print
+from PIL import Image
+
+import visualise
 
 
 Player = namedtuple('player', ['health', 'mana'])
@@ -14,6 +24,7 @@ SPELLS = {
         'Poison': 173,
         'Recharge': 229,
         }
+ASSETDIR = 'assets/wizardsim'
 
 
 class Game:
@@ -21,14 +32,23 @@ class Game:
             self,
             boss: Boss = None,
             player: Player = None,
-            difficulty: int = 0):
+            difficulty: int = 0,
+            draw: bool = False):
         self.difficulty = difficulty
         self.turn = 0
         self.effects = []
+        self.animation = None
         self.boss_damage = boss.damage if boss else None
         self.boss_hp = boss.health if boss else None
         self.player_hp = player.health if player else None
         self.mana = player.mana if player else None
+
+        if draw:
+            background = Image.open('assets/wizardsim/background.png')
+            self.animation = visualise.Animation(
+                    background.size, 24, background)
+            self.player_sprite = PlayerSprite()
+            self.animation.add_element(self.player_sprite)
 
     @property
     def as_tuple(self) -> tuple:
@@ -101,15 +121,18 @@ class Game:
 
         # Player turn
         if not action:
-            print(f"Player has no action selected on turn {self.turn + 1}")
+            logging.debug(
+                    f"Player has no action selected on turn {self.turn + 1}")
             return False
         self.mana -= SPELLS[action]
         if self.mana < 0:
-            print(f"Not enough mana to cast {action} on turn {self.turn + 1}")
+            logging.debug(
+                    f"Not enough mana to cast {action} "
+                    f"on turn {self.turn + 1}")
             return False
         active = {name for name, _ in self.effects}
         if action in active:
-            print(
+            logging.debug(
                     f"Cannot cast {action} on turn {self.turn + 1}, "
                     "it is active")
             return False
@@ -144,6 +167,17 @@ class Game:
         return None
 
 
+class PlayerSprite(visualise.Sprite):
+    def __init__(self):
+        image = os.path.join(ASSETDIR, 'wizard.png')
+        position = (72, 102)
+        super().__init__(image, position, start=0, fade_in=24)
+
+
+class BossSprite(visualise.Sprite):
+    pass
+
+
 def parse(stream) -> tuple:
     result = []
     for line in stream:
@@ -152,7 +186,7 @@ def parse(stream) -> tuple:
     return Boss(*result)
 
 
-def fight(boss, player, actions) -> tuple:
+def fight(boss, player, actions, draw: bool = False) -> tuple:
     """Run a combat scenario.
 
     The player will cast the spells listed in `actions` in order on their
@@ -164,12 +198,16 @@ def fight(boss, player, actions) -> tuple:
     Return a tuple of (player won, boss health, player health, turn number)
     after the fight ends.
     """
-    game = Game(boss, player)
+    game = Game(boss, player, draw=draw)
     outcome = None
     for action in actions:
         outcome = game.do_round(action)
         if outcome is not None:
             break
+
+    if draw:
+        game.animation.render('out/y2015d22.gif', stop=48)
+
     return (outcome, game.boss_hp, game.player_hp, game.turn)
 
 
@@ -205,13 +243,12 @@ def find_least_mana_win(boss, player, difficulty: int = 0) -> int:
             # Player lost, abandon this route.
             continue
 
-        # This game is still in play. Choose next spell from the list of
-        # spells that won't be in effect next round, and that the player can
+        # This game is still in play. Choose possible next spells from the list
+        # of spells that won't be in effect next round, and that the player can
         # afford to cast.
         active = {name for name, timer in game.effects if timer > 1}
         spells = [
-                name
-                for name, cost in SPELLS.items()
+                name for name, cost in SPELLS.items()
                 if cost <= game.mana and name not in active]
         spells.sort(key=lambda x: SPELLS[x])
         state = game.as_tuple
@@ -225,7 +262,7 @@ def run(stream, test=False, draw=False):
     if test:
         player = Player(10, 250)
         actions = ('Recharge', 'Shield', 'Drain', 'Poison', 'Magic Missile')
-        result1 = fight(boss, player, actions)
+        result1 = fight(boss, player, actions, draw)
         result2 = find_least_mana_win(boss, Player(10, 500), 1)
     else:
         player = Player(50, 500)
