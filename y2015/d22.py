@@ -7,6 +7,7 @@ https://adventofcode.com/2015/day/22
 import logging
 import os
 from collections import namedtuple
+from operator import add
 
 from PIL import Image, ImageFont
 
@@ -30,6 +31,8 @@ ASSETDIR = 'assets/wizardsim'
 FRAMERATE = 24
 BEAT = 12
 LONG_BEAT = 24
+PLAYER_POSITION = (72, 102)
+BOSS_POSITION = (384, 102)
 
 # Pixel12x10 is by Corne2Plum3, and the repo is located at
 # https://github.com/Corne2Plum3/Pixel12x10
@@ -47,6 +50,7 @@ class Game:
         self.difficulty = difficulty
         self.turn = 0
         self.time = 0
+        self.actions = []
         self.effects = []
         self.animation = None
 
@@ -101,7 +105,8 @@ class Game:
                 self.player_max_hp,
                 self.player_mana,
                 self.player_max_mana,
-                self.effects,
+                tuple(self.actions),
+                tuple(self.effects),
                 )
 
     @classmethod
@@ -117,15 +122,18 @@ class Game:
                 game.player_max_hp,
                 game.player_mana,
                 game.player_max_mana,
-                game.effects,
+                actions,
+                effects,
                 ) = value
+        game.actions = list(actions)
+        game.effects = list(effects)
         return game
 
     def add_message(self, message: str):
         if not self.animation:
             return
         element = MessageBox(
-                text=message.upper(),
+                text=message,
                 start=self.time,
                 stop=self.time + LONG_BEAT * 2,
                 fade_in=BEAT,
@@ -147,9 +155,14 @@ class Game:
                 case 'Shield':
                     armor += 7
                 case 'Poison':
+                    self.add_message(f'{effect}:\n3 DMG')
                     self.modify_boss_hp(-3)
+                    self.do_boss_knockback()
+                    self.time += LONG_BEAT * 2
                 case 'Recharge':
+                    self.add_message(f'{effect}:\n+101 MP')
                     self.modify_player_mana(101)
+                    self.time += LONG_BEAT * 2
             timer -= 1
             if timer > 0:
                 next_effects.append((effect, timer))
@@ -162,11 +175,12 @@ class Game:
         if not self.animation:
             return
 
+        self.add_message(f'{effect}\nends.')
         match effect:
             case 'Shield':
-                self.time += BEAT
                 self.shield_sprite.stop = self.time
                 self.shield_sprite.fade_out = BEAT
+        self.time += LONG_BEAT * 2
 
     def modify_player_hp(self, diff: int) -> int:
         prev = self.player_hp
@@ -220,22 +234,64 @@ class Game:
         if not self.animation:
             return
 
-        self.time += LONG_BEAT
+        interval = BEAT // 2
+        sprite = self.boss_sprite
+        for _ in range(2):
+            sprite.add_fade(self.time, interval, 1.0, 0.0)
+            self.time += interval
+            sprite.add_fade(self.time, interval, 0.0, 1.0)
+            self.time += interval
+
         self.boss_health_bar.stop = self.time
         self.boss_health_bar.fade_out = LONG_BEAT
-        self.boss_sprite.stop = self.time
-        self.boss_sprite.fade_out = LONG_BEAT
-        self.add_message('Boss\ndefeated!')
+        sprite.stop = self.time
+        sprite.fade_out = LONG_BEAT
+
+        self.add_message('BOSS\nDEFEATED!')
 
     def do_player_loss(self):
         if not self.animation:
             return
+
+        self.time += LONG_BEAT
+        self.player_health_bar.stop = self.time
+        self.player_health_bar.fade_out = LONG_BEAT
+        self.player_sprite.stop = self.time
+        self.player_sprite.fade_out = LONG_BEAT
+        self.add_message('GAME\nOVER!')
+
+    def do_player_knockback(self):
+        if not self.animation:
+            return
+
+        sprite = self.player_sprite
+        position = PLAYER_POSITION
+        vector = (-12, 0)
+        reverse = (12, 0)
+        dest = tuple(map(add, position, vector))
+
+        sprite.add_movement(self.time, BEAT, position, vector)
+        sprite.add_movement(self.time + BEAT, BEAT, dest, reverse)
+
+    def do_boss_knockback(self):
+        if not self.animation:
+            return
+
+        sprite = self.boss_sprite
+        position = BOSS_POSITION
+        vector = (12, 0)
+        reverse = (-12, 0)
+        dest = tuple(map(add, position, vector))
+
+        sprite.add_movement(self.time, BEAT, position, vector)
+        sprite.add_movement(self.time + BEAT, BEAT, dest, reverse)
 
     def do_shield(self):
         self.effects.append(('Shield', 6))
         if not self.animation:
             return
 
+        self.add_message('Shield\nbegins!')
         path = os.path.join(ASSETDIR, 'shield.png')
         image = Image.open(path)
         width, _ = image.size
@@ -248,23 +304,68 @@ class Game:
         self.shield_sprite = shield
         self.animation.add_element(shield)
 
-    def do_action(self, action):
-        text = action.upper()
-        if ' ' in text:
-            text = '\n'.join(text.split())
-        self.add_message(text)
+    def do_magic_missile(self):
+        if not self.animation:
+            self.modify_boss_hp(-4)
+            return
 
+        self.add_message('Magic Msl:\n4 DMG')
+        path = os.path.join(ASSETDIR, 'missile.png')
+        image = Image.open(path)
+        position = (138, 156)
+        vector = (396 - position[0], 0)
+
+        sprite = visualise.Sprite(
+                image, position, start=self.time,
+                stop=(self.time + LONG_BEAT), fade_in=(BEAT // 2))
+        sprite.add_movement(
+                self.time, LONG_BEAT, position, vector,
+                easing=visualise.ease_exp_in)
+        self.animation.add_element(sprite)
+
+        self.time += LONG_BEAT
+        self.do_boss_knockback()
+        self.modify_boss_hp(-4)
+
+    def do_drain(self):
+        damage = 2
+        if not self.animation:
+            self.modify_boss_hp(-damage)
+            self.modify_player_hp(damage)
+            return
+
+        self.add_message(f'Drain:\n{damage} DMG > +HP')
+
+        path = os.path.join(ASSETDIR, 'drain.png')
+        image = Image.open(path)
+        position = (396, 156)
+        vector = (126 - position[0], 0)
+
+        sprite = visualise.Sprite(
+                image, position, start=self.time,
+                stop=(self.time + LONG_BEAT), fade_in=(BEAT // 2))
+        sprite.add_movement(
+                self.time, LONG_BEAT, position, vector)
+        self.animation.add_element(sprite)
+
+        self.do_boss_knockback()
+        self.time += LONG_BEAT
+        self.modify_boss_hp(-2)
+        self.modify_player_hp(2)
+
+    def do_action(self, action):
         match action:
             case 'Magic Missile':
-                self.modify_boss_hp(-4)
+                self.do_magic_missile()
             case 'Drain':
-                self.modify_boss_hp(-2)
-                self.modify_player_hp(2)
+                self.do_drain()
             case 'Shield':
                 self.do_shield()
             case 'Poison':
+                self.add_message('Poison\nbegins!')
                 self.effects.append((action, 6))
             case 'Recharge':
+                self.add_message('Recharge\nbegins!')
                 self.effects.append((action, 5))
 
     def do_round(self, action: str) -> bool | None:
@@ -275,9 +376,12 @@ class Game:
         At the end of the round, return a boolean or None showing the current
         win state (True: player wins, False: enemy wins, None: undecided).
         """
+        self.time += BEAT
+
         if self.difficulty > 0:
-            # Hard mode - player loses health
+            self.add_message('Hard mode:\n-1 HP')
             self.modify_player_hp(-1)
+            self.time += LONG_BEAT * 2
             if self.player_hp <= 0:
                 return False
 
@@ -293,7 +397,10 @@ class Game:
                     f"Player has no action selected on turn {self.turn + 1}")
             self.do_player_loss()
             return False
+
+        self.actions.append(action)
         self.modify_player_mana(-SPELLS[action])
+
         if self.player_mana < 0:
             logging.debug(
                     f"Not enough mana to cast {action} "
@@ -323,7 +430,10 @@ class Game:
             return True
 
         # Enemy turn
-        self.modify_player_hp(-max(1, self.boss_damage - turn_armor))
+        damage = max(1, self.boss_damage - turn_armor)
+        self.modify_player_hp(-damage)
+        self.do_player_knockback()
+        self.add_message(f'Boss atk:\n-{damage} HP')
 
         if self.player_hp <= 0:
             self.do_player_loss()
@@ -336,14 +446,16 @@ class Game:
 class PlayerSprite(visualise.Sprite):
     def __init__(self):
         image = os.path.join(ASSETDIR, 'wizard.png')
-        position = (72, 102)
+        position = PLAYER_POSITION
         super().__init__(image, position, start=0, fade_in=LONG_BEAT)
 
 
 class BossSprite(visualise.Sprite):
     def __init__(self):
         image = os.path.join(ASSETDIR, 'boss.png')
-        origin = (564, 102)
+        position = BOSS_POSITION
+        x, y = position
+        origin = (x + 180, y)  # Start off-screen
         vector = (-180, 0)
         super().__init__(image, origin, start=LONG_BEAT)
         self.add_movement(LONG_BEAT, LONG_BEAT, origin, vector)
@@ -376,7 +488,7 @@ class MessageBox(visualise.Text):
         size = (502, 160)
         super().__init__(
                 FONT, size, position=position, align='left',
-                spacing=12, *args, **kwargs)
+                spacing=24, *args, **kwargs)
 
 
 def parse(stream) -> tuple:
@@ -400,7 +512,7 @@ def fight(boss, player, actions, draw: bool = False) -> tuple:
     after the fight ends.
     """
     game = Game(boss, player, draw=draw)
-    game.time = LONG_BEAT
+    game.time = LONG_BEAT * 2
     outcome = None
     for action in actions:
         outcome = game.do_round(action)
@@ -421,11 +533,12 @@ def get_total_mana_cost(actions):
 def find_least_mana_win(boss, player, difficulty: int = 0) -> int:
     """Find the way to win the game while spending the least mana.
 
-    Explore all the possible movesets in a breadth-first way. Return the total
-    cost of the cheapest moveset that wins the game.
+    Explore all the possible movesets in a breadth-first way. Return the
+    cheapest moveset that wins the game and its total mana cost.
     """
     init = Game(boss, player, difficulty).as_tuple
     best = float('inf')
+    moves = None
     # All spells are possible in the first round
     q = [(init, 0, action) for action in SPELLS.keys()]
 
@@ -441,6 +554,7 @@ def find_least_mana_win(boss, player, difficulty: int = 0) -> int:
         if win:
             if cost < best:
                 best = cost
+                moves = game.actions
             continue
         if win is False:
             # Player lost, abandon this route.
@@ -457,7 +571,7 @@ def find_least_mana_win(boss, player, difficulty: int = 0) -> int:
         state = game.as_tuple
         for action in spells:
             q.append((state, cost, action))
-    return best
+    return moves, best
 
 
 def run(stream, test=False, draw=False):
@@ -466,10 +580,13 @@ def run(stream, test=False, draw=False):
         player = Player(10, 250)
         actions = ('Recharge', 'Shield', 'Drain', 'Poison', 'Magic Missile')
         result1 = fight(boss, player, actions, draw)
-        result2 = find_least_mana_win(boss, Player(10, 500), 1)
+        _, result2 = find_least_mana_win(boss, Player(10, 500), 1)
     else:
         player = Player(50, 500)
-        result1 = find_least_mana_win(boss, player)
-        result2 = find_least_mana_win(boss, player, 1)
+        moves, result1 = find_least_mana_win(boss, player)
+        if draw:
+            fight(boss, player, moves, True)
+
+        _, result2 = find_least_mana_win(boss, player, 1)
 
     return (result1, result2)

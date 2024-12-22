@@ -18,6 +18,14 @@ def ease_cubic_out(time: float) -> float:
 
 
 def ease_cubic_in(time: float) -> float:
+    return time ** 3
+
+
+def ease_exp_in(time: float) -> float:
+    return 0 if time == 0 else 2 ** (10 * time - 10)
+
+
+def ease_cubic_in_inv(time: float) -> float:
     return 1 - (time ** 3)
 
 
@@ -104,7 +112,7 @@ class Element:
         progress = (time - start) / duration
         value = easing(progress)
         scaledvector = (v * value for v in vector)
-        position = map(add, source, scaledvector)
+        position = tuple(map(add, source, scaledvector))
         coords = self.get_coordinates(position)
         result = tuple(map(round, coords))
         return result
@@ -123,7 +131,7 @@ class Element:
                 time >= self.stop - self.fade_out):
             start = self.stop - self.fade_out
             offset = (time - start) / self.fade_out
-            return ease_cubic_in(offset)
+            return ease_cubic_in_inv(offset)
 
         keys = list(self.fades.keys())
         key = bisect.bisect_right(keys, time)
