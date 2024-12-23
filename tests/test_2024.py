@@ -90,3 +90,7 @@ def test_y2024d21():
 
 def test_y2024d22():
     assert get_day_result(YEAR, 22) == (37327623, 23)
+
+
+def test_y2024d23():
+    assert get_day_result(YEAR, 23) == (7, 'co,de,ka,ta')
