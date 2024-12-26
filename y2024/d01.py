@@ -11,21 +11,12 @@ from util import timing
 
 
 def parse(stream) -> str:
-    left = []
-    right = []
-    for line in stream:
-        line = line.strip()
-        a, b = line.split()
-        left.append(int(a))
-        right.append(int(b))
-    return left, right
+    pairs = [map(int, line.strip().split()) for line in stream]
+    return tuple(zip(*pairs))
 
 
 def get_total_distances(left, right):
-    left.sort()
-    right.sort()
-
-    pairs = zip(left, right)
+    pairs = zip(sorted(left), sorted(right))
     return sum(abs(a - b) for a, b in pairs)
 
 
