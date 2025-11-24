@@ -22,7 +22,7 @@ except ImportError:
 def timing(message: str = None) -> int:
     start = time.perf_counter_ns()
     if message:
-        logging.info(f"[.........] :green_circle: [green]START[/] {message}")
+        logging.info(f"[.........] :play_button: [green]START[/] {message}")
     try:
         yield start
     finally:
@@ -34,7 +34,7 @@ def timing(message: str = None) -> int:
         else:
             seconds = micros / 1_000_000
             t = f'{seconds:,.2f}s'
-        logging.info(f"[{t:>9s}] ⏹  END {message}")
+        logging.info(f"[{t:>9s}] :stop_button: END {message}")
 
 
 @total_ordering
