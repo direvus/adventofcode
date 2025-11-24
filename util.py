@@ -34,7 +34,7 @@ def timing(message: str = None) -> int:
         else:
             seconds = micros / 1_000_000
             t = f'{seconds:,.2f}s'
-        logging.info(f"[{t:>9s}] :stop_sign:   [red]END[/] {message}")
+        logging.info(f"[{t:>9s}] ⏹  END {message}")
 
 
 @total_ordering
