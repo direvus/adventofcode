@@ -7,7 +7,7 @@ https://adventofcode.com/2019/day/10
 import logging  # noqa: F401
 from math import gcd, atan2
 
-from util import NINF, TWOπ, get_manhattan_distance, timing
+from util import NINF, τ, get_manhattan_distance, timing
 
 
 def move(point: tuple, vector: tuple) -> tuple:
@@ -16,7 +16,7 @@ def move(point: tuple, vector: tuple) -> tuple:
 
 def get_angle(origin: tuple, point: tuple) -> float:
     vector = tuple(x - origin[i] for i, x in enumerate(point))
-    return atan2(vector[0], -vector[1]) % TWOπ
+    return atan2(vector[0], -vector[1]) % τ
 
 
 class Grid:

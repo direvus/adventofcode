@@ -62,7 +62,7 @@ class Direction(Enum):
 INF = float('inf')
 NINF = float('-inf')
 π = math.pi
-TWOπ = 2 * π
+τ = math.tau
 
 
 Point = namedtuple('point', ['y', 'x'])
