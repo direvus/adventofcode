@@ -96,7 +96,9 @@ def download_input(year: int, day: int, filename: str):
                 "Could not load session cookie. Please ensure your session "
                 "cookie is saved in the file '.session'")
     cookie = f'session={session}'
-    req = Request(url, headers={'Cookie': cookie})
+    req = Request(url, headers={
+        'User-Agent': 'direvus-adventofcode (github.com/direvus/adventofcode)',
+        'Cookie': cookie})
 
     with urlopen(req) as resp:
         with open(filename, 'w') as fp:
