@@ -13,26 +13,27 @@ def parse(stream) -> str:
     return [line.strip() for line in stream if line.strip()]
 
 
-def get_max_joltage(line: str):
-    a = max(line[:-1])
+def get_max_joltage(line: str, count: int):
+    if count == 1:
+        return max(line)
+    limit = -(count - 1)
+    a = max(line[:limit])
     b = '0'
-    for i, c in enumerate(line[:-1]):
+    for i, c in enumerate(line[:limit]):
         if c != a:
             continue
-        n = max(line[i + 1:])
+        n = get_max_joltage(line[i + 1:], count - 1)
         if n > b:
             b = n
-        if b == '9':
-            break
-    return int(a + b)
+    return a + b
 
 
 def run(stream, test: bool = False):
     with timing("Part 1"):
         parsed = parse(stream)
-        result1 = sum([get_max_joltage(x) for x in parsed])
+        result1 = sum([int(get_max_joltage(x, 2)) for x in parsed])
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = sum([int(get_max_joltage(x, 12)) for x in parsed])
 
     return (result1, result2)
