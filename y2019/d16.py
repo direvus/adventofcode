@@ -63,10 +63,9 @@ def do_phase(signal: list, offset: int = 0) -> None:
 
 @jit
 def do_phases(inputs, count: int, offset: int = 0, length: int = 8) -> list:
-    signal = np.array(inputs, dtype=np.uint8)
     for _ in range(count):
-        do_phase(signal, offset)
-    return signal[offset:offset + length]
+        do_phase(inputs, offset)
+    return inputs[offset:offset + length]
 
 
 def parse(stream) -> list[int]:
@@ -76,15 +75,17 @@ def parse(stream) -> list[int]:
 
 def run(stream, test: bool = False):
     with timing("Part 1"):
-        signal = parse(stream)
+        signal = np.array(parse(stream), dtype=np.uint8)
         output = do_phases(signal, 100)
         result1 = ''.join(str(x) for x in output[:8])
 
     with timing("Part 2"):
         if test:
-            signal = list(map(int, '03036732577212944063491565474664'))
+            signal = np.array(
+                    list(map(int, '03036732577212944063491565474664')),
+                    dtype=np.uint8)
         offset = int(''.join(str(x) for x in signal[:7]))
-        signal = signal * 10_000
+        signal = np.concatenate((signal,) * 10_000)
         output = do_phases(signal, 100, offset, 8)
         result2 = ''.join(str(x) for x in output)
 
