@@ -25,6 +25,22 @@ class Grid(grid.Grid):
             int(self.is_accessible(x))
             for x in self.iter_cells()])
 
+    def remove_cells(self):
+        result = 0
+        for cell in self.iter_cells():
+            if self.is_accessible(cell):
+                result += 1
+                self.cells[cell[1]][cell[0]] = 0
+        return result
+
+    def count_removable(self):
+        total = 0
+        count = None
+        while count != 0:
+            count = self.remove_cells()
+            total += count
+        return total
+
 
 def parse(stream) -> str:
     return stream.readline().strip()
@@ -37,6 +53,6 @@ def run(stream, test: bool = False):
         result1 = grid.count_accessible()
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = grid.count_removable()
 
     return (result1, result2)
