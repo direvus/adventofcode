@@ -32,6 +32,25 @@ def get_adjacent(position: tuple) -> set:
             }
 
 
+def get_surround(position: tuple) -> set:
+    """Return all cells that are surrounding `position`.
+
+    This means all cells that are horizontally, vertically, or diagonally
+    adjacent to the position.
+    """
+    x, y = position
+    return {
+            (x - 1, y - 1),
+            (x - 1, y),
+            (x - 1, y + 1),
+            (x, y - 1),
+            (x, y + 1),
+            (x + 1, y - 1),
+            (x + 1, y),
+            (x + 1, y + 1),
+            }
+
+
 def move(position: tuple, direction: int, count: int = 1) -> tuple:
     vector = (v * count for v in VECTORS[direction])
     return tuple(map(add, position, vector))
@@ -81,6 +100,14 @@ class Grid:
 
     def get_adjacent(self, position):
         return {x for x in get_adjacent(position) if self.in_bound(x)}
+
+    def get_surround(self, position):
+        return {x for x in get_surround(position) if self.in_bound(x)}
+
+    def iter_cells(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                yield (x, y)
 
 
 class SparseGrid(Grid):
