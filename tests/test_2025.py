@@ -25,4 +25,4 @@ def test_y2025d05():
 
 
 def test_y2025d06():
-    assert get_day_result(YEAR, 6) == (4277556, 0)
+    assert get_day_result(YEAR, 6) == (4277556, 3263827)
