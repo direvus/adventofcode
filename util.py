@@ -100,6 +100,12 @@ def get_manhattan_distance(a: tuple[int], b: tuple[int]) -> int:
     return sum(abs(b[i] - a[i]) for i in range(len(a)))
 
 
+def get_euclidean_distance(a: tuple[int], b: tuple[int]) -> float:
+    """Return the Euclidean distance between two points.
+    """
+    return math.sqrt(sum((a[i] - b[i]) ** 2 for i in range(len(a))))
+
+
 class PriorityQueue:
     def __init__(self):
         self.queue = []
