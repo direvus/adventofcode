@@ -29,6 +29,7 @@ def make_circuits(boxes, count):
     # Initially put each box into its own circuit
     circuits = []
     index = {}
+    length = len(boxes)
     for i, x in enumerate(boxes):
         circuits.append({x})
         index[x] = i
@@ -49,19 +50,34 @@ def make_circuits(boxes, count):
         circuits[cb] = set()
         i += 1
 
-    return circuits
+    sizes = sorted(map(len, circuits), reverse=True)
+    top = sizes[:3]
+    result1 = reduce(mul, top, 1)
+
+    # Continue making connections until one set contains all of the boxes
+    while True:
+        a, b, _ = distances.pop()
+        ca = index[a]
+        cb = index[b]
+        if ca == cb:
+            # Already in the same circuit, do nothing
+            continue
+        # Merge the circuit of B into the circuit of A
+        circuits[ca] |= circuits[cb]
+        for box in circuits[cb]:
+            index[box] = ca
+        circuits[cb] = set()
+        if len(circuits[ca]) == length:
+            result2 = a[0] * b[0]
+            break
+
+    return result1, result2
 
 
 def run(stream, test: bool = False):
-    with timing("Part 1"):
+    with timing("Parts 1 and 2"):
         parsed = parse(stream)
         count = 10 if test else 1000
-        circuits = make_circuits(set(parsed), count)
-        sizes = sorted(map(len, circuits), reverse=True)
-        top = sizes[:3]
-        result1 = reduce(mul, top, 1)
-
-    with timing("Part 2"):
-        result2 = 0
+        result1, result2 = make_circuits(parsed, count)
 
     return (result1, result2)
