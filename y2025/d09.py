@@ -31,10 +31,43 @@ class Grid(grid.SparseGrid):
         self.corners = []
         self.interior = {}
         self.verticals = []
+        self.horizontals = []
+        self.verticals = []
+        self.hbreaks = []
+        self.vbreaks = []
+        prev = None
         for line in stream:
-            x, y = map(int, line.split(','))
-            self.cells.add((x, y))
-            self.corners.append((x, y))
+            line = line.strip()
+            if not line:
+                continue
+            p = tuple(map(int, line.split(',')))
+            if prev is not None:
+                self.add_line(prev, p)
+            self.cells.add(p)
+            self.corners.append(p)
+            prev = p
+        if prev is not None:
+            # Loop back to the beginning to close the polygon
+            self.add_line(prev, self.corners[0])
+
+        self.verticals.sort(key=lambda l: l[0][0])
+        self.horizontals.sort(key=lambda l: l[0][1])
+        self.vbreaks.sort(key=lambda l: l[0][0])
+        self.hbreaks.sort(key=lambda l: l[0][1])
+
+    def add_line(self, a, b):
+        if a[0] == b[0]:
+            v = (0, 1 if b[1] > a[1] else -1)
+            self.verticals.append((a, b))
+            if v[1] > 0:
+                self.vbreaks.append((a, b))
+        elif a[1] == b[1]:
+            v = (1 if b[0] > a[0] else -1, 0)
+            self.horizontals.append((a, b))
+            if v[0] < 0:
+                self.hbreaks.append((a, b))
+        else:
+            raise Exception(f"Line {a} -> {b} is neither vertical nor horizontal!")
 
     def find_largest_rect(self):
         self.areas = [
@@ -45,6 +78,8 @@ class Grid(grid.SparseGrid):
 
     def contains_hline(self, a, b):
         y = a[1]
+        if not (self.contains_point(a) and self.contains_point(b)):
+            return False
         for line in self.vbreaks:
             x = line[0][0]
             if x < a[0]:
@@ -52,11 +87,16 @@ class Grid(grid.SparseGrid):
             if x >= b[0]:
                 break
             if line[0][1] <= y and line[1][1] >= y:
-                return False
+                # Edge case (literally!): the point behind the break may lie on
+                # a vertical edge
+                if not self.contains_point((x + 1, y)):
+                    return False
         return True
 
     def contains_vline(self, a, b):
         x = a[0]
+        if not (self.contains_point(a) and self.contains_point(b)):
+            return False
         for line in self.hbreaks:
             y = line[0][1]
             if y < a[1]:
@@ -64,7 +104,10 @@ class Grid(grid.SparseGrid):
             if y >= b[1]:
                 break
             if line[0][0] >= x and line[1][0] <= x:
-                return False
+                # Edge case (literally!): the point behind the break may lie on
+                # a horizontal edge
+                if not self.contains_point((x, y + 1)):
+                    return False
         return True
 
     def contains_point(self, point):
@@ -127,35 +170,6 @@ class Grid(grid.SparseGrid):
     def find_largest_rect_2(self):
         """Find the area of the largest rectangle for Part 2
         """
-        # First we have to trace the outline of the shape from the original
-        # cells list
-        length = len(self.corners)
-        pos = self.corners[0]
-        self.verticals = []
-        self.horizontals = []
-        self.vbreaks = []
-        self.hbreaks = []
-        for i in range(1, length + 1):
-            dest = self.corners[i % length]
-            if pos[0] == dest[0]:
-                v = (0, 1 if dest[1] > pos[1] else -1)
-                self.verticals.append((pos, dest))
-                if v[1] > 0:
-                    self.vbreaks.append((pos, dest))
-            elif pos[1] == dest[1]:
-                v = (1 if dest[0] > pos[0] else -1, 0)
-                self.horizontals.append((pos, dest))
-                if v[0] < 0:
-                    self.hbreaks.append((pos, dest))
-            else:
-                raise Exception(f"Line {pos} -> {dest} is neither vertical nor horizontal!")
-            pos = dest
-
-        self.verticals.sort(key=lambda l: l[0][0])
-        self.horizontals.sort(key=lambda l: l[0][1])
-        self.vbreaks.sort(key=lambda l: l[0][0])
-        self.hbreaks.sort(key=lambda l: l[0][1])
-
         # Reuse the area calculation from Part 1, and process the candidate
         # rectangles in largest first order.
         for a, b, area in self.areas:
