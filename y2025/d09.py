@@ -43,14 +43,43 @@ class Grid(grid.SparseGrid):
         self.areas.sort(key=lambda x: x[2], reverse=True)
         return self.areas[0][2]
 
-    def contains(self, point):
-        if point in self.cells or point in self.green:
+    def contains_hline(self, a, b):
+        y = a[1]
+        for line in self.vbreaks:
+            x = line[0][0]
+            if x < a[0]:
+                continue
+            if x >= b[0]:
+                break
+            if line[0][1] <= y and line[1][1] >= y:
+                return False
+        return True
+
+    def contains_vline(self, a, b):
+        x = a[0]
+        for line in self.hbreaks:
+            y = line[0][1]
+            if y < a[1]:
+                continue
+            if y >= b[1]:
+                break
+            if line[0][0] >= x and line[1][0] <= x:
+                return False
+        return True
+
+    def contains_point(self, point):
+        if point in self.cells:
             return True
 
-        if point in self.interior:
-            return self.interior[point]
-
         x, y = point
+        # Check if the point happens to lie on a horizontal line.
+        for l in self.horizontals:
+            if l[0][1] != y:
+                continue
+            x1, x2 = sorted((l[0][0], l[1][0]))
+            if x1 <= x and x2 >= x:
+                return True
+
         # Get all the vertical lines that intersect with the point's Y-value.
         verts = [l for l in self.verticals if line_intersects_y(l, y)]
 
@@ -63,82 +92,73 @@ class Grid(grid.SparseGrid):
         # shape. Otherwise, it isn't.
         for i, line in enumerate(verts):
             a, b = line
+            if a[0] == x:
+                return True
             if a[0] > x:
                 if i == 0:
-                    result = False
+                    return False
                 else:
                     prev = verts[i - 1]
-                    result = (a[1] < b[1] and prev[0][1] > prev[1][1])
-                self.interior[point] = result
-                return result
-        self.interior[point] = False
+                    return (a[1] < b[1] and prev[0][1] > prev[1][1])
         return False
 
-
     def contains_rect(self, a, b):
-        # Trace around the outside of the rectangle. Since this shape consists
-        # of a single linear ring, if every point along the boundary is within
-        # the polygon, then the entire rectangle is too.
+        # Since this shape consists of a single linear ring, if every line
+        # along the boundary is within the polygon, then the entire rectangle
+        # is too.
         minx, maxx = sorted((a[0], b[0]))
         miny, maxy = sorted((a[1], b[1]))
 
-        x = minx
-        y = miny
-        while x <= maxx:
-            if not self.contains((x, y)):
-                return False
-            x += 1
-        x -= 1
-        y += 1
-        while y <= maxy:
-            if not self.contains((x, y)):
-                return False
-            y += 1
-        y -= 1
-        x -= 1
-        while x >= minx:
-            if not self.contains((x, y)):
-                return False
-            x -= 1
-        x += 1
-        y -= 1
-        while y <= miny:
-            if not self.contains((x, y)):
-                return False
-            y -= 1
-        return True
+        nw = (minx, miny)
+        ne = (maxx, miny)
+        se = (maxx, maxy)
+        sw = (minx, maxy)
+
+        return (
+                self.contains_point(nw) and
+                self.contains_point(ne) and
+                self.contains_point(se) and
+                self.contains_point(sw) and
+                self.contains_hline(nw, ne) and
+                self.contains_vline(ne, se) and
+                self.contains_hline(sw, se) and
+                self.contains_vline(nw, sw))
 
     def find_largest_rect_2(self):
         """Find the area of the largest rectangle for Part 2
         """
         # First we have to trace the outline of the shape from the original
         # cells list
-        self.green = set()
-        length = len(self.cells)
+        length = len(self.corners)
         pos = self.corners[0]
         self.verticals = []
+        self.horizontals = []
+        self.vbreaks = []
+        self.hbreaks = []
         for i in range(1, length + 1):
             dest = self.corners[i % length]
             if pos[0] == dest[0]:
                 v = (0, 1 if dest[1] > pos[1] else -1)
                 self.verticals.append((pos, dest))
+                if v[1] > 0:
+                    self.vbreaks.append((pos, dest))
             elif pos[1] == dest[1]:
                 v = (1 if dest[0] > pos[0] else -1, 0)
+                self.horizontals.append((pos, dest))
+                if v[0] < 0:
+                    self.hbreaks.append((pos, dest))
             else:
                 raise Exception(f"Line {pos} -> {dest} is neither vertical nor horizontal!")
-
-            pos = move(pos, v)
-            while pos != dest:
-                self.green.add(pos)
-                pos = move(pos, v)
+            pos = dest
 
         self.verticals.sort(key=lambda l: l[0][0])
+        self.horizontals.sort(key=lambda l: l[0][1])
+        self.vbreaks.sort(key=lambda l: l[0][0])
+        self.hbreaks.sort(key=lambda l: l[0][1])
 
         # Reuse the area calculation from Part 1, and process the candidate
         # rectangles in largest first order.
-        print(f"{len(self.areas)} rectangles to check")
         for a, b, area in self.areas:
-            print(f"{a} -> {b}: {area}")
             if self.contains_rect(a, b):
                 return area
 
