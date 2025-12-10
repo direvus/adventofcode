@@ -11,9 +11,19 @@ from util import timing, INF, PriorityQueue
 
 
 def toggle(lights, button):
-    return tuple((
+    return tuple(
         not x if i in button else x
-        for i, x in enumerate(lights)))
+        for i, x in enumerate(lights))
+
+
+def jolt(counters, button):
+    return tuple(
+            x + 1 if i in button else x
+            for i, x in enumerate(counters))
+
+
+def get_distance(counters, goal):
+    return sum(goal[i] - x for i, x in enumerate(counters))
 
 
 class Machine:
@@ -23,11 +33,11 @@ class Machine:
         self.buttons = buttons
         self.joltages = joltages
 
-    def find_fewest_presses(self):
+    def find_light_path(self):
         # Use a Dijkstra to find the shortest path from the starting state to
         # the goal
-        start = tuple([False] * self.lights)
-        goal = tuple((i in self.targets for i in range(self.lights)))
+        start = tuple(False for _ in range(self.lights))
+        goal = tuple(i in self.targets for i in range(self.lights))
 
         q = PriorityQueue()
         q.push(start, 0)
@@ -50,6 +60,42 @@ class Machine:
                     dist[n] = score
                     q.set_priority(n, score)
             explored.add(node)
+        raise Exception(f"No solution found for {goal}")
+
+    def find_joltage_path(self):
+        # Use an AStar to find the shortest path from the starting state to the
+        # goal
+        start = tuple(0 for _ in self.joltages)
+        goal = self.joltages
+
+        q = PriorityQueue()
+        q.push(start, get_distance(start, goal))
+        dist = defaultdict(lambda: INF)
+        dist[start] = 0
+        explored = set()
+
+        while q:
+            est, node = q.pop()
+
+            if node == goal:
+                return est
+
+            score = dist[node] + 1
+            for b in self.buttons:
+                n = jolt(node, b)
+                if n in explored:
+                    continue
+                # Prune any branches where one of the counters has gone over
+                # the target joltage. Since there's no way to *reduce* a
+                # joltage, these branches cannot ever find a solution.
+                if any(x > goal[i] for i, x in enumerate(n)):
+                    continue
+                if score < dist[n]:
+                    dist[n] = score
+                    f = score + get_distance(n, goal)
+                    q.set_priority(n, f)
+            explored.add(node)
+        raise Exception(f"No solution found for {goal}")
 
 
 def parse(stream) -> str:
@@ -68,9 +114,9 @@ def parse(stream) -> str:
 def run(stream, test: bool = False):
     with timing("Part 1"):
         parsed = parse(stream)
-        result1 = sum(x.find_fewest_presses() for x in parsed)
+        result1 = sum(x.find_light_path() for x in parsed)
 
     with timing("Part 2"):
-        result2 = 0
+        result2 = sum(x.find_joltage_path() for x in parsed)
 
     return (result1, result2)
