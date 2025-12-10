@@ -188,3 +188,6 @@ def test_y2025d09():
     assert g.contains_hline((2, 3), (12, 3)) is False
 
     assert get_day_result(YEAR, 9) == (50, 24)
+
+def test_y2025d10():
+    assert get_day_result(YEAR, 10) == (7, 0)
