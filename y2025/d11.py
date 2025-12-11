@@ -15,6 +15,7 @@ class Graph:
     def __init__(self):
         self.nodes = set()
         self.edges = defaultdict(set)
+        self.paths = {}
 
     def parse(self, stream):
         for line in stream:
@@ -28,19 +29,16 @@ class Graph:
             self.edges[src] = dests
 
     def count_paths(self, start, end):
-        result = 0
-        q = deque()
-        q.append(start)
+        # Memoized DFS
+        if (start, end) in self.paths:
+            return self.paths[(start, end)]
 
-        while q:
-            node = q.pop()
-            if node == end:
-                result += 1
-                continue
+        if start == end:
+            return 1
 
-            for n in self.edges[node]:
-                q.append(n)
-        return result
+        count = sum(self.count_paths(n, end) for n in self.edges[start])
+        self.paths[(start, end)] = count
+        return count
 
 
 def parse(stream) -> str:
@@ -71,6 +69,13 @@ def run(stream, test: bool = False):
         g = parse(stream)
 
     with timing("Part 2"):
-        result2 = 0
+        with timing("svr -> fft"):
+            a = g.count_paths('svr', 'fft')
+        with timing("fft -> dac"):
+            b = g.count_paths('fft', 'dac')
+        with timing("dac -> out"):
+            c = g.count_paths('dac', 'out')
+
+        result2 = a * b * c
 
     return (result1, result2)
