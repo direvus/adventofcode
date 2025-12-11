@@ -52,8 +52,11 @@ def solve_gaussian(matrix: list) -> list:
     solution = [None] * width
     for row in reversed(matrix):
         z = num_leading_zeros(row)
+        if z >= width:
+            continue
         aug = row[width]
         for j in range(z + 1, width):
-            aug -= row[j] * solution[j]
+            if solution[j] is not None:
+                aug -= row[j] * solution[j]
         solution[z] = Fraction(aug, row[z])
     return solution

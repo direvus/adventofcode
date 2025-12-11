@@ -19,6 +19,7 @@ required external dependency is `numpy`.
 ### Required dependencies
 
 - `numpy`
+- `scipy`
 
 ### Optional dependencies
 

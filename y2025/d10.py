@@ -7,6 +7,8 @@ https://adventofcode.com/2025/day/10
 import logging  # noqa: F401
 from collections import defaultdict
 
+from scipy.optimize import linprog
+
 from util import timing, INF, PriorityQueue
 
 
@@ -14,16 +16,6 @@ def toggle(lights, button):
     return tuple(
         not x if i in button else x
         for i, x in enumerate(lights))
-
-
-def jolt(counters, button):
-    return tuple(
-            x + 1 if i in button else x
-            for i, x in enumerate(counters))
-
-
-def get_distance(counters, goal):
-    return sum(goal[i] - x for i, x in enumerate(counters))
 
 
 class Machine:
@@ -62,40 +54,26 @@ class Machine:
             explored.add(node)
         raise Exception(f"No solution found for {goal}")
 
-    def find_joltage_path(self):
-        # Use an AStar to find the shortest path from the starting state to the
-        # goal
-        start = tuple(0 for _ in self.joltages)
-        goal = self.joltages
+    def get_button_span(self):
+        n = len(self.joltages)
+        for i in range(len(self.joltages)):
+            count = sum(int(i in b) for b in self.buttons)
+            if count < n:
+                n = count
+        return n
 
-        q = PriorityQueue()
-        q.push(start, get_distance(start, goal))
-        dist = defaultdict(lambda: INF)
-        dist[start] = 0
-        explored = set()
+    def find_joltage_presses(self):
+        width = len(self.buttons)
+        c = [1] * width
+        a = [
+                [int(i in b) for b in self.buttons]
+                for i in range(len(self.joltages))]
 
-        while q:
-            est, node = q.pop()
-
-            if node == goal:
-                return est
-
-            score = dist[node] + 1
-            for b in self.buttons:
-                n = jolt(node, b)
-                if n in explored:
-                    continue
-                # Prune any branches where one of the counters has gone over
-                # the target joltage. Since there's no way to *reduce* a
-                # joltage, these branches cannot ever find a solution.
-                if any(x > goal[i] for i, x in enumerate(n)):
-                    continue
-                if score < dist[n]:
-                    dist[n] = score
-                    f = score + get_distance(n, goal)
-                    q.set_priority(n, f)
-            explored.add(node)
-        raise Exception(f"No solution found for {goal}")
+        res = linprog(c=c, A_eq=a, b_eq=self.joltages, method='highs')
+        if res.success:
+            return int(res.fun)
+        else:
+            raise Exception("Failed to find a solution!")
 
 
 def parse(stream) -> str:
@@ -104,7 +82,7 @@ def parse(stream) -> str:
         words = line.strip().split()
         lights = words[0][1:-1]  # Strip off square brackets
         targets = {i for i, x in enumerate(lights) if x == '#'}
-        buttons = [set(map(int, x[1:-1].split(','))) for x in words[1:-1]]
+        buttons = [frozenset(map(int, x[1:-1].split(','))) for x in words[1:-1]]
         joltages = tuple(map(int, words[-1][1:-1].split(',')))
         machine = Machine(len(lights), targets, buttons, joltages)
         machines.append(machine)
@@ -117,6 +95,11 @@ def run(stream, test: bool = False):
         result1 = sum(x.find_light_path() for x in parsed)
 
     with timing("Part 2"):
-        result2 = sum(x.find_joltage_path() for x in parsed)
+        counts = defaultdict(lambda: 0)
+        for x in parsed:
+            diff = len(x.joltages) - len(x.buttons)
+            counts[diff] += 1
+
+        result2 = sum(x.find_joltage_presses() for x in parsed)
 
     return (result1, result2)
