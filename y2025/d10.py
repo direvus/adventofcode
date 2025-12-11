@@ -69,11 +69,13 @@ class Machine:
                 [int(i in b) for b in self.buttons]
                 for i in range(len(self.joltages))]
 
-        res = linprog(c=c, A_eq=a, b_eq=self.joltages, method='highs')
-        if res.success:
-            return int(res.fun)
-        else:
+        res = linprog(
+                c=c, A_eq=a, b_eq=self.joltages,
+                method='highs', integrality=1)
+        if not res.success:
             raise Exception("Failed to find a solution!")
+
+        return round(res.fun)
 
 
 def parse(stream) -> str:
