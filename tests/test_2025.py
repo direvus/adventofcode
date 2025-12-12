@@ -195,3 +195,20 @@ def test_y2025d10():
 
 def test_y2025d11():
     assert get_day_result(YEAR, 11) == (5, 2)
+
+
+def test_y2025d12():
+    # Have to carve out an exception here, because the third region from the
+    # example input is actually not solvable in any reasonable amount of time.
+    # So run the main processing function against the first two regions only.
+    from y2025.d12 import check_fit
+    shapes = (
+            ((1, 1, 1), (1, 1, 0), (1, 1, 0)),
+            ((1, 1, 1), (1, 1, 0), (0, 1, 1)),
+            ((0, 1, 1), (1, 1, 1), (1, 1, 0)),
+            ((1, 1, 0), (1, 1, 1), (1, 1, 0)),
+            ((1, 1, 1), (1, 0, 0), (1, 1, 1)),
+            ((1, 1, 1), (0, 1, 0), (1, 1, 1)),
+            )
+    assert check_fit(shapes, (4, 4, (0, 0, 0, 0, 2, 0))) is True
+    assert check_fit(shapes, (12, 5, (1, 0, 1, 0, 2, 2))) is True
