@@ -5,6 +5,7 @@ import time
 from collections import namedtuple
 from contextlib import contextmanager
 from enum import Enum, auto
+from fractions import Fraction
 from functools import total_ordering
 
 try:
@@ -171,3 +172,14 @@ def get_digits(value: int) -> tuple:
         value, mod = divmod(value, 10)
         digits.append(mod)
     return tuple(reversed(digits))
+
+
+def is_integer(value) -> bool:
+    if isinstance(value, int):
+        return True
+
+    if isinstance(value, Fraction):
+        # From Python 3.12 on, Fraction has an is_integer() method, but in
+        # order to support 3.10 and 3.11, we'll just check the denominator
+        # instead.
+        return value.denominator == 1

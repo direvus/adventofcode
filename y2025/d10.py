@@ -9,7 +9,7 @@ from collections import defaultdict
 from itertools import product
 
 import matrix
-from util import timing, INF, PriorityQueue
+from util import timing, is_integer, INF, PriorityQueue
 
 
 def toggle(lights, button):
@@ -83,7 +83,7 @@ class Machine:
         result = INF
         for p in product(*options):
             s = matrix.solve_values(m, dict(zip(free, p)))
-            if any(x < 0 or not x.is_integer() for x in s):
+            if any(x < 0 or not is_integer(x) for x in s):
                 continue
             total = sum(map(int, s)) + sum(p)
             if total < result:
