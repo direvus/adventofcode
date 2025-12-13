@@ -6,9 +6,9 @@ https://adventofcode.com/2025/day/10
 """
 import logging  # noqa: F401
 from collections import defaultdict
+from itertools import product
 
-from scipy.optimize import linprog
-
+import matrix
 from util import timing, INF, PriorityQueue
 
 
@@ -62,20 +62,33 @@ class Machine:
                 n = count
         return n
 
+    def get_max_presses(self, index):
+        button = self.buttons[index]
+        return min(self.joltages[x] for x in button)
+
     def find_joltage_presses(self):
         width = len(self.buttons)
         c = [1] * width
         a = [
-                [int(i in b) for b in self.buttons]
+                [int(i in b) for b in self.buttons] + [self.joltages[i]]
                 for i in range(len(self.joltages))]
+        m = matrix.row_reduce(a)
 
-        res = linprog(
-                c=c, A_eq=a, b_eq=self.joltages,
-                method='highs', integrality=1)
-        if not res.success:
-            raise Exception("Failed to find a solution!")
+        free = tuple(matrix.find_free(m))
+        options = [range(self.get_max_presses(i) + 1) for i in free]
 
-        return round(res.fun)
+        # Iterate through all viable number of presses for each of the free
+        # buttons, and plug those values back into the matrix to get the total
+        # number of button presses. Return the lowest such valid result
+        result = INF
+        for p in product(*options):
+            s = matrix.solve_values(m, dict(zip(free, p)))
+            if any(x < 0 for x in s):
+                continue
+            total = int(sum(s)) + sum(p)
+            if total < result:
+                result = total
+        return result
 
 
 def parse(stream) -> str:
@@ -97,11 +110,6 @@ def run(stream, test: bool = False):
         result1 = sum(x.find_light_path() for x in parsed)
 
     with timing("Part 2"):
-        counts = defaultdict(lambda: 0)
-        for x in parsed:
-            diff = len(x.joltages) - len(x.buttons)
-            counts[diff] += 1
-
         result2 = sum(x.find_joltage_presses() for x in parsed)
 
     return (result1, result2)
