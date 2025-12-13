@@ -83,9 +83,9 @@ class Machine:
         result = INF
         for p in product(*options):
             s = matrix.solve_values(m, dict(zip(free, p)))
-            if any(x < 0 for x in s):
+            if any(x < 0 or not x.is_integer() for x in s):
                 continue
-            total = int(sum(s)) + sum(p)
+            total = sum(map(int, s)) + sum(p)
             if total < result:
                 result = total
         return result
