@@ -112,7 +112,6 @@ def run(stream, test=False):
     with timing("Part 1\n"):
         points = walk_grid(grid, 6)
         result1 = len(points)
-    print(f"Result for Part 1 = {result1} \n")
 
     # Part 2
     with timing("Part 2\n"):
@@ -127,28 +126,17 @@ def run(stream, test=False):
         with timing(f"Executing {count} steps"):
             points = walk_grid2(grid, count)
             total = len(points)
-        print(f"Got {total} total points")
 
         full_odd = len(set(get_square_points(points, h, w, 0, 0)))
-        print(f"Got {full_odd} full odd points on home square")
         full_even = len(set(get_square_points(points, h, w, 1, 0)))
-        print(f"Got {full_even} full even points on y+1 square")
         major_odd_se = len(set(get_square_points(points, h, w, 1, 1)))
         major_odd_ne = len(set(get_square_points(points, h, w, -1, 1)))
         major_odd_sw = len(set(get_square_points(points, h, w, 1, -1)))
         major_odd_nw = len(set(get_square_points(points, h, w, -1, -1)))
-        print(f"Got {major_odd_ne} major odd points on y+1, x+1 square")
-        print(f"Got {major_odd_se} major odd points on y-1, x+1 square")
-        print(f"Got {major_odd_nw} major odd points on y+1, x-1 square")
-        print(f"Got {major_odd_sw} major odd points on y-1, x-1 square")
         minor_even_se = len(set(get_square_points(points, h, w, 2, 1)))
         minor_even_ne = len(set(get_square_points(points, h, w, -2, 1)))
         minor_even_sw = len(set(get_square_points(points, h, w, 2, -1)))
         minor_even_nw = len(set(get_square_points(points, h, w, -2, -1)))
-        print(f"Got {minor_even_se} minor even points on y+2, x+1 square")
-        print(f"Got {minor_even_ne} minor even points on y-2, x+1 square")
-        print(f"Got {minor_even_sw} minor even points on y+2, x-1 square")
-        print(f"Got {minor_even_nw} minor even points on y-2, x-1 square")
 
         result2 = sum([
                 full_odd * ((n - 1) ** 2),
@@ -166,5 +154,4 @@ def run(stream, test=False):
                 len(set(get_square_points(points, h, w, 0, 2))),
                 len(set(get_square_points(points, h, w, 0, -2))),
                 ])
-    print(f"Result for Part 2 = {result2} \n")
     return (result1, result2)

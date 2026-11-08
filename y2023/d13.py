@@ -71,7 +71,6 @@ def run(stream, test=False):
         for pattern in patterns:
             h, v = detect_reflections(pattern, 0)
             total1 += v + (100 * h)
-    print(f"Total for Part 1 = {total1}\n")
 
     # Part 2
     total2 = 0
@@ -79,5 +78,4 @@ def run(stream, test=False):
         for pattern in patterns:
             h, v = detect_reflections(pattern, 1)
             total2 += v + (100 * h)
-    print(f"Total for Part 2 = {total2}\n")
     return (total1, total2)

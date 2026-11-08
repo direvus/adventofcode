@@ -165,7 +165,6 @@ def run(stream, test=False):
 
         inner = get_interior_area(points)
         area1 = inner + perimeter
-    print(f"Result for Part 1 = {area1}\n")
 
     # Part 2
     with timing("Part 2\n"):
@@ -181,5 +180,4 @@ def run(stream, test=False):
 
         inner = get_interior_area(points)
         area2 = inner + perimeter
-    print(f"Result for Part 2 = {area2}\n")
     return (area1, area2)

@@ -169,11 +169,9 @@ def run(stream, test=False):
         for part in parts:
             if process_part(workflows, part):
                 result1 += sum(part.values())
-    print(f"Result for Part 1 = {result1} \n")
 
     # Part 2
     with timing("Part 2"):
         tree = make_tree(workflows, 'in', 0)
         result2 = get_tree_combos(tree)
-    print(f"Result for Part 2 = {result2} \n")
     return (result1, result2)
