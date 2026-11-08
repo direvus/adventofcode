@@ -88,7 +88,6 @@ def run(stream, test=False):
     with timing("Part 1"):
         tilted = tilt(rows, Direction.NORTH)
         load1 = get_total_load(tilted)
-    print(f"Result for Part 1 = {load1}\n")
 
     # Part 2
     results = []
@@ -110,17 +109,11 @@ def run(stream, test=False):
                 # Loop detected
                 start = matches[0]
                 diff = cycles - start
-                print(
-                    f"Cycle {cycles} matched {start} -- "
-                    f"looping every {diff} cycles")
                 index = ((limit - start) % diff) + start
                 if index < cycles:
                     rows = results[index]
-                    print(f"Found target result at {index}")
                     break
                 limit = index
-                print(f"Continuing until we get to {index} ...")
             results.append(rows)
         load2 = get_total_load(rows)
-    print(f"Result for Part 2 = {load2}\n")
     return (load1, load2)

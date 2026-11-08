@@ -28,7 +28,6 @@ There are also some optional dependencies to enable extra features:
 - `rich`, for pretty printing on the console
 - `pillow`, for rendering visualisations
 - `numba`, to speed up some of the number-crunchy solutions
-- `pytest`, to run the test suite
 
 ## Installation
 

@@ -2,8 +2,6 @@
 from collections import namedtuple
 from itertools import combinations
 
-from rich import print
-
 from matrix import solve_gaussian
 from util import timing
 
@@ -118,10 +116,8 @@ def run(stream, test=False):
     with timing("Part 1\n"):
         hails = parse_hail(stream)
         result1 = get_intersections_xy(hails, area_min, area_max)
-    print(f"Result for Part 1 = {result1} \n")
 
     with timing("Part 2\n"):
         rock = get_intercept(hails)
         result2 = sum(rock.point)
-    print(f"Result for Part 2 = {result2} \n")
     return (result1, result2)

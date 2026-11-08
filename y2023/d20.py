@@ -186,7 +186,6 @@ def run(stream, test=False):
             low += result[0]
             high += result[1]
         result = low * high
-    print(f"Result for Part 1 = {result} \n")
 
     # Part 2
     cons = {
@@ -196,5 +195,4 @@ def run(stream, test=False):
             'jg': 4091,
             }
     lcm = math.lcm(*cons.values())
-    print(f"Result for Part 2 = {lcm}")
     return (result, lcm)

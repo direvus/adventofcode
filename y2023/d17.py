@@ -170,7 +170,6 @@ def find_path_astar(rows: list, min_run: int = 0, max_run: int = 3) -> int:
 
                 f[neighbour] = fscore
                 nodes.set_priority(neighbour, fscore)
-    print("Ran out of nodes without finding the destination!")
 
 
 def run(stream, test=False):
@@ -181,10 +180,8 @@ def run(stream, test=False):
     # Part 1
     with timing("Part 1"):
         score1 = find_path_astar(rows)
-    print(f"Result for Part 1 = {score1}\n")
 
     # Part 2
     with timing("Part 2"):
         score2 = find_path_astar(rows, 4, 10)
-    print(f"Result for Part 2 = {score2}\n")
     return (score1, score2)

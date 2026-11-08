@@ -90,7 +90,6 @@ def run(stream, test=False):
     # Part 1
     with timing("Part 1"):
         count = count_tiles(rows, (0, 0), Direction.EAST)
-    print(f"Result for Part 1 = {count}\n")
 
     # Part 2
     with timing("Part 2"):
@@ -104,5 +103,4 @@ def run(stream, test=False):
             results.append(count_tiles(rows, (y, 0), Direction.EAST))
             results.append(count_tiles(rows, (y, width - 1), Direction.WEST))
         result = max(results)
-    print(f"Result for Part 2 = {result}\n")
     return (count, result)

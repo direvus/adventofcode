@@ -59,7 +59,6 @@ def run(stream, test=False):
             nways = count_ways_slide(row, runs)
             total1 += nways
             part1.append(nways)
-    print(f"Total ways for Part 1 = {total1}\n")
 
     # Part 2
     total2 = 0
@@ -69,5 +68,4 @@ def run(stream, test=False):
             row = '?'.join([orig_row] * 5)
             subtotal = count_ways_slide(row, orig_runs * 5)
             total2 += subtotal
-        print(f"Row {i+1} = {subtotal}")
     return (total1, total2)

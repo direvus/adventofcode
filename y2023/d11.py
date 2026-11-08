@@ -39,15 +39,10 @@ def run(stream, test=False):
             empty_rows.add(height)
         height += 1
 
-    print(f"Got {len(galaxies)} galaxies on a {width} x {height} field")
-    print(f"Empty rows are {empty_rows}")
-    print(f"Empty columns are {empty_cols}")
     pairs = list(combinations(galaxies, 2))
     total1 = 0
     total2 = 0
     for a, b in pairs:
         total1 += get_distance(a, b, empty_rows, empty_cols, 2)
         total2 += get_distance(a, b, empty_rows, empty_cols, 10 ** 6)
-    print(f"Total distances with expansion factor 2 = {total1}")
-    print(f"Total distances with expansion factor 10^6 = {total2}")
     return (total1, total2)

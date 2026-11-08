@@ -28,7 +28,6 @@ def run(stream, test=False):
     for i, time in enumerate(times):
         dist = distances[i]
         ways = get_race_ways(time, dist)
-        print(f"Race {i + 1} has {ways} ways to win")
         total *= ways
 
     ways = get_race_ways(time2, distance2)

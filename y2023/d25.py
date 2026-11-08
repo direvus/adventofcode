@@ -2,8 +2,6 @@
 from collections import defaultdict
 from itertools import pairwise
 
-from rich import print
-
 from util import timing
 
 
@@ -163,7 +161,6 @@ def run(stream, test=False):
         subs = tuple(g2.get_subgraphs())
         assert len(subs) == 2
         result1 = len(subs[0]) * len(subs[1])
-    print(f"Result for Part 1 = {result1} \n")
 
     # There is no Part 2 for Day 25
     return (result1, None)

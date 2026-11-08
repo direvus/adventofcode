@@ -1,44 +1,37 @@
+import unittest
 from io import StringIO
 
 from tests.common import get_day_result
 
 
-YEAR = 2025
+class TestSolutions2025(unittest.TestCase):
+    year = 2025
 
+def test_y2025d01(self):
+    assert get_day_result(self.year, 1) == (3, 6)
 
-def test_y2025d01():
-    assert get_day_result(YEAR, 1) == (3, 6)
+def test_y2025d02(self):
+    assert get_day_result(self.year, 2) == (1227775554, 4174379265)
 
+def test_y2025d03(self):
+    assert get_day_result(self.year, 3) == (357, 3121910778619)
 
-def test_y2025d02():
-    assert get_day_result(YEAR, 2) == (1227775554, 4174379265)
+def test_y2025d04(self):
+    assert get_day_result(self.year, 4) == (13, 43)
 
+def test_y2025d05(self):
+    assert get_day_result(self.year, 5) == (3, 14)
 
-def test_y2025d03():
-    assert get_day_result(YEAR, 3) == (357, 3121910778619)
+def test_y2025d06(self):
+    assert get_day_result(self.year, 6) == (4277556, 3263827)
 
+def test_y2025d07(self):
+    assert get_day_result(self.year, 7) == (21, 40)
 
-def test_y2025d04():
-    assert get_day_result(YEAR, 4) == (13, 43)
+def test_y2025d08(self):
+    assert get_day_result(self.year, 8) == (40, 25272)
 
-
-def test_y2025d05():
-    assert get_day_result(YEAR, 5) == (3, 14)
-
-
-def test_y2025d06():
-    assert get_day_result(YEAR, 6) == (4277556, 3263827)
-
-
-def test_y2025d07():
-    assert get_day_result(YEAR, 7) == (21, 40)
-
-
-def test_y2025d08():
-    assert get_day_result(YEAR, 8) == (40, 25272)
-
-
-def test_y2025d09():
+def test_y2025d09(self):
     from y2025.d09 import Grid
     s = StringIO("""
             7,1
@@ -187,17 +180,15 @@ def test_y2025d09():
     assert g.contains_hline((2, 3), (11, 3)) is True
     assert g.contains_hline((2, 3), (12, 3)) is False
 
-    assert get_day_result(YEAR, 9) == (50, 24)
+    assert get_day_result(self.year, 9) == (50, 24)
 
-def test_y2025d10():
-    assert get_day_result(YEAR, 10) == (7, 33)
+def test_y2025d10(self):
+    assert get_day_result(self.year, 10) == (7, 33)
 
+def test_y2025d11(self):
+    assert get_day_result(self.year, 11) == (5, 2)
 
-def test_y2025d11():
-    assert get_day_result(YEAR, 11) == (5, 2)
-
-
-def test_y2025d12():
+def test_y2025d12(self):
     # Have to carve out an exception here, because the third region from the
     # example input is actually not solvable in any reasonable amount of time.
     # So run the main processing function against the first two regions only.

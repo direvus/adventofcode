@@ -37,7 +37,6 @@ def run(stream, test=False):
     # Part 1
     with timing("Part 1"):
         total1 = sum([make_hash(x) for x in seq])
-    print(f"Result for Part 1 = {total1}\n")
 
     # Part 2
     with timing("Part 2"):
@@ -48,5 +47,4 @@ def run(stream, test=False):
         total2 = sum([
                 get_focus_power(i, x, lenses)
                 for i, x in enumerate(boxes)])
-    print(f"Result for Part 2 = {total2}\n")
     return (total1, total2)

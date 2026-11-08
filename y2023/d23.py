@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 from collections import namedtuple
 
-from rich import print
-
 from util import timing, Point
 
 
@@ -156,12 +154,10 @@ def run(stream, test=False):
         grid = Grid()
         grid.parse(stream)
         result1 = grid.get_longest_path_length(grid.head)
-    print(f"Result for Part 1 = {result1} \n")
 
     with timing("Part 2\n"):
         grid.reset_paths()
         grid.slopes = False
         grid.head = grid.find_paths(grid.start)
         result2 = grid.get_longest_path_length(grid.head)
-    print(f"Result for Part 2 = {result2} \n")
     return (result1, result2)
